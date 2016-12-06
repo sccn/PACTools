@@ -13,11 +13,10 @@
 %    srate   = data sampling rate (Hz)
 %
 %    Most important optional inputs
-%       'method'    = ['mod'|'corrsin'|'corrcos'|'latphase'] modulation
-%                     method or correlation of amplitude with sine or cosine of 
-%                     angle (see ref). 'laphase' compute the phase
-%                     histogram at a specific time and requires the
-%                     'powerlat' option to be set.
+%       'alpha'     = Significance level of the statistical test. If
+%                     empty no statistical test is done. Empty by Default.                     
+%       'bonfcorr'  = {'on','off'} Apply Bonferroni correction to the alpha value.
+%                     Default {'off'} 
 %       'freqs'     = [min max] frequency limits. Default [minfreq 50], 
 %                     minfreq being determined by the number of data points, 
 %                     cycles and sampling frequency. Use 0 for minimum frequency
@@ -28,20 +27,20 @@
 %       'freqs2'    = [float array] array of frequencies for the second
 %                     argument. 'freqs' is used for the first argument. 
 %                     By default it is the same as 'freqs'.
-%       'wavelet'   = 0  -> Use FFTs (with constant window length) { Default } 
-%                   = >0 -> Number of cycles in each analysis wavelet 
-%                   = [cycles expfactor] -> if 0 < expfactor < 1,  the number 
-%                     of wavelet cycles expands with frequency from cycles
-%                     If expfactor = 1, no expansion; if = 0, constant
-%                     window length (as in FFT)            {default wavelet: 0}
-%                   = [cycles array] -> cycle for each frequency. Size of array
-%                      must be the same as the freqs1number of frequencies 
-%                     {default cycles: 0}
-%       'wavelet2'  = same as 'wavelet' for the second argument. Default is
-%                     same as cycles. Note that if the lowest frequency for X
-%                     and Y are different and cycle is [cycles expfactor], it
-%                     may result in discrepencies in the number of cycles at
-%                     the same frequencies for X and Y.
+%       'method'    = ['mod'|'corrsin'|'corrcos'|'latphase'] modulation
+%                     method or correlation of amplitude with sine or cosine of 
+%                     angle (see ref). 'laphase' compute the phase
+%                     histogram at a specific time and requires the
+%                     'powerlat' option to be set.
+%       'methodpac' = {'mvlmi', 'klmi', 'glm'} Method to be use
+%                     to compute the phase amplitude coupling. 
+%                     mvlmi : Mean Vector Length Modulation Index (Canolty et al. 2006)
+%                     klmi  : Kullback-Leibler Modulation Index (Tort et al. 2010)
+%                     glm   : Generalized Linear Model (Penny et al. 2008)
+%                     Default {'glm'}
+%       'nbinskl'   = Number of bins to use for the Kullback Leibler
+%                     Modulation Index. Default [18].
+%       'nboot'     = Number of surrogate data to use. Default [200]
 %       'ntimesout' = Number of output times (int<frames-winframes). Enter a 
 %                     negative value [-S] to subsample original time by S.
 %       'timesout'  = Enter an array to obtain spectral decomposition at 
@@ -50,7 +49,10 @@
 %                     time array). Overwrite 'ntimesout'. {def: automatic}
 %       'powerlat'  = [float] latency in ms at which to compute phase
 %                     histogram
-%       'tlimits'   = [min max] time limits in ms.
+%       'ptspercent'= Size in percentage of the segments to shuffle 
+%                     when creating surrogate data. Default [0.05]
+%       'tlimits'   = [min max] time limits in ms. Default [0 number of
+%                     time points / sampling rate]
 %
 %    Optional Detrending:
 %       'detrend'   = ['on'|'off'], Linearly detrend each data epoch   {'off'}
@@ -66,9 +68,14 @@
 %                     Multiplies the number of output frequencies by dividing
 %                     their spacing (standard FFT padding). When cycles~=0, 
 %                     frequency spacing is divided by padratio.
-%       'nfreqs'    = number of output frequencies. For FFT, closest computed
-%                     frequency will be returned. Overwrite 'padratio' effects
-%                     for wavelets. Default: usfreqs1e 'padratio'.
+%       'nfreqs1'    = number of output frequencies for modulating signal (phase). 
+%                     For FFT, closest computed frequency will be returned. 
+%                     Overwrite 'padratio' effects for wavelets.
+%                     Default: usfreqs1e 'padratio'.
+%       'nfreqs2'    = number of output frequencies for modulated signal (amplitude). 
+%                     For FFT, closest computed frequency will be returned. 
+%                     Overwrite 'padratio' effects for wavelets.
+%                     Default: usfreqs1e 'padratio'.
 %       'freqscale' = ['log'|'linear'] frequency scale. Default is 'linear'.
 %                     Note that for obtaining 'log' spaced freqs using FFT, 
 %                     closest correspondant frequencies in the 'linear' space 
@@ -88,14 +95,16 @@
 %       'alltfYstr' = same as 'alltfXstr'
 %                     
 % Outputs: 
-%        pac         = Matrix (nfreqs1,nfreqs2,timesout) of coherence (complex).
-%                      Use 20*log(abs(crossfcoh)) to vizualize log spectral diffs. 
-%        timesout    = Vector of output times (window centers) (ms).
-%        freqsout1   = Vector of frequency bin centers for first argument (Hz).
-%        freqsout2   = Vector of frequency bin centers for second argument (Hz).
-%        alltfX      = single trial spectral decomposition of X
-%        alltfY      = single trial spectral decomposition of Y
-%
+%        crossfcoh      = Matrix (nfreqs1,nfreqs2,length(timesout1)) of phase amplitude 
+%                       coupling values.
+%        timesout1      = Vector of output times (window centers) (ms).
+%        freqs1         = Vector of frequency bin centers for first argument (Hz).
+%        freqs2         = Vector of frequency bin centers for second argument (Hz).
+%        alltfX         = spectral decomposition of X
+%        alltfY         = spectral decomposition of Y
+%        crossfcoh_pval = Matrix (nfreqs1,nfreqs2,length(timesout1)) of Pvalues for the
+%                        phase amplitude coupling values.
+%        pacstruct      = structure containing the paramters and results of the computation             
 % Author: Arnaud Delorme, SCCN/INC, UCSD 2005-
 %
 % Ref: Testing for Nested Oscilations (2008) J Neuro Methods 174(1):50-61
@@ -139,10 +148,11 @@ g = finputcheck(varargin, ...
                 { 'alpha'         'real'     [0 0.2]                   [];
                   'alltfXstr'     'struct'   struct                    struct;
                   'alltfYstr'     'struct'   struct                    struct;
-                  'ptspercent'    'float'    [ ]                       0.05;
-                  'nboot'         'real'     []                        200;
-                  'baseboot'      'float'    []                        0;
-                  'boottype'      'string'   {'times','trials','timestrials'}  'timestrials';
+                  'ptspercent'    'float'    [0 1]                     0.05;
+                  'nboot'         'real'     [0 Inf]                   200;
+                  'baseboot'      'float'    []                        0;                       %
+                  'boottype'      'string'   {'times','trials','timestrials'}  'timestrials';   %
+                  'bonfcorr'      'string'   {'on','off'}              'off';
                   'detrend'       'string'   {'on','off'}              'off';
                   'freqs'         'real'     [0 Inf]                   [0 srate/2];
                   'freqs2'        'real'     [0 Inf]                   [];
@@ -150,25 +160,25 @@ g = finputcheck(varargin, ...
                   'itctype'       'string'   {'phasecoher','phasecoher2','coher'}  'phasecoher';
                   'nfreqs1'       'integer'  [0 Inf]                   [];
                   'nfreqs2'       'integer'  [0 Inf]                   [];
-                  'lowmem'        'string'   {'on','off'}              'off';
+                  'lowmem'        'string'   {'on','off'}              'off';                   %
                   'method'        'string'   { 'mod','corrsin','corrcos'}         'mod';
-                  'naccu'         'integer'  [1 Inf]                   250;
-                  'newfig'        'string'   {'on','off'}              'on';
+                  'naccu'         'integer'  [1 Inf]                   250;                     %
+                  'newfig'        'string'   {'on','off'}              'on';                    %
                   'padratio'      'integer'  [1 Inf]                   2;
                   'rmerp'         'string'   {'on','off'}              'off';
-                  'rboot'         'real'     []                        [];
+                  'rboot'         'real'     []                        [];                      %
                   'subitc'        'string'   {'on','off'}              'off';
                   'subwin'        'real'     []                        []; ...
-                  'gammapowerlim' 'real'     []                        []; ...
-                  'powerlim'      'real'     []                        []; ...
-                  'powerlat'      'real'     []                        []; ...
-                  'gammabase'     'real'     []                        []; ...
+                  'gammapowerlim' 'real'     []                        []; ...                  %
+                  'powerlim'      'real'     []                        []; ...                  %
+                  'powerlat'      'real'     []                        []; ...                  %
+                  'gammabase'     'real'     []                        []; ...                  %
                   'timesout'      'real'     []                        []; ...
                   'methodpac'     'string'   pacmethods_list           'glm';
                   'nbinskl'       'integer'  [1 Inf]                   [];
                   'ntimesout'     'integer'  []                        length(X)/2; ...
                   'tlimits'       'real'     []                        [0 frame/srate];
-                  'title'         'string'   []                        '';
+                  'title'         'string'   []                        '';                      %
                   'vert'          {'real','cell'}  []                  [];
                   'cycles'        'real'     [0 Inf]                   [3 0.5];
                   'cycles2'       'real'     [0 Inf]                   [3 0.5];   
@@ -179,8 +189,7 @@ if isstr(g), error(g); end;
 
 % more defaults
 % -------------
-% if isempty(g.wavelet2), g.wavelet2 = g.wavelet; end;
-% if isempty(g.freqs2),   g.freqs2   = g.freqs;   end;
+if isempty(g.freqs2),   g.freqs2   = g.freqs;   end;
 
 % remove ERP if necessary
 % -----------------------
@@ -250,6 +259,11 @@ cohboot =[];
 if numel(size(alltfX)) ==2, ti_loopend = 1; strial_flag = 1; else  ti_loopend = length(timesout1); strial_flag = 0; end
 betastmp = []; peakangletmp = []; normpactmp = []; signifmasktmp = []; 
 bin_averagetmp = []; surrogate_pactmp = []; compositestmp = []; nbinskltmp = [];
+
+% Apply Bonferroni correction
+if strcmp(g.bonfcorr, 'on') && ~isempty(g.alpha)
+    g.alpha = g.alpha / (length(freqs1) * length(freqs2) * ti_loopend); 
+end
 
 if ~strcmpi(g.method, 'latphase')
     for find1 = 1:length(freqs1)

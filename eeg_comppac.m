@@ -3,21 +3,31 @@
 %                 statistical significance of the PAC with surrogate data.
 %
 % Usage:
-%
+%   >> eeg_comppac(x,y);
+%   >> [pacval,pval,significant,pacstr] ...
+%                     = eeg_comppac(x,y,'key1', 'val1', 'key2', val2' ...);
 % Inputs:
 %    x      - Time series of the phase [ntimes] or [ntrials]
 %    y      - Time series of the amplitude [ntimes] or [ntrials]
 %
 %   Optional inputs
-%       'method'        - { 'mvlmi', 'klmi', 'glm'} Method to be use
-%                         to compute the phase amplitude coupling. Default {'plv'}                
+             
 %       'alpha'         - Significance level of the statistical test. If
 %                         empty no statistical test is done.
 %                         Default [0.05]
+%       'methodpac'     - {'mvlmi', 'klmi', 'glm'} Method to be use
+%                         to compute the phase amplitude coupling. 
+%                         mvlmi : Mean Vector Length Modulation Index (Canolty et al. 2006)
+%                         klmi  : Kullback-Leibler Modulation Index (Tort et al. 2010)
+%                         glm   : Generalized Linear Model (Penny et al. 2008)
+%                         Default {'glm'}
+%       'nbinskl'       - Number of bins to use for the Kullback Leibler
+%                         Modulation Index. Default [18].
+%       'nboot'         - Number of surrogate data to use. Default [200]
 %       'normpac'       - Normalize the PAC according to Penny et al.
 %                        (2008). Not defined for klmi. [0,1] Default [0]
-%       'nbinskl'       - Number of bins to use for the Kullback Leibler
-%                        Modulation Index. Default [18].
+%       'ptspercent'    - Size in percentage of the segments to shuffle 
+%                         when creating surrogate data. Default [0.05]
 %
 % Outputs:
 %        pacval         - Phase Amplitude Coulping Value
@@ -64,15 +74,15 @@ catch
     disp('eeg_comppac() error: calling convention {''key'', value, ... } error'); return;
 end;
 
-try g.method;         catch, g.method       = 'mvlmi';    end;
+try g.method;         catch, g.method       = 'glm';      end;
 try g.nbinskl;        catch, g.nbinskl      = 18;         end;
 try g.normpac;        catch, g.normpac      = 0;          end;
 try g.alpha;          catch, g.alpha        = [];         end;
 try g.verbose;        catch, g.verbose      = 0;          end;
-try g.ptspercent;     catch, g.ptspercent   = 0.001;      end;
+try g.ptspercent;     catch, g.ptspercent   = 0.05;       end;
 try g.nboot;          catch, g.nboot        = 200;        end;
 if ~isequal(size(x),size(y))
-    error('eeg_comppac: X and Y must have the same dimensions');
+    error('eeg_comppac() error: X and Y must have the same dimensions');
 end
 
 % Initializing pacstr structure
@@ -146,6 +156,10 @@ switch g.method
         pacstr.nbinskl     = g.nbinskl;
         pacstr.bin_average = bin_average;
         pacstr.nbinskl     = nbins;
+        
+        if nbins < g.nbinskl,
+            disp('eeg_comppac() warning: number of bins for KL computation was reduced');
+        end
         
     case 'glm'
         % General Linear Model

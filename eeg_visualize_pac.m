@@ -1,4 +1,4 @@
-% eeg_visualize_pac() - visualize the phase amplitude coupling
+% eeg_visualize_pac() - visualize the phase amplitude coupling data
 %
 % Usage:
 %   >> eeg_visualize_pac(EEG);
@@ -8,48 +8,55 @@
 %    EEG      - EEG structure or pac structure
 %
 %   Optional inputs
-%       'time'         - Time point to plot. Default [1]                
+%       'time'              - Time point(s) to plot. Only one time point is 
+%                           used for all the plot flags except plotcomodt
+%                           Default [1]                
 %       'phasefreq'         - Frequency of the phase to plot. The plots will
-%                           use the closest frequency in EEG.pacstruct.freqs_phase 
-%                           Default [median(EEG.pacstruct.freqs_phase)]
+%                           use the closest frequency available and the
+%                           median frequency by default                           
 %       'ampfreq'           - Frequency of the amplitude to plot. The plots will
-%                           use the closest frequency in EEG.pacstruct.freqs_phase
-%                           Default [median(EEG.pacstruct.freqs_amp)]
-%       'plot_comod'        - Logical. Plot the comodulogram. 
-%                           Default depends on the other inputs.
-%       'plot_comod_time'   - Logical. Plot the comodulogram at the given 
-%                           time point. Default depends on the other inputs.
-%       'plot_comod_slices' - Logical. Plot slices of the comodulogram in
-%                           time. Default depends on the other inputs.
-%       'plot_mi_time'      - Logical. Plot the modulation index in time at
-%                           the given phase and amplitude frequencies.
-%                           Default depends on the other inputs.
-%       'plot_mi_time_amp'  - Logical. Plot the modulation index in time
+%                           use the closest frequency available and the
+%                           median frequency be default.
+%       'plotcomod'         - Logical. Plot the comodulogram. 
+%                           Default [1] if no other plot flags given,
+%                           otherwise [0]
+%       'plotcomodt'        - Logical. Plot the comodulogram at the given 
+%                           time point(s). Several time points can be used.
+%                           Default [0]
+%       'plotampt'          - Logical. Plot the modulation index in time
 %                           and in amplitudes at a given phase frequency.
-%                           Default depends on the other inputs.
-%       'plot_mi_time_phase'- Logical. Plot the modulation index in time
+%                           Default [0]
+%       'plotphaset'        - Logical. Plot the modulation index in time
 %                           and in phases at a given amplitude frequency.
-%                           Default depends on the other inputs.
-%       'plot_surr'         - Logical. Plot the surrogate distribution.
-%                           Default depends on the other inputs
-%       'plot_kl'           - Logical. Plot Kullback-Leibler phase amplitude 
-%                           plot. Default depends on the other inputs
-%       'plot_mvl'          - Logical. Plot the distribution of the composites 
+%                           Default [0]
+%       'plotsurrdist'      - Logical. Plot the surrogate distribution for 
+%                           a given time point, amplitude frequency, 
+%                           and phase frequency. Default [0]                          
+%       'plotkl'            - Logical. Plot Kullback-Leibler modulation 
+%                           index plot phase amplitude for a given time point,
+%                           amplitude frequency, and phase frequency.                          
+%                           Default [0]   
+%       'plotmvl'           - Logical. Plot the distribution of the composites 
 %                           of the mean vector length modulation index method
-%                           Default depends on the other inputs.
-%       'norm_comp_amp'    - Logical. Normlize amplitude of the composites 
-%                           of the mean vector length modulation index. 
-%                           Default [1].
-%       'nbins_mvlmi_dist'  - Number of bins per phase bin and half the number 
+%                           for a given time point, amplitude frequency,
+%                           and phase frequency. Default [0]
+%       'arrowweight'       - Scalar used to multiply the ploted mean 
+%                           vector length arrow. Default [0]
+%       'nbinsmvl'          - Number of bins per phase bin and half the number 
 %                           of phase bins to use in the composite distribution 
 %                           of the mean vector length modulation index plot. 
 %                           Default [36]
-%       'abs_pacval'        - Plot the absolute value of the phase amplitude
-%                           coupling value. Default [0]
-%       'nslices'           - Number of slices to use in the modulation
-%                           index slices plot. Default [5 per second]
-%       'plot_all'          - Logical. Plot all of the possible plots with
-%                           the data and inputs. Default [0]
+%       'normcomposite'     - Logical. Normalize the amplitude of the composites 
+%                           values of the mean vector length modulation index. 
+%                           Default [0].
+%       'abspacval'        - Use the absolute value of the phase amplitude
+%                          coupling value. Default [0]
+%       'plotall'          - Logical. Plot all of the possible plots with
+%                          the data and given parameters. Default [0]
+%       'alphadata'        - Transparency to be used for to mask of
+%                          significance in the comodulogram plot.
+%                          Default [0.3]
+%       
 %
 % Author: Joseph Heng and Ramon Martinez Cancino, EPFL, SCCN/INC, UCSD 2016
 %
@@ -112,13 +119,12 @@ try g.plotphaset;             plotflag    = 1; catch, g.plotphaset     = 0;     
 try g.plotsurrdist;           plotflag    = 1; catch, g.plotsurrdist   = 0;              end;
 try g.plotkl;                 plotflag    = 1; catch, g.plotkl         = 0;              end;
 try g.plotmvl;                plotflag    = 1; catch, g.plotmvl        = 0;              end;
-try g.normcomposite;                           catch, g.normcomposite  = 1;              end;
+try g.normcomposite;                           catch, g.normcomposite  = 0;              end;
 try g.nbinsmvl;                                catch, g.nbinsmvl       = 36;             end;
 try g.abspacval;                               catch, g.abspacval      = 0;              end;
-try g.nslices;                                 catch, g.nslices        = [];             end;%ceil(5*(pacstruct.timesout(end)-pacstruct.timesout(1)));
 try g.plotall;                                 catch, g.plotall        = 0;              end;
 try g.alphadata;                               catch, g.alphadata      = 0.3;            end;  
-try g.arrowweight;                             catch, g.arrowweight    = 3;              end;
+try g.arrowweight;                             catch, g.arrowweight    = 1;              end;
 % Determine if the data is single strial or multiple triale
 if numel(size(pacstruct.pacval)) == 2,
     s_trial = true;
@@ -327,11 +333,7 @@ if g.plotcomodt
         
         % Plot
         indxval = closest_time_idx;
-        %     stepval    = (size(pacval ,3)/g.nslices);
-        %     indxval    = round(0:stepval:size(pacval ,3));
-        %     indxval(1) = 1;
         Z       = pacval(:,:,indxval);
-%         tplot   = linspace(pacstruct.timesout(1), pacstruct.timesout(end), length(indxval)) ;
         tplot = pacstruct.timesout(closest_time_idx);
         [M,N,P] = size(Z);
         for i=1:P
@@ -368,19 +370,6 @@ if g.plotcomodt
         end
         set(get(h(plot_indx),'Parent'),'ZTickLabel', zlabel_string);
         
-        % Time axis label
-        %     xlabel_val = pacstruct.freqs_phase(get(get(h(plot_indx),'Parent'),'ZTick'));
-        %     for i = 1:length(zlabel_val)
-        %         zlabel_string{i} = sprintf('%1.1f',zlabel_val(i));
-        %     end
-        
-        %     set(get(h(plot_indx),'Parent'),'ZTickLabel', zlabel_string);
-        %     view(-4,34)
-        
-        %     h_xlabel.Position = [0.45   -0.2     0];
-        %     h_ylabel.Position = [-0.05    0.1   0];
-        %     h_zlabel.Position = [-0.0445  0.85   0];
-        %     set(h_ylabel,'rotation',-63);
         title('Modulation Index','FontSize',AXES_FONTSIZE_L,'FontWeight','bold');
     end
 end
