@@ -116,15 +116,15 @@ if nargin <8
    
     % Retreiving Inputs
     if isempty(res), return; end;
-    options    = {'freqs' str2double(res.freq1)          'freqs2' str2double(res.freq2)          'methodpac' method_list{res.method}...
-                  'nboot' str2double(res.nsurrogates)    'alpha' str2double(res.pvalue),         'nfreqs1',str2double(res.nfreqs1), ...
-                  'nfreqs2',str2double(res.nfreqs2)      };
+    options    = {'freqs' str2num(res.freq1)          'freqs2' str2num(res.freq2)          'methodpac' method_list{res.method}...
+                  'nboot' str2num(res.nsurrogates)    'alpha' str2num(res.pvalue),         'nfreqs1',str2num(res.nfreqs1), ...
+                  'nfreqs2',str2num(res.nfreqs2)      };
               
-    indexphase = str2double(res.freq1_dataindx);
-    indexamp   = str2double(res.freq2_dataindx);
+    indexphase = str2num(res.freq1_dataindx);
+    indexamp   = str2num(res.freq2_dataindx);
     pooldata   = datatypel_list{res.datatype};
-    phasefreq  = str2double(res.freq1);
-    ampfreq    = str2double(res.freq2);
+    phasefreq  = str2num(res.freq1);
+    ampfreq    = str2num(res.freq2);
 else
     options = {'freqs' phasefreq 'freqs2' ampfreq 'nfreqs1' g.nfreqs1 'nfreqs2' g.nfreqs2 'methodpac' g.methodpac 'nboot' g.nboot 'alpha' g.alpha };
 end
@@ -162,7 +162,10 @@ optextended = {pooldata, phasefreq, ampfreq, indexphase, indexamp, options,varar
 if  ~g.forcecomp && isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
     serialized_inputs = std_serialize(optextended);
     computedflag = isequal(serialized_inputs,EEG.etc.eegpac.serialize);
-    if computedflag, flag_compute = false; end;
+    if computedflag
+        flag_compute = false;
+        EEG.etc.eegpac.serialize = serialized_inputs;
+    end;
 end
 
 if flag_compute
@@ -186,14 +189,14 @@ if flag_compute
             end
             
             % Running eeg_pac
-            % Three options, so we can save the TF decompositions us them later in the loop
-            if all(isempty(timefreq_phase{ichan_phase}),isempty(timefreq_amp{ichan_amp}))
+            % Four options, so we can save the TF decompositions us them later in the loop
+            if all([isempty(timefreq_phase{ichan_phase}),isempty(timefreq_amp{ichan_amp})])
                 [pacval, timesout, freqs1, freqs2, tmp, alltfX, alltfY,crossfcoh_pval, pacstruct] = eeg_pac(X, Y, EEG.srate,  options{:}); clear tmp;
                 
                 % populating  phase cell
                 timefreq_phase{ichan_phase}.timesout = timesout;
                 timefreq_phase{ichan_phase}.freqs    = freqs1;
-                timefreq_phase{ichan_phase}.alltf   = alltfX;
+                timefreq_phase{ichan_phase}.alltf    = alltfX;
                 
                 timefreq_amp{ichan_amp}.timesout = timesout;
                 timefreq_amp{ichan_amp}.freqs    = freqs2;
@@ -210,6 +213,17 @@ if flag_compute
                 timefreq_amp{ichan_amp}.timesout = timesout;
                 timefreq_amp{ichan_amp}.freqs    = freqs2;
                 timefreq_amp{ichan_amp}.alltf    = alltfY;
+                
+            elseif isempty(timefreq_phase{ichan_phase})
+                tmpopt = options;
+                tmpopt{end+1} = 'alltfYstr' ;
+                tmpopt{end+1} = timefreq_amp{ichan_amp};
+             
+                [pacval, timesout, freqs1, freqs2, tmp, alltfX, alltfY,crossfcoh_pval, pacstruct] = eeg_pac(X, Y, EEG.srate,  tmpopt{:}); clear tmp;
+                % populating  phase cell
+                timefreq_phase{ichan_phase}.timesout = timesout;
+                timefreq_phase{ichan_phase}.freqs    = freqs1;
+                timefreq_phase{ichan_phase}.alltf    = alltfX;
             else
                 tmpopt = options;
                 tmpopt{end+1} = 'alltfXstr' ;
@@ -225,18 +239,42 @@ if flag_compute
                 EEG.etc.eegpac = [];
             end
             
-            pacstruct.indxchanphase = indexphase(ichan_phase);
-            pacstruct.indxchanamp   = indexamp(ichan_amp);
-            pacstruct.options       = options;
-            pacstruct.pacval        = pacval;
-            pacstruct.timesout      = timesout;
-            pacstruct.freqs1        = freqs1;
-            pacstruct.freqs2        = freqs2;
-            pacstruct.alltfX        = alltfX;
-            pacstruct.alltfY        = alltfY;
-            EEG.etc.eegpac{ichan_phase,ichan_amp} = pacstruct;
+%             pacstruct.indxchanphase = indexphase(ichan_phase);
+%             pacstruct.indxchanamp   = indexamp(ichan_amp);
+%             pacstruct.options       = options;
+%             pacstruct.pacval        = pacval;
+%             pacstruct.timesout      = timesout;
+%             pacstruct.freqs1        = freqs1;
+%             pacstruct.freqs2        = freqs2;
+            
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.pacstruct      = pacstruct; % Deprecate after finish development
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.indxchanphase  = indexphase(ichan_phase);
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.indxchanamp    = indexamp(ichan_amp);
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.pacval         = pacval;
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.pval           = pacstruct.pval;
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.signifmask     = pacstruct.signifmask;
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.peakangle      = pacstruct.peakangle;
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.betas          = pacstruct.betas;
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.bin_average    = pacstruct.bin_average;
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.composites     = pacstruct.composites;
         end
     end
+    
+    % Common stuff
+    EEG.etc.eegpac.options      = options;
+    EEG.etc.eegpac.method       = pacstruct.method;
+    EEG.etc.eegpac.freqs_phase  = pacstruct.freqs_phase;
+    EEG.etc.eegpac.freqs_amp    = pacstruct.freqs_amp;
+    EEG.etc.eegpac.alpha        = pacstruct.alpha;
+    EEG.etc.eegpac.ptspercent   = pacstruct.ptspercent;
+    EEG.etc.eegpac.nboots       = pacstruct.nboots;
+    EEG.etc.eegpac.srate        = pacstruct.srate;
+    EEG.etc.eegpac.timesout     = timesout;
+    EEG.etc.eegpac.options      = options;
+    EEG.etc.eegpac.freqs1       = freqs1;
+    EEG.etc.eegpac.freqs2       = freqs2;
+    EEG.etc.eegpac.nbinskl      = pacstruct.nbinskl;
+          
 end
 
 com = sprintf('pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str(phasefreq),num2str(ampfreq),num2str(indexphase),num2str(indexamp), vararg2str(options(5:end)));
