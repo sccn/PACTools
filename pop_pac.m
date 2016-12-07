@@ -247,7 +247,7 @@ if flag_compute
 %             pacstruct.freqs1        = freqs1;
 %             pacstruct.freqs2        = freqs2;
             
-            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.pacstruct      = pacstruct; % Deprecate after finish development
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.pacstruct      = indexphase; % Deprecate after finish development
             EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.indxchanphase  = indexphase(ichan_phase);
             EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.indxchanamp    = indexamp(ichan_amp);
             EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.pacval         = pacval;
@@ -261,6 +261,9 @@ if flag_compute
     end
     
     % Common stuff
+    EEG.etc.eegpac.pahseindx    = indexphase;
+    EEG.etc.eegpac.ampindx      = indexamp;
+    
     EEG.etc.eegpac.options      = options;
     EEG.etc.eegpac.method       = pacstruct.method;
     EEG.etc.eegpac.freqs_phase  = pacstruct.freqs_phase;
