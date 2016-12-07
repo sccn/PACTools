@@ -4,7 +4,7 @@
 %
 % Usage:
 %   >> eeg_pac(x,y,srate);
-%   >> [coh,timesout,freqsout1,freqsout2,cohboot] ...
+%   >> [crossfcoh, timesout1, freqs1, freqs2, crossfcohall, alltfX, alltfY,crossfcoh_pval, pacstruct] ...
 %                     = eeg_pac(x,y,srate,'key1', 'val1', 'key2', val2' ...);
 % Inputs:
 %    x       = [float array] 2-D data array of size (times,trials) or
@@ -312,6 +312,7 @@ if ~strcmpi(g.method, 'latphase')
     pacstruct.ptspercent        = g.ptspercent;
     pacstruct.nboots            = g.nboot;
     pacstruct.srate             = srate;
+    pacstruct.bonfcorr          = g.bonfcorr;
     
     pacstruct.pacval            = crossfcoh;
     pacstruct.pval              = crossfcoh_pval;

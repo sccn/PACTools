@@ -261,14 +261,14 @@ if flag_compute
     end
     
     % Common stuff
-    EEG.etc.eegpac.pahseindx    = indexphase;
+    EEG.etc.eegpac.phaseindx    = indexphase;
     EEG.etc.eegpac.ampindx      = indexamp;
     
-    EEG.etc.eegpac.options      = options;
     EEG.etc.eegpac.method       = pacstruct.method;
     EEG.etc.eegpac.freqs_phase  = pacstruct.freqs_phase;
     EEG.etc.eegpac.freqs_amp    = pacstruct.freqs_amp;
     EEG.etc.eegpac.alpha        = pacstruct.alpha;
+    EEG.etc.eegpac.bonfcorr     = pacstruct.bonfcorr;
     EEG.etc.eegpac.ptspercent   = pacstruct.ptspercent;
     EEG.etc.eegpac.nboots       = pacstruct.nboots;
     EEG.etc.eegpac.srate        = pacstruct.srate;
