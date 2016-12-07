@@ -8,6 +8,7 @@
 %    EEG      - EEG structure or pac structure
 %
 %   Optional inputs
+<<<<<<< 2006c3c85b02516dfd730ba318b548feef86b4e1
 %       'time'              - Time point(s) to plot. Only one time point is 
 %                           used for all the plot flags except plotcomodt
 %                           Default [1]                
@@ -57,6 +58,56 @@
 %                          significance in the comodulogram plot.
 %                          Default [0.3]
 %       
+=======
+%       'time'              - Time point to plot. Default [1]                
+%       'phasefreq'         - Frequency of the phase to plot. The plots will
+%                             use the closest frequency in EEG.pacstruct.freqs_phase 
+%                            Default [median(EEG.pacstruct.freqs_phase)]
+%       'ampfreq'           - Frequency of the amplitude to plot. The plots will
+%                             use the closest frequency in EEG.pacstruct.freqs_phase
+%                             Default [median(EEG.pacstruct.freqs_amp)]
+%       'plot_comod'        - Logical. Plot the comodulogram. 
+%                             Default depends on the other inputs.
+%       'plot_comod_time'   - Logical. Plot the comodulogram at the given 
+%                             time point. Default depends on the other inputs.
+%       'plot_comod_slices' - Logical. Plot slices of the comodulogram in
+%                             time. Default depends on the other inputs.
+%       'plot_mi_time'      - Logical. Plot the modulation index in time at
+%                             the given phase and amplitude frequencies.
+%                             Default depends on the other inputs.
+%       'plot_mi_time_amp'  - Logical. Plot the modulation index in time
+%                             and in amplitudes at a given phase frequency.
+%                             Default depends on the other inputs.
+%       'plot_mi_time_phase'- Logical. Plot the modulation index in time
+%                             and in phases at a given amplitude frequency.
+%                             Default depends on the other inputs.
+%       'plot_surr'         - Logical. Plot the surrogate distribution.
+%                             Default depends on the other inputs
+%       'plot_kl'           - Logical. Plot Kullback-Leibler phase amplitude 
+%                             plot. Default depends on the other inputs
+%       'plot_mvl'          - Logical. Plot the distribution of the composites 
+%                             of the mean vector length modulation index method
+%                             Default depends on the other inputs.
+%       'norm_comp_amp'     - Logical. Normlize amplitude of the composites 
+%                             of the mean vector length modulation index. 
+%                             Default [1].
+%       'nbins_mvlmi_dist'  - Number of bins per phase bin and half the number 
+%                             of phase bins to use in the composite distribution 
+%                             of the mean vector length modulation index plot. 
+%                             Default [36]
+%       'abs_pacval'        - Plot the absolute value of the phase amplitude
+%                             coupling value. Default [0]
+%       'nslices'           - Number of slices to use in the modulation
+%                             index slices plot. Default [5 per second]
+%       'plot_all'          - Logical. Plot all of the possible plots with
+%                             the data and inputs. Default [0]
+%       'phasechanindx'     - When EEG strcuture is provided, will take
+%                             this index to retreive and reconstruct the
+%                             'pacstruct'
+%       'ampchanindx'      - When EEG strcuture is provided, will take
+%                            this index to retreive and reconstruct the
+%                            'pacstruct'
+>>>>>>> Comments for addition of new inputs to determine the index on the EEG structure
 %
 % Author: Joseph Heng and Ramon Martinez Cancino, EPFL, SCCN/INC, UCSD 2016
 %
@@ -86,6 +137,8 @@ function eeg_visualize_pac(EEG, varargin)
 if isfield(EEG,'etc')
     if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
     pacstruct = EEG.etc.eegpac;
+    % Reconstruct pacstruct from EEG.etc arguments using indices from
+    % inputs for channels/components used fro the PAC cmputation
     else
         error('eeg_visualize_pac() error: Invalid or inexistent field eegpac')
     end
@@ -121,11 +174,20 @@ try g.plotkl;                 plotflag    = 1; catch, g.plotkl         = 0;     
 try g.plotmvl;                plotflag    = 1; catch, g.plotmvl        = 0;              end;
 try g.normcomposite;                           catch, g.normcomposite  = 0;              end;
 try g.nbinsmvl;                                catch, g.nbinsmvl       = 36;             end;
+
 try g.abspacval;                               catch, g.abspacval      = 0;              end;
+<<<<<<< 2006c3c85b02516dfd730ba318b548feef86b4e1
 try g.plotall;                                 catch, g.plotall        = 0;              end;
 try g.alphadata;                               catch, g.alphadata      = 0.3;            end;  
 try g.arrowweight;                             catch, g.arrowweight    = 1;              end;
 % Determine if the data is single strial or multiple triale
+=======
+%try g.nslices;                                 catch, g.nslices        = [];             end;%ceil(5*(pacstruct.timesout(end)-pacstruct.timesout(1)));
+try g.plotall;                                 catch, g.plotall        = 0;              end;
+try g.alphadata;                               catch, g.alphadata      = 0.3;            end;  
+try g.arrowweight;                             catch, g.arrowweight    = 3;              end;
+% Determine if the data is single strial or multiple trials
+>>>>>>> Comments for addition of new inputs to determine the index on the EEG structure
 if numel(size(pacstruct.pacval)) == 2,
     s_trial = true;
 else
