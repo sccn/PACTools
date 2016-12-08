@@ -15,8 +15,8 @@
 %    Most important optional inputs
 %       'alpha'     = Significance level of the statistical test. If
 %                     empty no statistical test is done. Empty by Default.                     
-%       'bonfcorr'  = {'on','off'} Apply Bonferroni correction to the alpha value.
-%                     Default {'off'} 
+%       'bonfcorr'  = Logical. Apply Bonferroni correction to the alpha value
+%                     if true. Default [false]
 %       'freqs'     = [min max] frequency limits. Default [minfreq 50], 
 %                     minfreq being determined by the number of data points, 
 %                     cycles and sampling frequency. Use 0 for minimum frequency
@@ -152,7 +152,7 @@ g = finputcheck(varargin, ...
                   'nboot'         'real'     [0 Inf]                   200;
                   'baseboot'      'float'    []                        0;                       %
                   'boottype'      'string'   {'times','trials','timestrials'}  'timestrials';   %
-                  'bonfcorr'      'string'   {'on','off'}              'off';
+                  'bonfcorr'      'string'   [0 1]                     0;
                   'detrend'       'string'   {'on','off'}              'off';
                   'freqs'         'real'     [0 Inf]                   [0 srate/2];
                   'freqs2'        'real'     [0 Inf]                   [];
@@ -261,7 +261,7 @@ betastmp = []; peakangletmp = []; normpactmp = []; signifmasktmp = [];
 bin_averagetmp = []; surrogate_pactmp = []; compositestmp = []; nbinskltmp = [];
 
 % Apply Bonferroni correction
-if strcmp(g.bonfcorr, 'on') && ~isempty(g.alpha)
+if g.bonfcorr && ~isempty(g.alpha)
     g.alpha = g.alpha / (length(freqs1) * length(freqs2) * ti_loopend); 
 end
 
