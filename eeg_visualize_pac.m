@@ -128,12 +128,12 @@ if isfield(EEG,'etc')
     if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
     % Reconstruct pacstruct from EEG.etc arguments using indices from
     % inputs for channels/components used fro the PAC cmputation
-    if isempty(g.phasechanindx) || isempty(g.ampchanindx)
-        error('eeg_visualize_pac() error: phasechanindx and ampchanindx must be provided')
-    end       
-    pacstruct = reconstruct_pacstruct(EEG, g.phasechanindx, g.ampchanindx)
+        if isempty(g.phasechanindx) || isempty(g.ampchanindx)
+            error('eeg_visualize_pac() error: phasechanindx and ampchanindx must be provided');
+        end       
+        pacstruct = reconstruct_pacstruct(EEG, g.phasechanindx, g.ampchanindx);
     else
-        error('eeg_visualize_pac() error: Invalid or inexistent field eegpac')
+        error('eeg_visualize_pac() error: Invalid or inexistent field eegpac');
     end
 else
     pacstruct = EEG;
