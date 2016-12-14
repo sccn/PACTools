@@ -273,6 +273,7 @@ if flag_compute
             EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.betas          = pacstruct.betas;
             EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.bin_average    = pacstruct.bin_average;
             EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.composites     = pacstruct.composites;
+            EEG.etc.eegpac.datapac{ichan_phase,ichan_amp}.surrogate_pac  = pacstruct.surrogate_pac;
         end
     end
     
@@ -290,8 +291,8 @@ if flag_compute
     EEG.etc.eegpac.srate        = pacstruct.srate;
     EEG.etc.eegpac.timesout     = timesout;
     EEG.etc.eegpac.options      = options;
-    EEG.etc.eegpac.freqs1       = freqs1;
-    EEG.etc.eegpac.freqs2       = freqs2;
+%     EEG.etc.eegpac.freqs1       = freqs1;
+%     EEG.etc.eegpac.freqs2       = freqs2;
     EEG.etc.eegpac.nbinskl      = pacstruct.nbinskl;
           
 end
