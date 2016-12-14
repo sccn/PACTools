@@ -62,8 +62,12 @@
 %       'ampchanindx'       - When EEG structure is provided, will take
 %                             this index to retreive and reconstruct the
 %                            'pacstruct'
-%       
+% Outputs:
+%         h                 - Cell array with the handles to the figures
+%                             generated
 %
+% NOTE for developers: If changes in the inputs, update pop_pacplot as well
+%                       
 % Author: Joseph Heng and Ramon Martinez Cancino, EPFL, SCCN/INC, UCSD 2016
 %
 % See also:
@@ -86,8 +90,9 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-function eeg_visualize_pac(EEG, varargin)
-    
+function h = eeg_visualize_pac(EEG, varargin)
+h = [];
+
 try
     options = varargin;
     if ~isempty( varargin ),
@@ -120,18 +125,21 @@ try g.abspacval;                               catch, g.abspacval      = 0;     
 try g.plotall;                                 catch, g.plotall        = 0;              end;
 try g.alphadata;                               catch, g.alphadata      = 0.3;            end;  
 try g.arrowweight;                             catch, g.arrowweight    = 1;              end;
-try g.phasechanindx;                           catch, g.phasechanindx  = [];             end;
-try g.ampchanindx;                             catch, g.ampchanindx    = [];             end;
+try g.phasechanindx;                           catch, g.phasechanindx  = 1;             end;
+try g.ampchanindx;                             catch, g.ampchanindx    = 1;             end;
 
+if isempty(g.time),  timeflag = 0; end;
 % Detect if EEG or pacstruct structure
 if isfield(EEG,'etc')
     if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
+
     % Reconstruct pacstruct from EEG.etc arguments using indices from
     % inputs for channels/components used fro the PAC cmputation
         if isempty(g.phasechanindx) || isempty(g.ampchanindx)
             error('eeg_visualize_pac() error: phasechanindx and ampchanindx must be provided');
         end       
         pacstruct = reconstruct_pacstruct(EEG, g.phasechanindx, g.ampchanindx);
+        if isempty(pacstruct), return; end;
     else
         error('eeg_visualize_pac() error: Invalid or inexistent field eegpac');
     end
@@ -279,7 +287,7 @@ plot_indx = 0;
 %% Comodulogram
 if g.plotcomod
     plot_indx = plot_indx +1;
-    h(plot_indx) = figure('Name', 'Modulation Index','Units','Normalized','Position', [3.4740e-01 2.4352e-01 3.4219e-01 5.4074e-01], 'Resize', 'off');
+    h(plot_indx) = figure('Name', 'Modulation Index','Units','Normalized','Position', [3.4740e-01 2.4352e-01 3.4219e-01 5.4074e-01], 'Resize', 'off','Tag','comod_plot');
     h_axes1 = axes('parent',h(plot_indx) , 'Units', 'Normalized',...
                    'ActivePositionProperty', 'outerposition',...
                    'Color','None',...
@@ -314,8 +322,8 @@ end
 
 if g.plotcomodt
     if length(g.time) == 1
-        plot_indx = plot_indx +1;
-        h(plot_indx) = figure('Name', 'Modulation Index','Units','Normalized','Position', [3.4740e-01 2.4352e-01 3.4219e-01 5.4074e-01], 'Resize', 'off');
+        plot_indx = plot_indx + 1;
+        h(plot_indx) = figure('Name', 'Modulation Index','Units','Normalized','Position', [3.4740e-01 2.4352e-01 3.4219e-01 5.4074e-01], 'Resize', 'off','Tag','comodt_plot');
         h_axes1 = axes('Parent',h(plot_indx),'Units', 'Normalized',...
             'ActivePositionProperty', 'outerposition',...
             'Color','None',...
@@ -346,8 +354,8 @@ if g.plotcomodt
         box on; grid on;
         %% Plot slices of modulation index in time
     else
-        plot_indx = plot_indx +1;
-        h(plot_indx)     = figure('Name', 'Modulation Index in time','Units','Normalized','Position', [0.2349    0.3093    0.5547    0.2907]);
+        plot_indx = plot_indx + 1;
+        h(plot_indx)     = figure('Name', 'Modulation Index in time','Units','Normalized','Position', [0.2349    0.3093    0.5547    0.2907],'Tag','comodt_plot');
         haxes = axes('Units', 'Normalized',...
             'Color','None',...
             'parent', h(plot_indx));
@@ -397,54 +405,59 @@ end
 
 %% Plot modulation index in time
 if g.plotphaset
-    plot_indx = plot_indx +1;
-    hfig = plot_pactimefreq(pacval,closest_ampfreq_idx,closest_ampfreq,pacstruct,1);
-    h(plot_indx) = hfig;
+    plot_indx = plot_indx + 1;
+    h(plot_indx) = plot_pactimefreq(pacval,closest_ampfreq_idx,closest_ampfreq,pacstruct,1,'phaset_plot');
 end
 if g.plotampt  
-    plot_indx = plot_indx +1;
-    hfig = plot_pactimefreq(pacval,closest_phasefreq_idx,closest_phasefreq,pacstruct,0);
-    h(plot_indx) = hfig;
+    plot_indx = plot_indx + 1;
+    h(plot_indx) = plot_pactimefreq(pacval,closest_phasefreq_idx,closest_phasefreq,pacstruct,0,'ampt_plot');
 end
 
 %% Plot surrogate distribution
-if g.plotsurrdist && length(g.time) == 1
-    surrogate_pac = pacstruct.surrogate_pac(closest_phasefreq_idx, closest_ampfreq_idx,closest_time_idx, :);
-
-    pacvaltmp = pacval(closest_phasefreq_idx, closest_ampfreq_idx, closest_time_idx);
-    p_value = pacstruct.pval(closest_phasefreq_idx, closest_ampfreq_idx, closest_time_idx);
-    if s_trial,
-        figure_title = sprintf('Surrogate coupling value at %.1f Hz of amplitude frequency, %.1f Hz of phase frequency', closest_ampfreq, closest_phasefreq);
-    else
-        figure_title = sprintf('Surrogate coupling value at %.1f s, %.1f Hz of amplitude frequency, %.1f Hz of phase frequency', closest_time, closest_ampfreq, closest_phasefreq);
+if g.plotsurrdist
+    surrogate_pactmp = squeeze(pacstruct.surrogate_pac(closest_phasefreq_idx, closest_ampfreq_idx,closest_time_idx, :));
+    surrogate_pactmp = reshape(surrogate_pactmp,length(surrogate_pactmp),length(closest_time_idx));
+    for itime = 1:length(closest_time_idx)
+        surrogate_pac = surrogate_pactmp(:,itime);
+        pacvaltmp = pacval(closest_phasefreq_idx, closest_ampfreq_idx, closest_time_idx(itime));
+        p_value = pacstruct.pval(closest_phasefreq_idx, closest_ampfreq_idx, closest_time_idx(itime));
+        if s_trial,
+            figure_title = sprintf('Surrogate coupling value at %.1f Hz of amplitude frequency, %.1f Hz of phase frequency', closest_ampfreq, closest_phasefreq);
+        else
+            figure_title = sprintf('Surrogate coupling value at %.1f s, %.1f Hz of amplitude frequency, %.1f Hz of phase frequency', closest_time(itime), closest_ampfreq, closest_phasefreq);
+        end
+        h3 = figure('Name', figure_title, 'Units','Normalized', 'Position', [0.2456 0.2308 0.5244 0.5583],'Tag','surrdist_plot');
+        haxes = axes('parent', h3);
+        hhist = histfit(squeeze(surrogate_pac),max(1,ceil(length(surrogate_pac)/5)));
+        set(hhist(1),'FaceColor',[0.4000    0.6980    1.0000]);
+        set(hhist(2),'LineWidth',4);
+        hold on;
+        line([pacvaltmp pacvaltmp],haxes.YLim, 'Color', [1 1 1], 'parent', haxes);
+        ylimtmp = get(haxes,'Ylim');
+        xlimtmp = get(haxes,'Xlim');
+        [x1fig y1fig] = axescoord2figurecoord(pacvaltmp, ylimtmp(2)/3, haxes);
+        [x2fig y2fig] = axescoord2figurecoord(pacvaltmp, 0, haxes);
+        harrow = annotation(h3, 'textarrow',[x1fig x2fig],[y1fig y2fig],'String','Observed PAC');
+        set(harrow,'LineWidth',4,'FontSize',20,'HeadWidth',20,'HeadLength',20,'HeadStyle','plain');
+        
+        xlabel(haxes,'PAC Value');
+        ylabel(haxes,'# surrogate PAC observations');
+        if s_trial
+            title(haxes, sprintf('Distribution of surrogate PAC \n Frequency_{phase} = %.1f Hz Frequency_{amplitude} = %.1f Hz',...
+                closest_phasefreq, closest_ampfreq));
+        else
+            title(haxes, sprintf('Distribution of surrogate PAC \n Frequency_{phase} = %.1f Hz Frequency_{amplitude} = %.1f Hz  Time = %.1f s',...
+                closest_phasefreq, closest_ampfreq, closest_time(itime)));
+        end
+        hlegend = legend(haxes,'Distribution of surrogates PAC values','Estimated normal distribution');
+        set(hlegend,'box','off','FontSize',AXES_FONTSIZE_L+5);
+        set(haxes,'FontSize',AXES_FONTSIZE_L+5);
+        grid on;
+        
+        % Saving handles
+        plot_indx = plot_indx + 1;
+        h(plot_indx) = h3;
     end
-    h3 = figure('Name', figure_title, 'Units','Normalized', 'Position', [0.2456 0.2308 0.5244 0.5583]);
-    haxes = axes('parent', h3);
-    hhist = histfit(squeeze(surrogate_pac),max(1,ceil(length(surrogate_pac)/5)));
-    set(hhist(1),'FaceColor',[0.4000    0.6980    1.0000]);
-    set(hhist(2),'LineWidth',4);
-    hold on;
-    line([pacvaltmp pacvaltmp],haxes.YLim, 'Color', [1 1 1], 'parent', haxes);
-    ylimtmp = get(haxes,'Ylim');
-    xlimtmp = get(haxes,'Xlim');  
-    [x1fig y1fig] = axescoord2figurecoord(pacvaltmp, ylimtmp(2)/3, haxes);
-    [x2fig y2fig] = axescoord2figurecoord(pacvaltmp, 0, haxes);
-    harrow = annotation(h3, 'textarrow',[x1fig x2fig],[y1fig y2fig],'String','Observed PAC');
-    set(harrow,'LineWidth',4,'FontSize',20,'HeadWidth',20,'HeadLength',20,'HeadStyle','plain');
-
-    xlabel(haxes,'PAC Value');
-    ylabel(haxes,'# surrogate PAC observations');
-    if s_trial
-        title(haxes, sprintf('Distribution of surrogate PAC \n Frequency_{phase} = %.1f Hz Frequency_{amplitude} = %.1f Hz',...
-                              closest_phasefreq, closest_ampfreq));    
-    else
-        title(haxes, sprintf('Distribution of surrogate PAC \n Frequency_{phase} = %.1f Hz Frequency_{amplitude} = %.1f Hz  Time = %.1f s',...
-                            closest_phasefreq, closest_ampfreq, closest_time));             
-    end
-    hlegend = legend(haxes,'Distribution of surrogates PAC values','Estimated normal distribution');
-    set(hlegend,'box','off','FontSize',AXES_FONTSIZE_L+5);
-    set(haxes,'FontSize',AXES_FONTSIZE_L+5);
-    grid on;
 end
 
 %% Plot KLMI
@@ -453,7 +466,7 @@ if g.plotkl
     bin_average = pacstruct.bin_average{closest_phasefreq_idx, closest_ampfreq_idx, closest_time_idx};
 
     % Plot the bin_average
-    h4 = figure('Name', 'Phase-Amplitude distribution','Units', 'Normalized','Position',[0.2995    0.3528    0.3698    0.3565]);
+    h4 = figure('Name', 'Phase-Amplitude distribution','Units', 'Normalized','Position',[0.2995    0.3528    0.3698    0.3565],'Tag','klhist_plot');
     haxes = axes('parent',h4);
     bar(haxes, linspace(0,2*pi,nbins), bin_average);   
     set(haxes,'FontSize',AXES_FONTSIZE_L+5);
@@ -467,73 +480,84 @@ if g.plotkl
                              closest_phasefreq, closest_ampfreq, closest_time));            
     end
     xlim(haxes, [-2*pi/nbins, 2*pi+2*pi/nbins]);
+    
+    % Saving handles
+    plot_indx = plot_indx + 1;
+    h(plot_indx) = h4;
 end
 
 %% Plot MVLMI distribution
 if g.plotmvl
     % Procesing for the plot
     n = g.nbinsmvl;
-    composites = pacstruct.composites(closest_phasefreq_idx, closest_ampfreq_idx, closest_time_idx, :);
-    
-    angle_composite   = wrapTo2Pi(angle(composites));
-    amp_composite     = abs(composites);
-    max_amp_composite = max(amp_composite);
-    
-    if g.normcomposite
-        amp_composite = amp_composite/max_amp_composite;
-        r_stepsize    = 1/n;
-        r             = (0:n)'/n;
-        mraw          = mean(amp_composite .* exp(1j*angle_composite));
-    else
-        r_stepsize    = max_amp_composite/n;
-        r             = (0:r_stepsize:max_amp_composite)';
-        mraw          = mean(composites);
-    end
-    
-    theta = pi*(0:2*n)/n;
-    theta_stepsize = pi/n;
-    X = r*cos(theta);
-    Y = r*sin(theta);
-    
-    C = zeros(length(r), length(theta));
-    
-    % Binning the composite values in the Real and Img part
-    for i=1:length(r)
-        for j=1:length(theta)
-            C(i,j) = sum(angle_composite > wrapTo2Pi((j-1)*theta_stepsize) & ...
-                angle_composite < wrapTo2Pi(j*theta_stepsize)     & ...
-                amp_composite              > (i-1)* r_stepsize    & ...
-                amp_composite              <   i  * r_stepsize);
+    compositestmp = squeeze(pacstruct.composites(closest_phasefreq_idx, closest_ampfreq_idx, closest_time_idx, :));
+    compositestmp = reshape(compositestmp,length(compositestmp),length(closest_time_idx));
+    for icomposites = 1: length(closest_time_idx)
+        composites = compositestmp(:,icomposites);
+        angle_composite   = wrapTo2Pi(angle(composites));
+        amp_composite     = abs(composites);
+        max_amp_composite = max(amp_composite);
+        
+        if g.normcomposite
+            amp_composite = amp_composite/max_amp_composite;
+            r_stepsize    = 1/n;
+            r             = (0:n)'/n;
+            mraw          = mean(amp_composite .* exp(1j*angle_composite));
+        else
+            r_stepsize    = max_amp_composite/n;
+            r             = (0:r_stepsize:max_amp_composite)';
+            mraw          = mean(composites);
         end
+        
+        theta = pi*(0:2*n)/n;
+        theta_stepsize = pi/n;
+        X = r*cos(theta);
+        Y = r*sin(theta);
+        
+        C = zeros(length(r), length(theta));
+        
+        % Binning the composite values in the Real and Img part
+        for i=1:length(r)
+            for j=1:length(theta)
+                C(i,j) = sum(angle_composite > wrapTo2Pi((j-1)*theta_stepsize) & ...
+                    angle_composite < wrapTo2Pi(j*theta_stepsize)     & ...
+                    amp_composite              > (i-1)* r_stepsize    & ...
+                    amp_composite              <   i  * r_stepsize);
+            end
+        end
+        
+        % --- Plotting ---
+        h6 = figure('Name', 'Distribution of Composite Values', 'Units', 'Normalized','Position',[0.3031 0.4241 0.3422 0.4806],'Tag','mvhist_plot');
+        haxes = axes('parent', h6);
+        pcolor(haxes, X,Y,C);
+        hold on;
+        hquiver = quiver(haxes, 0, 0, real(mraw), imag(mraw), g.arrowweight, 'r', 'linewidth', 3 ,'MaxHeadSize', 10);
+        axis(haxes, 'equal', 'tight');
+        shading(haxes,'flat');
+        hcolorbar = colorbar(haxes);
+        set(get(hcolorbar,'Label'),'String','# composite values')
+        xlabel(haxes,'Real');
+        ylabel(haxes,'Imaginary');
+        if s_trial,
+            title(haxes, sprintf('Distribution of Composite Values \n Frequency_{phase} = %.1f Hz Frequency_{amplitude} = %.1f Hz',...
+                closest_phasefreq, closest_ampfreq));
+        else
+            title(haxes, sprintf('Distribution of Composite Values \n Frequency_{phase} = %.1f Hz Frequency_{amplitude} = %.1f Hz \n Time = %.3f s',...
+                closest_phasefreq, closest_ampfreq, closest_time(icomposites)));
+        end
+        set(haxes,'FontSize',AXES_FONTSIZE_L+5,'Color','None');
+        hlegend = legend(hquiver,'Mean PAC vector');
+        set(hlegend,'box', 'on','EdgeColor','None');
+        set(get(hlegend,'BoxFace'),'ColorType','truecoloralpha', 'ColorData',uint8(255*[1;1;1;.5]))
+        
+        % Saving handles
+        plot_indx = plot_indx + 1;
+        h(plot_indx) = h6;
     end
-    
-    % --- Plotting ---
-    h6 = figure('Name', 'Distribution of Composite Values', 'Units', 'Normalized','Position',[0.3031 0.4241 0.3422 0.4806]);
-    haxes = axes('parent', h6);
-    pcolor(haxes, X,Y,C);
-    hold on;
-    hquiver = quiver(haxes, 0, 0, real(mraw), imag(mraw), g.arrowweight, 'r', 'linewidth', 3 ,'MaxHeadSize', 10);
-    axis(haxes, 'equal', 'tight');
-    shading(haxes,'flat');
-    hcolorbar = colorbar(haxes);
-    set(get(hcolorbar,'Label'),'String','# composite values')
-    xlabel(haxes,'Real');
-    ylabel(haxes,'Imaginary');
-    if s_trial,
-        title(haxes, sprintf('Distribution of Composite Values \n Frequency_{phase} = %.1f Hz Frequency_{amplitude} = %.1f Hz',...
-              closest_phasefreq, closest_ampfreq));
-    else
-        title(haxes, sprintf('Distribution of Composite Values \n Frequency_{phase} = %.1f Hz Frequency_{amplitude} = %.1f Hz \n Time = %.3f s',...
-              closest_phasefreq, closest_ampfreq, closest_time));
-    end
-    set(haxes,'FontSize',AXES_FONTSIZE_L+5,'Color','None');
-    hlegend = legend(hquiver,'Mean PAC vector');
-    set(hlegend,'box', 'on','EdgeColor','None');
-    set(get(hlegend,'BoxFace'),'ColorType','truecoloralpha', 'ColorData',uint8(255*[1;1;1;.5]))
 end
 end
 %------------------------------------------------------------------------
-function hfig = plot_pactimefreq(pacval,closest_freq_idx,closest_freq,pacstruct,ampflag)
+function hfig = plot_pactimefreq(pacval,closest_freq_idx,closest_freq,pacstruct,ampflag,tagtext)
 icadefs;
 
 if ampflag
@@ -549,7 +573,7 @@ else
 end
 
 [~,~,ntimepoints] = size(pacval);
-hfig = figure('Name', sprintf('Modulation Index for %.1f Hz of %s frequency', closest_freq,ampphase), 'Units','Normalized', 'Position', [0.2456 0.2308 0.5244 0.5583]);
+hfig = figure('Name', sprintf('Modulation Index for %.1f Hz of %s frequency', closest_freq,ampphase), 'Units','Normalized', 'Position', [0.2456 0.2308 0.5244 0.5583],'Tag',tagtext);
 haxes = axes('parent',hfig,'Position',[0.1 0.21 8.500e-01 0.700]);
 imagesc(pacstruct.timesout,y_freqs,mi);
 colorbar(haxes);
@@ -569,9 +593,10 @@ grid on;
 end
 
 function pacstruct = reconstruct_pacstruct(EEG, phasechanindx, ampchanindx)
+
     phaseidxstruct = find(EEG.etc.eegpac.phaseindx == phasechanindx);
     ampidxstruct   = find(EEG.etc.eegpac.ampindx   == ampchanindx);
-    
+    if all([~isempty(phaseidxstruct), ~isempty(ampidxstruct)])
     pacstruct                   = EEG.etc.eegpac.datapac{phaseidxstruct,ampidxstruct};
     pacstruct.method            = EEG.etc.eegpac.method;
     pacstruct.freqs_phase       = EEG.etc.eegpac.freqs_phase;
@@ -580,9 +605,14 @@ function pacstruct = reconstruct_pacstruct(EEG, phasechanindx, ampchanindx)
     pacstruct.ptspercent        = EEG.etc.eegpac.ptspercent;
     pacstruct.nboots            = EEG.etc.eegpac.nboots;
     pacstruct.srate             = EEG.etc.eegpac.srate;
-    pacstruct.timeout           = EEG.etc.eegpac.timesout;
+    pacstruct.timesout          = EEG.etc.eegpac.timesout;
     pacstruct.options           = EEG.etc.eegpac.options;
-    pacstruct.freqs1            = EEG.etc.eegpac.freqs1;
-    pacstruct.freqs2            = EEG.etc.eegpac.freqs2;
+%     pacstruct.freqs1            = EEG.etc.eegpac.freqs1;
+%     pacstruct.freqs2            = EEG.etc.eegpac.freqs2;
     pacstruct.nbinskl           = EEG.etc.eegpac.nbinskl;
+    else
+        disp('eeg_visualize_pac() : Invalid data index');
+        pacstruct = [];
+        return;
+    end
 end
