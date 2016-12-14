@@ -152,7 +152,7 @@ g = finputcheck(varargin, ...
                   'nboot'         'real'     [0 Inf]                   200;
                   'baseboot'      'float'    []                        0;                       %
                   'boottype'      'string'   {'times','trials','timestrials'}  'timestrials';   %
-                  'bonfcorr'      'string'   [0 1]                     0;
+                  'bonfcorr'      'integer'  [0 1]                     0;
                   'detrend'       'string'   {'on','off'}              'off';
                   'freqs'         'real'     [0 Inf]                   [0 srate/2];
                   'freqs2'        'real'     [0 Inf]                   [];
