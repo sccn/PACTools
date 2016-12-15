@@ -369,7 +369,7 @@ if g.plotcomodt
             % Create a plane at x=i
             h(plot_indx) = surface(tplot(i)*ones(1,M),1:N,repmat([M:-1:1],N,1),repmat([M:-1:1],N,1));
             % set the color of the plane to be the image
-            h(plot_indx).CData = flipud(Z(:,:,i))';
+            set(h(plot_indx),'CData', flipud(Z(:,:,i))');
             % set some extra properties
             set(h(plot_indx),'EdgeColor','none', 'FaceColor','interp')
             alpha(.5)
