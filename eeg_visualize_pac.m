@@ -128,6 +128,7 @@ try g.arrowweight;                             catch, g.arrowweight    = 1;     
 try g.phasechanindx;                           catch, g.phasechanindx  = 1;             end;
 try g.ampchanindx;                             catch, g.ampchanindx    = 1;             end;
 
+
 if isempty(g.time),  timeflag = 0; end;
 % Detect if EEG or pacstruct structure
 if isfield(EEG,'etc')
@@ -400,6 +401,8 @@ if g.plotcomodt
         set(get(h(plot_indx),'Parent'),'ZTickLabel', zlabel_string);
         
         title('Modulation Index','FontSize',AXES_FONTSIZE_L,'FontWeight','bold');
+        hbar = colorbar;
+        set(get(hbar,'Label'),'String','Modulation Index');
     end
 end
 
