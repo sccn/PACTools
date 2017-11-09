@@ -265,6 +265,19 @@ if g.bonfcorr && ~isempty(g.alpha)
     g.alpha = g.alpha / (length(freqs1) * length(freqs2) * ti_loopend); 
 end
 
+% Initializations
+crossfcoh_pval = nan(length(freqs1),length(freqs2),length(ti_loopend));
+crossfcoh        = crossfcoh_pval; 
+signifmasktmp    = crossfcoh_pval; 
+peakangletmp     = crossfcoh_pval; 
+betastmp         = nan(length(freqs1),length(freqs2),length(ti_loopend),3);         
+normpactmp       = crossfcoh_pval;      
+bin_averagetmp   = cell(size(crossfcoh_pval)); 
+surrogate_pactmp = crossfcoh_pval; 
+compositestmp    = crossfcoh_pval;   
+nbinskltmp       = crossfcoh_pval;      
+
+
 if ~strcmpi(g.method, 'latphase')
     for find1 = 1:length(freqs1)
         if strcmpi(g.verbose, 'on')
