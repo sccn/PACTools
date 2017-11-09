@@ -5,7 +5,12 @@
 %   >>  pac = pop_pac(EEG,)
 %
 % Inputs:
-%
+%  EEG         - input dataset
+%  pooldata    - ('channels' || 'component' ) 
+%  phasefreq   -
+%  ampfreq     -
+%  indexphase  -
+%  indexamp    -
 %
 % Optional inputs:
 %
