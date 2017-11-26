@@ -112,23 +112,25 @@ plotflag  = 0;
 try g.time;                   timeflag    = 1; catch, g.time           = 1;              end;
 try g.phasefreq;              phaseflag   = 1; catch,                                    end;  % Default set once pactruct is defined
 try g.ampfreq;                ampflag     = 1; catch,                                    end;  % Default set once pactruct is defined
-try g.plotcomod;              plotflag    = 1; catch, g.plotcomod      = 0;              end;
-try g.plotcomodt;             plotflag    = 1; catch, g.plotcomodt     = 0;              end;
-try g.plotampt;               plotflag    = 1; catch, g.plotampt       = 0;              end;
-try g.plotphaset;             plotflag    = 1; catch, g.plotphaset     = 0;              end;
-try g.plotsurrdist;           plotflag    = 1; catch, g.plotsurrdist   = 0;              end;
-try g.plotkl;                 plotflag    = 1; catch, g.plotkl         = 0;              end;
-try g.plotmvl;                plotflag    = 1; catch, g.plotmvl        = 0;              end;
-try g.normcomposite;                           catch, g.normcomposite  = 0;              end;
-try g.nbinsmvl;                                catch, g.nbinsmvl       = 36;             end;
-try g.abspacval;                               catch, g.abspacval      = 0;              end;
-try g.plotall;                                 catch, g.plotall        = 0;              end;
-try g.alphadata;                               catch, g.alphadata      = 0.3;            end;  
-try g.arrowweight;                             catch, g.arrowweight    = 1;              end;
-try g.phasechanindx;                           catch, g.phasechanindx  = 1;             end;
-try g.ampchanindx;                             catch, g.ampchanindx    = 1;             end;
-
-
+try g.plotcomod;              plotflag    = 1; catch, g.plotcomod       = 0;              end;
+try g.plotcomodt;             plotflag    = 1; catch, g.plotcomodt      = 0;              end;
+try g.plotampt;               plotflag    = 1; catch, g.plotampt        = 0;              end;
+try g.plotphaset;             plotflag    = 1; catch, g.plotphaset      = 0;              end;
+try g.plotsurrdist;           plotflag    = 1; catch, g.plotsurrdist    = 0;              end;
+try g.plotkl;                 plotflag    = 1; catch, g.plotkl          = 0;              end;
+try g.plotmvl;                plotflag    = 1; catch, g.plotmvl         = 0;              end;
+try g.normcomposite;                           catch, g.normcomposite   = 0;              end;
+try g.nbinsmvl;                                catch, g.nbinsmvl        = 36;             end;
+try g.abspacval;                               catch, g.abspacval       = 0;              end;
+try g.plotall;                                 catch, g.plotall         = 0;              end;
+try g.alphadata;                               catch, g.alphadata       = 0.3;            end;  
+try g.arrowweight;                             catch, g.arrowweight     = 1;              end;
+try g.phasechanindx;                           catch, g.phasechanindx   = 1;              end;
+try g.ampchanindx;                             catch, g.ampchanindx     = 1;              end;
+try g.comodtazimuth;                           catch, g.comodtazimuth   = -10;            end;
+try g.comodtelevation;                         catch, g.comodtelevation = 23;             end;
+try g.smoothvert;                              catch, g.smoothvert      = 3;              end;
+try g.smoothhorz;                              catch, g.smoothhorz      = 2;            end;
 if isempty(g.time),  timeflag = 0; end;
 % Detect if EEG or pacstruct structure
 if isfield(EEG,'etc')
@@ -171,7 +173,7 @@ if g.plotall,
     g.plotcomod = 1;       
     if s_trial,
         if phaseflag && ampflag,
-            if ~isempty(pacstruct.surrogate_pac),
+            if ~isempty(pacstruct.surrogate_pac) && ~ all(isnan(pacstruct.surrogate_pac(:)))
                 g.plotsurrdist = 1;
             end
             switch pacstruct.method
@@ -193,7 +195,7 @@ if g.plotall,
         end
         if phaseflag && ampflag,
             if timeflag,            
-                if ~isempty(pacstruct.surrogate_pac),
+                if ~isempty(pacstruct.surrogate_pac) && ~ all(isnan(pacstruct.surrogate_pac(:)))
                     g.plotsurrdist = 1;
                 end
                 switch pacstruct.method
@@ -342,7 +344,7 @@ if g.plotcomodt
         set(get(h(plot_indx),'Children'),'Fontsize',AXES_FONTSIZE_L+5);
         
         % Plot significance mask
-        if ~isempty(pacstruct.signifmask)
+        if ~isempty(pacstruct.signifmask) 
             haxes2 = axes('Position',haxes.Position,'XTick',[],'YTick',[],'XTickLabel','','YTickLabel','');
             haxes2.ActivePositionProperty = 'outerposition';
             linkaxes([haxes,haxes2]);
@@ -372,13 +374,13 @@ if g.plotcomodt
             % set the color of the plane to be the image
             set(h(plot_indx),'CData', flipud(Z(:,:,i))');
             % set some extra properties
-            set(h(plot_indx),'EdgeColor','none', 'FaceColor','interp')
+            set(h(plot_indx),'EdgeColor','none');
             alpha(.5)
         end
         
         % Makeup
         % set the viewing angle
-        view(3)
+        view(g.comodtazimuth, g.comodtelevation)
         axis tight; grid on;
         h_ylabel = ylabel('Amplitude Frequency (Hz)','FontSize',AXES_FONTSIZE_L,'FontWeight','bold','Units','Normalized');
         h_zlabel = zlabel('Phase Frequency (Hz)','FontSize'    ,AXES_FONTSIZE_L,'FontWeight','bold','Units','Normalized');
@@ -409,11 +411,11 @@ end
 %% Plot modulation index in time
 if g.plotphaset
     plot_indx = plot_indx + 1;
-    h(plot_indx) = plot_pactimefreq(pacval,closest_ampfreq_idx,closest_ampfreq,pacstruct,1,'phaset_plot');
+    h(plot_indx) = plot_pactimefreq(pacval,closest_ampfreq_idx,closest_ampfreq,pacstruct,1,'phaset_plot', g.smoothvert, g.smoothhorz);
 end
 if g.plotampt  
     plot_indx = plot_indx + 1;
-    h(plot_indx) = plot_pactimefreq(pacval,closest_phasefreq_idx,closest_phasefreq,pacstruct,0,'ampt_plot');
+    h(plot_indx) = plot_pactimefreq(pacval,closest_phasefreq_idx,closest_phasefreq,pacstruct,0,'ampt_plot', g.smoothvert, g.smoothhorz);
 end
 
 %% Plot surrogate distribution
@@ -560,7 +562,7 @@ if g.plotmvl
 end
 end
 %------------------------------------------------------------------------
-function hfig = plot_pactimefreq(pacval,closest_freq_idx,closest_freq,pacstruct,ampflag,tagtext)
+function hfig = plot_pactimefreq(pacval,closest_freq_idx,closest_freq,pacstruct,ampflag,tagtext,smoothvert, smoothhorz)
 icadefs;
 
 if ampflag
@@ -578,7 +580,7 @@ end
 [~,~,ntimepoints] = size(pacval);
 hfig = figure('Name', sprintf('Modulation Index for %.1f Hz of %s frequency', closest_freq,ampphase), 'Units','Normalized', 'Position', [0.2456 0.2308 0.5244 0.5583],'Tag',tagtext);
 haxes = axes('parent',hfig,'Position',[0.1 0.21 8.500e-01 0.700]);
-imagesc(pacstruct.timesout,y_freqs,mi);
+imagesc(pacstruct.timesout,y_freqs,smooth2a(mi,smoothvert, smoothhorz));
 colorbar(haxes);
 set(haxes,'YDir','normal');
 ylabel(haxes,y_label);
@@ -587,7 +589,7 @@ title(haxes, sprintf('Modulation Index \n Frequency_{%s} = %.1f Hz',ampphase,clo
 % Axes 2
 haxespos = get(haxes,'Position');
 haxes = axes('parent',hfig,'Position',[haxespos(1)    0.09    haxespos(3)    0.12]);
-plot(pacstruct.timesout,mean(mi), 'linewidth',3);
+plot(pacstruct.timesout,smooth(mean(smooth2a(mi,smoothvert, smoothhorz))), 'linewidth',3);
 xlabel(haxes,'Time [s]');
 ylabel(haxes,'Modulation Index');
 set(get(hfig,'Children'),'FontSize',AXES_FONTSIZE_L+5);
