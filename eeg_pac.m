@@ -274,7 +274,7 @@ betastmp         = nan(length(freqs1),length(freqs2),length(ti_loopend),3);
 normpactmp       = crossfcoh_pval;      
 bin_averagetmp   = cell(size(crossfcoh_pval)); 
 surrogate_pactmp = crossfcoh_pval; 
-compositestmp    = crossfcoh_pval;   
+compositestmp    = nan(length(freqs1),length(freqs2),length(ti_loopend),trials);   
 nbinskltmp       = crossfcoh_pval;      
 
 
