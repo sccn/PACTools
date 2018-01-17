@@ -15,7 +15,7 @@
 %       'alpha'         - Significance level of the statistical test. If
 %                         empty no statistical test is done.
 %                         Default [0.05]
-%       'methodpac'     - {'mvlmi', 'klmi', 'glm'} Method to be use
+%       'method'     - {'mvlmi', 'klmi', 'glm'} Method to be use
 %                         to compute the phase amplitude coupling. 
 %                         mvlmi : Mean Vector Length Modulation Index (Canolty et al. 2006)
 %                         klmi  : Kullback-Leibler Modulation Index (Tort et al. 2010)
@@ -86,36 +86,38 @@ if ~isequal(size(x),size(y))
 end
 
 % Initializing pacstr structure
-pacstr.method        = g.method;
-pacstr.pacval        = [];
-pacstr.pval          = [];
-pacstr.peakangle     = [];  % Phase of the modulating signal at which the amplitude enveloppe of the modulated signal is the highest
-pacstr.beta          = [];
-pacstr.normpac       = [];
-pacstr.nbinskl       = [];
-pacstr.normpac       = [];    % No definition for KLMI
-pacstr.alpha         = g.alpha;
-pacstr.significant   = [];
-pacstr.bin_average   = [];
-pacstr.surrogate_pac = [];
-pacstr.phaseangles   = [];
-pacstr.amplitudes    = [];
-pacstr.composites    = [];
+pacstr = create_pacstr('method', g.method, 'alpha', g.alpha);
+
+% pacstr.method        = g.method;
+% pacstr.pacval        = [];
+% pacstr.pval          = [];
+% pacstr.peakangle     = [];  % Phase of the modulating signal at which the amplitude enveloppe of the modulated signal is the highest
+% pacstr.beta          = [];
+% pacstr.normpac       = [];
+% pacstr.nbinskl       = [];
+% pacstr.normpac       = [];    % No definition for KLMI
+% pacstr.alpha         = g.alpha;
+% pacstr.significant   = [];
+% pacstr.bin_average   = [];
+% pacstr.surrogate_pac = [];
+% pacstr.phaseangles   = [];
+% pacstr.amplitudes    = [];
+% pacstr.composites    = [];
 
 % Compute the pacval depending on the method
 switch g.method
-%     case 'plv'
-%         % Phase Locking Value
-%         pacval = eeg_plv(x,y);
-%         % Print results
-%         if g.verbose
-%           fprintf('Phase Locking Value = %.3f \n', pacval);
-%         end
-%         % Put values of interest in pac structure
-%         % Normalizing pacval following Penny et al. (2008)
-%         if g.normpac
-%             pacstr.normpac = asin(2*pacval-1);
-%         end
+    case 'plv'
+        % Phase Locking Value
+        pacval = eeg_plv(x,y);
+        % Print results
+        if g.verbose
+          fprintf('Phase Locking Value = %.3f \n', pacval);
+        end
+        % Put values of interest in pac structure
+        % Normalizing pacval following Penny et al. (2008)
+        if g.normpac
+            pacstr.normpac = asin(2*pacval-1);
+        end
         
     case 'mvlmi'
         % Mean Vector Length modulation index
@@ -175,6 +177,7 @@ switch g.method
         if g.normpac
             pacstr.normpac = atanh(sqrt(pacval));
         end
+        
 end
 
 pacstr.pacval = pacval; % Put the pac value in the pac structure
