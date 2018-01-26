@@ -1,0 +1,371 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Demo script for phase amplitude coupling toolbox.</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-12-04"><meta name="DC.source" content="eeg_pac_tutorial.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Demo script for phase amplitude coupling toolbox.</h1><!--introduction--><p>Generates artificial amplitude modulated data then applies methods to detect phase amplitude coupling (PAC).</p><p>This toolbox supports the following methods :</p><div><ul><li>Mean Vector Length Modulation Index <i>Canolty et al. 2006</i></li><li>Kullback-Leibler Modulation Index <i>Tort et al. 2010</i></li><li>Generalized Linear Model <i>Penny et al. 2008</i></li><li>MIPAC <i>Martinez-Cancino et al. 2018</i></li></ul></div><p>In this demo, multiple trial and single trial PAC data are simulateds. PAC estimation is performed using the Mean Vector Length and Instantaneous MIPAC method to the single trial data and the Generalized Linear Model and Event Related - MIPAC for multiple trials data. Codes to perform the estimation are provided.</p><p>Notes : In order to make the simulation more realistic noise was added and the data was shifted slighty in time.</p><p>Authors: Joseph Heng and Ramon Martinez Cancino, EPFL, SCCN/INC, UCSD 2016</p><p>Copyright (C) 2016  Joseph Heng and Ramon Martinez Cancino, EPFL, UCSD, INC, SCCN</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Parameters to generate single trial data</a></li><li><a href="#3">Generate single trial PAC data</a></li><li><a href="#4">Compute PAC related measures using the method described in <i>Canolty et al. 2006</i></a></li><li><a href="#5">Visualizations  of single trial PAC estimation using Mean Vector Length Modulation Index from Canolty et al. 2006</a></li><li><a href="#8">Compute PAC related measures using Instanteaneous MIPAC</a></li><li><a href="#9">Visualizations  of single trial PAC estimation using MIPAC</a></li><li><a href="#10">Parameters to generate multiple trial data</a></li><li><a href="#12">Generate multiple trial data</a></li><li><a href="#13">Compute PAC related measures using the method described in <i>Penny et al. 2008</i></a></li><li><a href="#14">Visualizations</a></li><li><a href="#18">Real data application</a></li><li><a href="#19">PAC GUI</a></li></ul></div><h2 id="1">Parameters to generate single trial data</h2><p>Signal parameters</p><pre class="codeinput">fcarrier      = 60;   <span class="comment">% Frequency of the carrier wave</span>
+fmodulating   = 8;    <span class="comment">% Frequency of the modulating wave.</span>
+
+max_time      = 5;    <span class="comment">% Time of the simulation. In seconds.</span>
+s_rate        = 500;  <span class="comment">% Sampling rate in Hz.</span>
+padtime       = 0;    <span class="comment">% Padding time at the start and end of the signal.</span>
+snrval        = 5;    <span class="comment">% Signal to noise ratio.</span>
+nsegm         = 5;    <span class="comment">% Number of segments in the data. Each segment is a block with or without modulation</span>
+</pre><p>Method parameters</p><pre class="codeinput">method      = <span class="string">'mvlmi'</span>;  <span class="comment">% Method to be used to compute PAC (Mean Vector Length Modulation Index from Canolty et al. 2006)</span>
+nfreqsphase = 20;       <span class="comment">% Number of frequencies used for the phase.</span>
+nfreqsamp   = 10;       <span class="comment">% Number of frequencies used for the amplitude.</span>
+alpha       = 0.01;     <span class="comment">% Alpha value used for statistics (not corrected). If alpha = [] the statistics are not computed.</span>
+phaserange  = [4 25];   <span class="comment">% Range of phases to be used</span>
+amprange    = [30 100]; <span class="comment">% Range of amplitudes to be used</span>
+nsurrogate  = 200;      <span class="comment">% Number of surrogates.</span>
+</pre><h2 id="3">Generate single trial PAC data</h2><pre class="codeinput">tlimits     = [0 max_time];
+data_pac    = generate_pac_signal(fcarrier,fmodulating,tlimits,<span class="string">'Ac'</span>,5,<span class="string">'Am'</span>,1,<span class="string">'fs'</span>,s_rate,<span class="string">'cpfunc'</span>     ,<span class="string">'block'</span><span class="keyword">...</span>
+                                                                                         ,<span class="string">'blockamp'</span>  ,1 <span class="keyword">...</span>
+                                                                                         ,<span class="string">'nsegm'</span>     ,nsegm<span class="keyword">...</span>
+                                                                                         ,<span class="string">'plot_flag'</span> ,1 <span class="keyword">...</span>
+                                                                                         ,<span class="string">'padtime'</span>   ,padtime<span class="keyword">...</span>
+                                                                                         ,<span class="string">'snr'</span>       ,snrval<span class="keyword">...</span>
+                                                                                         ,<span class="string">'m'</span>         ,1 <span class="keyword">...</span>
+                                                                                         ,<span class="string">'method'</span>    ,<span class="string">'wiki'</span>);
+</pre><pre class="codeoutput">
+ans =
+
+  logical
+
+   1
+
+</pre><img vspace="5" hspace="5" src="eeg_pac_tutorial_01.png" style="width:280px;height:210px;" alt=""> <h2 id="4">Compute PAC related measures using the method described in <i>Canolty et al. 2006</i></h2><pre class="codeinput">[mvlmipacval, ~, ~, ~, ~, ~,~,~, mvlmipacstruct] = eeg_pac(data_pac', data_pac', s_rate,<span class="string">'freqs'</span>    ,phaserange<span class="keyword">...</span>
+                                                                                       ,<span class="string">'freqs2'</span>   ,amprange<span class="keyword">...</span>
+                                                                                       ,<span class="string">'alpha'</span>    ,alpha<span class="keyword">...</span>
+                                                                                       ,<span class="string">'methodpac'</span>,method<span class="keyword">...</span>
+                                                                                       ,<span class="string">'nfreqs1'</span>  ,nfreqsphase<span class="keyword">...</span>
+                                                                                       ,<span class="string">'nfreqs2'</span>  ,nfreqsamp<span class="keyword">...</span>
+                                                                                       ,<span class="string">'winsize'</span>  ,s_rate<span class="keyword">...</span>
+                                                                                       ,<span class="string">'nboot'</span>    ,nsurrogate);
+</pre><pre class="codeoutput error">Assignment has more non-singleton rhs dimensions than non-singleton subscripts
+
+Error in eeg_pac (line 356)
+                 if ~isempty(pacstructtmp.surrogate_pac), surrogate_pactmp(find1, find2, ti, :) = pacstructtmp.surrogate_pac; end;
+
+Error in eeg_pac_tutorial (line 61)
+[mvlmipacval, ~, ~, ~, ~, ~,~,~, mvlmipacstruct] = eeg_pac(data_pac', data_pac', s_rate,'freqs'    ,phaserange...
+</pre><h2 id="5">Visualizations  of single trial PAC estimation using Mean Vector Length Modulation Index from Canolty et al. 2006</h2><pre class="codeinput"><span class="comment">% Plot comodulogram</span>
+eeg_visualize_pac(mvlmipacstruct, <span class="string">'abs_pacval'</span>, 1, <span class="string">'plotcomod'</span>, 1);
+</pre><p>Plot distribution of surrogate PAC values and estimated PAC value</p><pre class="codeinput">eeg_visualize_pac(mvlmipacstruct, <span class="string">'phasefreq'</span>, fmodulating, <span class="string">'ampfreq'</span>, fcarrier, <span class="string">'abs_pacval'</span>, 1, <span class="string">'plotsurrdist'</span>, 1);
+</pre><p>Plot distribution of composite phase-amplitude vectors and mean vector length. (See Canolty et al 2006)</p><pre class="codeinput">eeg_visualize_pac(mvlmipacstruct, <span class="string">'phasefreq'</span>, fmodulating, <span class="string">'ampfreq'</span>, fcarrier, <span class="string">'abs_pacval'</span>, 1, <span class="string">'plotmvl'</span>, 1);
+</pre><h2 id="8">Compute PAC related measures using Instanteaneous MIPAC</h2><p>In this example, the same siulated signal generated initially will be used.</p><pre class="codeinput">[instmipacval, ~, ~, ~, ~, ~,~,~, instmipacstruct] = eeg_pac(data_pac', data_pac', s_rate,<span class="string">'freqs'</span>    ,phaserange<span class="keyword">...</span>
+                                                                                         ,<span class="string">'freqs2'</span>    ,amprange<span class="keyword">...</span>
+                                                                                         ,<span class="string">'alpha'</span>     ,[]<span class="keyword">...</span>
+                                                                                         ,<span class="string">'methodpac'</span> ,<span class="string">'instmipac'</span><span class="keyword">...</span>
+                                                                                         ,<span class="string">'nfreqs1'</span>   ,nfreqsphase<span class="keyword">...</span>
+                                                                                         ,<span class="string">'nfreqs2'</span>   ,nfreqsamp<span class="keyword">...</span>
+                                                                                         ,<span class="string">'winsize'</span>   ,s_rate);
+</pre><h2 id="9">Visualizations  of single trial PAC estimation using MIPAC</h2><h2 id="10">Parameters to generate multiple trial data</h2><pre class="codeinput"><span class="comment">% Signal parameters</span>
+fcarrier      = 60;   <span class="comment">% Frequency of the carrier wave</span>
+fmodulating   = 8;    <span class="comment">% Frequency of the modulating wave.</span>
+
+max_time      = 2;    <span class="comment">% Time of the simulation. In seconds</span>
+n_trials      = 500;  <span class="comment">% Number of trials.</span>
+s_rate        = 200;  <span class="comment">% Sampling rate in Hz</span>
+padtime       = .25;  <span class="comment">% Padding time at the start and end of the signal.</span>
+snrval        = 5;    <span class="comment">% Signal to noise ratio.</span>
+maxshift      = 10;   <span class="comment">% Maximum shifts (jitter) injected into the data.</span>
+nsegm         = 5;    <span class="comment">% Number of segments in the data. Each segment is a block with or without modulation</span>
+</pre><p>Method parameters</p><pre class="codeinput">method      = <span class="string">'glm'</span>;    <span class="comment">% Method to be used to compute PAC (GLM from Penny et al. 2008)</span>
+nfreqsphase = 10;       <span class="comment">% Number of frequencies used for the phase.</span>
+nfreqsamp   = 20;       <span class="comment">% Number of frequencies used for the amplitude.</span>
+alpha       = [];       <span class="comment">% Alpha value used for statistics (not corrected). If alpha = [] the statistics are not computed.</span>
+phaserange  = [4 25];   <span class="comment">% Range of phases to be used</span>
+amprange    = [30 100]; <span class="comment">% Range of amplitudes to be used</span>
+</pre><h2 id="12">Generate multiple trial data</h2><pre class="codeinput">tlimits      = [0 max_time];
+
+shift = randi(maxshift, n_trials,1);<span class="comment">% Vector to shift the trials in time</span>
+<span class="keyword">for</span> i=1:n_trials
+     plot_flag = i == 1;            <span class="comment">% Plot the first trial</span>
+     [datatmp,t_outtmp]  = generate_pac_signal(fcarrier,fmodulating,tlimits,<span class="string">'Ac'</span>,5,<span class="string">'Am'</span>,1,<span class="string">'fs'</span>,s_rate,<span class="string">'cpfunc'</span>,<span class="string">'block'</span>,<span class="string">'blockamp'</span>,1, <span class="string">'nsegm'</span>,nsegm,<span class="string">'plot_flag'</span>, plot_flag,<span class="string">'padtime'</span>,padtime,<span class="string">'snr'</span>,snrval,<span class="string">'m'</span>,1);
+     datatmp = [datatmp(shift(i):end) datatmp(1:shift(i)-1)];                                    <span class="comment">% Shift the data in time</span>
+     datapactrials(i,:) = [datatmp(end-ceil(maxshift/2):end) datatmp(1:end-ceil(maxshift/2)-1)]; <span class="comment">% Fill data matrix with shifted vector</span>
+<span class="keyword">end</span>
+</pre><h2 id="13">Compute PAC related measures using the method described in <i>Penny et al. 2008</i></h2><pre class="codeinput">profile <span class="string">on</span>;
+[glmpacval, ~, ~, ~, ~, ~,~,~, glmpacstruct] = eeg_pac(datapactrials', datapactrials', s_rate,<span class="string">'freqs'</span>    ,phaserange<span class="keyword">...</span>
+                                                                                             ,<span class="string">'alpha'</span>    ,alpha<span class="keyword">...</span>
+                                                                                             ,<span class="string">'methodpac'</span>,method<span class="keyword">...</span>
+                                                                                             ,<span class="string">'nfreqs1'</span>  ,nfreqsphase<span class="keyword">...</span>
+                                                                                             ,<span class="string">'nfreqs2'</span>  ,nfreqsamp<span class="keyword">...</span>
+                                                                                             ,<span class="string">'freqs2'</span>   ,amprange<span class="keyword">...</span>
+                                                                                             ,<span class="string">'winsize'</span>  ,s_rate<span class="keyword">...</span>
+                                                                                             ,<span class="string">'nboot'</span>    ,nsurrogate);
+profile <span class="string">viewer</span>;
+</pre><h2 id="14">Visualizations</h2><p>Plot comodulogram</p><pre class="codeinput">eeg_visualize_pac(glmpacstruct, <span class="string">'plotcomod'</span>, 1);
+</pre><p>Plot temporal evolution of modulation</p><pre class="codeinput">timevect = linspace(padtime, max_time+padtime, 15);
+eeg_visualize_pac(glmpacstruct, <span class="string">'time'</span>, timevect, <span class="string">'plotcomodt'</span>, 1);
+</pre><p>Plot temporal evolution of modulation index as a function of phase frequencies at the amplitude frequency of the carrier signal</p><pre class="codeinput">eeg_visualize_pac(glmpacstruct, <span class="string">'ampfreq'</span>, fcarrier, <span class="string">'plotphaset'</span>, 1);
+</pre><pre>Plot temporal evolution of modulation index as a function of amplitude frequencies
+at the phase frequency of the modulating signal</pre><pre class="codeinput">eeg_visualize_pac(glmpacstruct,<span class="string">'phasefreq'</span>, fmodulating, <span class="string">'plotampt'</span>, 1);
+</pre><h2 id="18">Real data application</h2><p>Load data. Here you should replace the path to the data with your own one or call pop_pac(EEG) to compute PAC.</p><pre class="codeinput">EEG = pop_loadset(<span class="string">'filename'</span>,<span class="string">'datademopac.set'</span>,<span class="string">'filepath'</span>,pwd);
+</pre><h2 id="19">PAC GUI</h2><p><img vspace="5" hspace="5" src="pop_pacjpeg.jpg" alt=""> </p><pre class="codeinput"><span class="comment">% Plot comodulogram</span>
+eeg_visualize_pac(EEG.etc.eegpac{1}, <span class="string">'plotcomod'</span>, 1);
+
+<span class="comment">% Plot temporal evolution of modulation</span>
+timevect = linspace(0,3,20);
+eeg_visualize_pac(EEG.etc.eegpac{1}, <span class="string">'time'</span>, timevect, <span class="string">'plotcomodt'</span>, 1);
+
+<span class="comment">%  Plot temporal evolution of modulation index as a function of the amplitude frequencies</span>
+<span class="comment">%  at the given phase frequency</span>
+eeg_visualize_pac(EEG.etc.eegpac{1}, <span class="string">'phasefreq'</span>, 9, <span class="string">'plotampt'</span>, 1);
+
+<span class="comment">% Plot temporal evolution of modulation index as a function of phase frequencies</span>
+<span class="comment">% at the given amplitude frequency</span>
+eeg_visualize_pac(EEG.etc.eegpac{1}, <span class="string">'ampfreq'</span>, 55, <span class="string">'plotphaset'</span>, 1);
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Demo script for phase amplitude coupling toolbox.
+%
+% Generates artificial amplitude modulated data then applies methods to detect  
+% phase amplitude coupling (PAC).
+%
+% This toolbox supports the following methods :
+% 
+% * Mean Vector Length Modulation Index _Canolty et al. 2006_
+% * Kullback-Leibler Modulation Index _Tort et al. 2010_
+% * Generalized Linear Model _Penny et al. 2008_
+% * MIPAC _Martinez-Cancino et al. 2018_
+% 
+%
+% In this demo, multiple trial and single trial PAC data are simulateds. PAC estimation is performed using
+% the Mean Vector Length and Instantaneous MIPAC method to the single trial data and the 
+% Generalized Linear Model and Event Related - MIPAC for multiple trials data.
+% Codes to perform the estimation are provided.
+%
+% Notes :
+% In order to make the simulation more realistic noise was added and the
+% data was shifted slighty in time.
+%
+% Authors: Joseph Heng and Ramon Martinez Cancino, EPFL, SCCN/INC, UCSD 2016
+%
+% Copyright (C) 2016  Joseph Heng and Ramon Martinez Cancino, EPFL, UCSD, 
+% INC, SCCN
+
+%% Parameters to generate single trial data
+% Signal parameters
+fcarrier      = 60;   % Frequency of the carrier wave
+fmodulating   = 8;    % Frequency of the modulating wave.
+
+max_time      = 5;    % Time of the simulation. In seconds.
+s_rate        = 500;  % Sampling rate in Hz.
+padtime       = 0;    % Padding time at the start and end of the signal. 
+snrval        = 5;    % Signal to noise ratio.
+nsegm         = 5;    % Number of segments in the data. Each segment is a block with or without modulation
+
+%%
+% Method parameters           
+method      = 'mvlmi';  % Method to be used to compute PAC (Mean Vector Length Modulation Index from Canolty et al. 2006)
+nfreqsphase = 20;       % Number of frequencies used for the phase.
+nfreqsamp   = 10;       % Number of frequencies used for the amplitude.
+alpha       = 0.01;     % Alpha value used for statistics (not corrected). If alpha = [] the statistics are not computed.
+phaserange  = [4 25];   % Range of phases to be used
+amprange    = [30 100]; % Range of amplitudes to be used
+nsurrogate  = 200;      % Number of surrogates.
+
+%% Generate single trial PAC data
+tlimits     = [0 max_time];
+data_pac    = generate_pac_signal(fcarrier,fmodulating,tlimits,'Ac',5,'Am',1,'fs',s_rate,'cpfunc'     ,'block'...  
+                                                                                         ,'blockamp'  ,1 ...
+                                                                                         ,'nsegm'     ,nsegm...
+                                                                                         ,'plot_flag' ,1 ...
+                                                                                         ,'padtime'   ,padtime...
+                                                                                         ,'snr'       ,snrval...
+                                                                                         ,'m'         ,1 ...
+                                                                                         ,'method'    ,'wiki');
+
+%% Compute PAC related measures using the method described in _Canolty et al. 2006_
+[mvlmipacval, ~, ~, ~, ~, ~,~,~, mvlmipacstruct] = eeg_pac(data_pac', data_pac', s_rate,'freqs'    ,phaserange...
+                                                                                       ,'freqs2'   ,amprange...
+                                                                                       ,'alpha'    ,alpha...
+                                                                                       ,'methodpac',method...
+                                                                                       ,'nfreqs1'  ,nfreqsphase...
+                                                                                       ,'nfreqs2'  ,nfreqsamp...
+                                                                                       ,'winsize'  ,s_rate...
+                                                                                       ,'nboot'    ,nsurrogate);
+                                                                                                                                                                   
+%% Visualizations  of single trial PAC estimation using Mean Vector Length Modulation Index from Canolty et al. 2006
+
+% Plot comodulogram 
+eeg_visualize_pac(mvlmipacstruct, 'abs_pacval', 1, 'plotcomod', 1);
+
+%%
+% Plot distribution of surrogate PAC values and estimated PAC value
+eeg_visualize_pac(mvlmipacstruct, 'phasefreq', fmodulating, 'ampfreq', fcarrier, 'abs_pacval', 1, 'plotsurrdist', 1);
+  
+%%
+% Plot distribution of composite phase-amplitude vectors and mean vector
+% length. (See Canolty et al 2006)
+
+eeg_visualize_pac(mvlmipacstruct, 'phasefreq', fmodulating, 'ampfreq', fcarrier, 'abs_pacval', 1, 'plotmvl', 1);
+
+
+%% Compute PAC related measures using Instanteaneous MIPAC
+% In this example, the same siulated signal generated initially will be
+% used. 
+
+[instmipacval, ~, ~, ~, ~, ~,~,~, instmipacstruct] = eeg_pac(data_pac', data_pac', s_rate,'freqs'    ,phaserange...
+                                                                                         ,'freqs2'    ,amprange...
+                                                                                         ,'alpha'     ,[]...
+                                                                                         ,'methodpac' ,'instmipac'...
+                                                                                         ,'nfreqs1'   ,nfreqsphase...
+                                                                                         ,'nfreqs2'   ,nfreqsamp...
+                                                                                         ,'winsize'   ,s_rate);    
+                                                                                     
+%% Visualizations  of single trial PAC estimation using MIPAC
+
+
+%% Parameters to generate multiple trial data
+
+% Signal parameters
+fcarrier      = 60;   % Frequency of the carrier wave
+fmodulating   = 8;    % Frequency of the modulating wave.
+
+max_time      = 2;    % Time of the simulation. In seconds
+n_trials      = 500;  % Number of trials.
+s_rate        = 200;  % Sampling rate in Hz
+padtime       = .25;  % Padding time at the start and end of the signal. 
+snrval        = 5;    % Signal to noise ratio.
+maxshift      = 10;   % Maximum shifts (jitter) injected into the data.
+nsegm         = 5;    % Number of segments in the data. Each segment is a block with or without modulation
+%%
+% Method parameters           
+method      = 'glm';    % Method to be used to compute PAC (GLM from Penny et al. 2008)
+nfreqsphase = 10;       % Number of frequencies used for the phase.
+nfreqsamp   = 20;       % Number of frequencies used for the amplitude.
+alpha       = [];       % Alpha value used for statistics (not corrected). If alpha = [] the statistics are not computed.
+phaserange  = [4 25];   % Range of phases to be used
+amprange    = [30 100]; % Range of amplitudes to be used
+
+%% Generate multiple trial data
+tlimits      = [0 max_time];
+
+shift = randi(maxshift, n_trials,1);% Vector to shift the trials in time
+for i=1:n_trials                    
+     plot_flag = i == 1;            % Plot the first trial
+     [datatmp,t_outtmp]  = generate_pac_signal(fcarrier,fmodulating,tlimits,'Ac',5,'Am',1,'fs',s_rate,'cpfunc','block','blockamp',1, 'nsegm',nsegm,'plot_flag', plot_flag,'padtime',padtime,'snr',snrval,'m',1);
+     datatmp = [datatmp(shift(i):end) datatmp(1:shift(i)-1)];                                    % Shift the data in time
+     datapactrials(i,:) = [datatmp(end-ceil(maxshift/2):end) datatmp(1:end-ceil(maxshift/2)-1)]; % Fill data matrix with shifted vector
+end
+
+%% Compute PAC related measures using the method described in _Penny et al. 2008_
+profile on;
+[glmpacval, ~, ~, ~, ~, ~,~,~, glmpacstruct] = eeg_pac(datapactrials', datapactrials', s_rate,'freqs'    ,phaserange...  
+                                                                                             ,'alpha'    ,alpha...
+                                                                                             ,'methodpac',method...
+                                                                                             ,'nfreqs1'  ,nfreqsphase...
+                                                                                             ,'nfreqs2'  ,nfreqsamp...
+                                                                                             ,'freqs2'   ,amprange...
+                                                                                             ,'winsize'  ,s_rate...
+                                                                                             ,'nboot'    ,nsurrogate);
+profile viewer;                                                                                          
+%% Visualizations 
+% Plot comodulogram 
+eeg_visualize_pac(glmpacstruct, 'plotcomod', 1);
+%%
+% Plot temporal evolution of modulation
+timevect = linspace(padtime, max_time+padtime, 15);
+eeg_visualize_pac(glmpacstruct, 'time', timevect, 'plotcomodt', 1);
+%%
+% Plot temporal evolution of modulation index as a function of phase frequencies
+% at the amplitude frequency of the carrier signal
+eeg_visualize_pac(glmpacstruct, 'ampfreq', fcarrier, 'plotphaset', 1);
+%%
+%  Plot temporal evolution of modulation index as a function of amplitude frequencies 
+%  at the phase frequency of the modulating signal
+eeg_visualize_pac(glmpacstruct,'phasefreq', fmodulating, 'plotampt', 1);
+
+%% Real data application
+% Load data. Here you should replace the path to the data with your own
+% one or call pop_pac(EEG) to compute PAC.
+EEG = pop_loadset('filename','datademopac.set','filepath',pwd); 
+
+%% PAC GUI
+% 
+% <<pop_pacjpeg.jpg>> 
+% 
+
+% Plot comodulogram
+eeg_visualize_pac(EEG.etc.eegpac{1}, 'plotcomod', 1);
+
+% Plot temporal evolution of modulation
+timevect = linspace(0,3,20);
+eeg_visualize_pac(EEG.etc.eegpac{1}, 'time', timevect, 'plotcomodt', 1);
+
+%  Plot temporal evolution of modulation index as a function of the amplitude frequencies 
+%  at the given phase frequency
+eeg_visualize_pac(EEG.etc.eegpac{1}, 'phasefreq', 9, 'plotampt', 1);
+
+% Plot temporal evolution of modulation index as a function of phase frequencies
+% at the given amplitude frequency
+eeg_visualize_pac(EEG.etc.eegpac{1}, 'ampfreq', 55, 'plotphaset', 1);
+
+##### SOURCE END #####
+--></body></html>
