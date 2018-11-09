@@ -26,9 +26,9 @@ try g.xvarnorm_circ;     catch, g.xvarnorm_circ   = 0;            end;
 try g.varthresh;         catch, g.varthresh       = 1;            end;
 try g.kstep;             catch, g.kstep           = 1;            end;
 try g.saveItot;          catch, g.saveItot        = 1;            end;
-try g.maxkprop;          catch, g.maxkprop        = 40;           end;
-try g.bigdataflag;       catch, g.bigdataflag     = 0;           end;
-try  g.mapflag; catch,g.mapflag = 0; end
+try g.maxkprop;          catch, g.maxkprop        = 400;          end;
+try g.bigdataflag;       catch, g.bigdataflag     = 0;            end;
+try g.normopt;           catch, g.normopt         = 2;            end;
 % Check dimension of signals
 
 
@@ -38,9 +38,9 @@ if strncmpi(g.xdistmethod,'circ',4)
     if ~g.bigdataflag
         dxnorm = abs(squareform(pdist(X,@distfun)));
     else
-        dxnorm = zeros(length(X),'single');
-        dxnorm(tril(true(length(X)),-1)) = abs(single(pdist(X,@distfun)));
-        dxnorm = dxnorm + dxnorm';
+%         dxnorm = zeros(length(X),'single');
+%         dxnorm(tril(true(length(X)),-1)) = abs(single(pdist(X,@distfun)));
+%         dxnorm = dxnorm + dxnorm';
     end
     if g.xvarnorm_circ
          [s,s0] = circ_std(dxnorm(:));
@@ -52,9 +52,9 @@ else
     if ~g.bigdataflag
         dxnorm = squareform(pdist(X,g.xdistmethod));
     else
-        dxnorm = zeros(length(X),'single');
-        dxnorm(tril(true(length(X)),-1)) = abs(single(pdist(X,g.xdistmethod)));
-        dxnorm = dxnorm + dxnorm';
+%         dxnorm = zeros(length(X),'single');
+%         dxnorm(tril(true(length(X)),-1)) = abs(single(pdist(X,g.xdistmethod)));
+%         dxnorm = dxnorm + dxnorm';
     end
 end
 clear X;
@@ -63,9 +63,9 @@ if strncmpi(g.ydistmethod,'circ',4)
     if ~g.bigdataflag
         dynorm = squareform(pdist(Y,@distfun));
     else
-        dynorm = zeros(length(Y),'single');
-        dynorm(tril(true(length(Y)),-1)) = abs(single(pdist(Y,@distfun)));
-        dynorm = dynorm + dynorm';
+%         dynorm = zeros(length(Y),'single');
+%         dynorm(tril(true(length(Y)),-1)) = abs(single(pdist(Y,@distfun)));
+%         dynorm = dynorm + dynorm';
     end
     if g.yvarnorm_circ
         [s,s0] = circ_std(dynorm(:));
@@ -77,47 +77,33 @@ else
     if ~g.bigdataflag
     dynorm = squareform(pdist(Y,g.ydistmethod));
     else
-        dynorm = zeros(length(Y),'single');
-        dynorm(tril(true(length(Y)),-1)) = abs(single(pdist(Y,g.ydistmethod)));
-        dynorm = dynorm + dynorm';
+%         dynorm = zeros(length(Y),'single');
+%         dynorm(tril(true(length(Y)),-1)) = abs(single(pdist(Y,g.ydistmethod)));
+%         dynorm = dynorm + dynorm';
     end
 end
 clear Y;
 
-dxitmp = dxnorm/norm(dxnorm(:));%dxitmp = dxnorm/max(max(dxnorm)); %clear dxnorm;
-if g.mapflag
-    dxivartmp = mmapvars(dxitmp,'dxi','dxifile');
-    dximap = memmapfile(dxivartmp);
-else
-    dxi = dxitmp;
-end  
-clear dxitmp;
 
-
-dyitmp = dynorm/norm(dynorm(:));%dyitmp = dynorm/max(max(dynorm)); %clear dynorm;
-if g.mapflag
-    dyivartmp = mmapvars(dyitmp,'dyi','dyifile');
-    dyimap = memmapfile(dyivartmp,'Format','double');
-else
-    dyi = dyitmp;
+% Scale norm
+if g.normopt == 1
+    dxi = dxnorm/norm(dxnorm(:));
+elseif g.normopt ==2
+    dxi = dxnorm/max(dxnorm(:)); %clear dxnorm;
 end
-clear dyitmp;
+
+if g.normopt == 1
+    dyi = dynorm/norm(dynorm(:));
+elseif g.normopt == 2
+    dyi = dynorm/max(dynorm(:)); %clear dynorm;
+end
 
 % dz stuff
-dzi = max(dxnorm,dynorm); clear dxnorm dynorm
+dzi = max(dxi,dyi); %clear dxnorm dynorm
 dzi(logical(find(eye(size(dzi))))) = []; dzi = reshape(dzi,nlat,nlat-1);
 [~, knntmp] = sort(dzi,2); clear dzi;
 
-% dxi = dxnorm; xlength = length(dxnorm); clear dxnorm;
-if g.mapflag
-    dxi =  dximap.Data;
-end
 dxi(logical(find(eye(size(dxi))))) = []; dxi = reshape(dxi,nlat,nlat-1);
-
-if g.mapflag
-    dyi =  dyimap.Data;
-end
-% dyi = dynorm; ylength = length(dynorm); clear dynorm;
 dyi(logical(find(eye(size(dyi))))) = []; dyi = reshape(dyi,nlat,nlat-1);
 
 % dzi = dz; zlength = length(dznorm); clear dznorm;
@@ -175,7 +161,7 @@ while difvar >= g.varthresh && g.k < g.maxkprop
     
 end
 kconv = g.k-g.kstep;
-end
+
 %--- AUX Functions (end of main function) ---
 function D = distfun(XI,XJ)
 % From Circular Statistics Toolbox for Matlab

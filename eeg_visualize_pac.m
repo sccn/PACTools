@@ -498,7 +498,7 @@ if g.plotmvl
     compositestmp = squeeze(pacstruct.composites(closest_phasefreq_idx, closest_ampfreq_idx, closest_time_idx, :));
     compositestmp = reshape(compositestmp,length(compositestmp),length(closest_time_idx));
     for icomposites = 1: length(closest_time_idx)
-        composites = compositestmp(:,icomposites);
+        composites = compositestmp{:,icomposites};
         angle_composite   = wrapTo2Pi(angle(composites));
         amp_composite     = abs(composites);
         max_amp_composite = max(amp_composite);

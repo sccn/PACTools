@@ -1,4 +1,6 @@
-function [Iloc_orig, kconv0, Iloc_sigval, Iloc_pval, dvarvect, totalIlocalif,surrdata] = minfokraskov_convergence_signif(X,Y,n_surrogate,pts_seg,varargin)
+function [Iloc_origsurr, kconv0, Iloc_sigval, Iloc_pval, dvarvect, totalIlocalif,surrdata] = minfokraskov_convergence_signif(X,Y,n_surrogate,pts_seg,varargin)
+% Compute MI based on kraskov method using the variance reduction loop.
+% Provide a filtered MI if requested in parameters. Used for InstMIPAC ONLY
 
 if nargin < 5
     help minfokraskov;
@@ -33,14 +35,25 @@ try g.kstep;             catch, g.kstep           = 1;             end;
 try g.saveItot;          catch, g.saveItot        = 1;             end;
 try g.maxkprop;          catch, g.maxkprop        = 40;            end;
 try g.maxkprop;          catch, g.maxkprop        = 40;            end;
+try, g.butterorder;      catch, g.butterorder     = 6;             end;
 try, g.alpha;            catch, g.alpha           = [];            end;
 
-[I,Iloc_orig,kconv0,dvarvect, totalIlocalif] = minfokraskov_convergence(X,Y,'k0',g.k0...
+[I,Iloc_orig,kconv0,dvarvect, totalIlocalif] = minfokraskov_convergencewin(X,Y,'k0',g.k0...
     ,'kraskovmethod',g.karskovmethod...
     ,'xdistmethod',  g.xdistmethod...
     ,'ydistmethod',  g.ydistmethod...
     ,'varthresh',    g.varthresh...
     ,'saveItot',     g.saveItot);
+
+
+if ~isempty(g.filterfreq)
+%     Iloc_origsurr = eegfilt(Iloc_orig', g.srate, [], g.filterfreq);
+     g.butterorder = 6;
+     [b,a] = butter(g.butterorder,g.filterfreq/(g.srate/2),'low');
+     Iloc_origsurr = filtfilt(b,a,Iloc_orig');
+else
+    Iloc_origsurr = Iloc_orig;
+end
 
 if ~isempty(g.alpha)
     % surrogate analyses for significance testing
@@ -93,7 +106,7 @@ if ~isempty(g.alpha)
             
         end
         
-        [Isurrtmp,Ilocal,kconv,difvarvect] = minfokraskov_convergence(X_surrogate',Y_surrogate'...
+        [Isurrtmp,Ilocal,kconv,difvarvect] = minfokraskov_convergencewin(X_surrogate',Y_surrogate'...
             ,'k',             kconv0...
             ,'kraskovmethod', g.karskovmethod...
             ,'xdistmethod',   g.xdistmethod...
@@ -102,40 +115,19 @@ if ~isempty(g.alpha)
             ,'yvarnorm_circ', g.yvarnorm_circ...
             );
         if ~isempty(g.filterfreq)
-            %            Ilocal = eegfilt(Ilocal', g.srate, [], g.filterfreq);
-            [b,a] = butter(6,g.filterfreq/(g.srate/2),'low');
-            Ilocal = filtfilt(b,a,Ilocal);
+            % Ilocal = eegfilt(Ilocal', g.srate, [], g.filterfreq);
+            
+            [b,a] = butter(g.butterorder,g.filterfreq/(g.srate/2),'low');
+            Ilocal = filtfilt(b,a,Ilocal');
         end
-        
         surrdata(si,:) = Ilocal;
-        surrI(si)      = Isurrtmp;
     end
     
     Iloc_zscore         = (Iloc_origsurr' - mean(surrdata)) ./ std(surrdata);
     Iloc_pval           = 1-normcdf(abs(Iloc_zscore));
     
     Iloc_sigval = zeros(size(Iloc_pval));
-    Iloc_sigval(abs(Iloc_sigval) < g.alpha) = 1;
-    
+    Iloc_sigval(abs(Iloc_sigval) < g.alpha) = 1;    
 end
-
-    if ~isempty(g.filterfreq)
-%         Iloc_origsurr = eegfilt(Iloc_orig', g.srate, [], g.filterfreq);
-        EEG1       = eeg_emptyset;
-        EEG1.data  = Iloc_orig;
-        EEG1.srate = g.srate;
-        EEG1.trials = 1;
-        EEG1.pnts   = length(EEG1.data);
-%         Iloc_origsurr = pop_eegfiltnew(EEG1, [], g.filterfreq  , EEG1.srate, 0);
-        [b,a] = butter(6,g.filterfreq/(EEG1.srate/2),'low');
-        Iloc_origsurr = filtfilt(b,a,EEG1.data);
-    else
-        Iloc_origsurr = Iloc_orig;
-    end
-    
-%     Iloc_sigval = (Iloc_origsurr' - mean(surrdata)) ./ std(surrdata);
-%     Iloc_sigval(abs(Iloc_sigval) < 1.96)  = 0;
-%     Iloc_sigval(isnan(Iloc_sigval)) = 0;
-%     Iloc_sigval(Iloc_sigval ~= 0) = 1;
 
 end

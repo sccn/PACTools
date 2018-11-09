@@ -86,6 +86,7 @@ try g.blockamp;    catch, g.blockamp    = 1;             end;
 try g.m;           catch, g.m           = 0.5;            end;
 try g.fsin;        catch, g.fsin        = 0.1;           end;
 try g.padtime;     catch, g.padtime     = 0;             end;
+try g.method;      catch, g.method      = 'wiki';             end;
 
 if ~isempty(g.m)
     m = g.m;
@@ -107,7 +108,7 @@ g.Ac = 5; % A Amplitude
 g.Am = 1;
 carrier_signal = g.Ac*sin(2*pi*fc*t);
 
-% Coupling functions
+%% Coupling functions. Determining shape of m
 if ~isempty(g.cpfunc)
     m        = zeros(1,length(t));
     npts_seg = floor((length(t)-2*g.padtime*g.fs)/g.nsegm);
@@ -166,14 +167,30 @@ if ~isempty(g.cpfunc)
 end
 
 m = m./max(m);
-mmod = -m+1;
+if strcmp(g.method,'tort')
+    mmod = -m+1;
+else
+    mmod = m;
+end
 % AM Modulation
 if length(mmod) ~= 1
     if length(mmod) == length(amplitude_mod)
         ti = t;
-        amplitude_mod  = (g.Ac*((1-mmod).*sin(2*pi*fm*ti)+1+mmod)/2).*sin(2*pi*fc*ti) + g.Am*sin(2*pi*fm*ti);%+ noise_amp*rand(1,length(ti));
+        if strcmp(g.method,'tort')
+            amplitude_mod  = (g.Ac*((1-mmod).*sin(2*pi*fm*ti)+1+mmod)/2).*sin(2*pi*fc*ti) + g.Am*sin(2*pi*fm*ti) + noise_amp.*rand(1,length(ti));
+            phase_signal   = cos(2*pi*fm*ti);
+        elseif strcmp(g.method,'wiki')
+%             amplitude_mod  = sin(2*pi*fc*ti) + g.Ac.*mmod.*(sin(2*pi*(fm+fc)*ti) - sin(2*pi*(fm-fc)*ti))/2 + mmod.*cos(2*pi*fm*ti);
+            
+            amplitude_mod  = (1+ mmod.*cos(2*pi*fm*ti)).*g.Ac.*sin(2*pi*fc*ti) + mmod.*cos(2*pi*fm*ti) + noise_amp.*rand(1,length(ti));
+            phase_signal   = g.Am*cos(2*pi*fm*ti);
+            
+            
+%             amplitude_mod  = sin(2*pi*fc*ti) + mmod.*sin(2*pi*fm*ti).*sin(2*pi*fc*ti) + 0.1.*sin(2*pi*fm*ti);
+%             phase_signal   = sin(2*pi*fm*ti);
+        end
         amplitude_mod  = awgn(amplitude_mod,g.snr,'measured');
-        phase_signal   = cos(2*pi*fm*ti);
+%         phase_signal   = cos(2*pi*fm*ti);
     else
         npts_seg = floor(length(t)/length(mmod));
         count = 1;
@@ -181,11 +198,13 @@ if length(mmod) ~= 1
         for iseg = 1: length(mmod)
             if iseg ~= length(mmod)
                 ti = t(count:count + npts_seg-1);
-                
-                % Tort
-                amplitude_mod(count:count + npts_seg-1) = (g.Ac*((1-mmod(iseg))*sin(2*pi*fm*ti)+1+mmod(iseg))/2).*sin(2*pi*fc*ti) + g.Am*sin(2*pi*fm*ti);%+ noise_amp*rand(1,length(ti));
+                if strcmp(g.method,'tort')
+                    % Tort
+                    amplitude_mod(count:count + npts_seg-1) = (g.Ac*((1-mmod(iseg))*sin(2*pi*fm*ti)+1+mmod(iseg))/2).*sin(2*pi*fc*ti) + g.Am*sin(2*pi*fm*ti);%+ noise_amp*rand(1,length(ti));
+                else strcmp(g.method,'wiki')
+                    amplitude_mod(count:count + npts_seg-1)  = (1+ mmod(iseg).*cos(2*pi*fm*ti)).*g.Ac.*sin(2*pi*fc*ti) + mmod(iseg).*cos(2*pi*fm*ti) + noise_amp.*rand(1,length(ti));
+                end
                 amplitude_mod(count:count + npts_seg-1) = awgn(amplitude_mod(count:count + npts_seg-1),g.snr,'measured');
-                
                 % Modulating signal generation
                 phase_signal(count:count + npts_seg-1) = cos(2*pi*fm*ti);
 %                 amplitude_mod(count:count + npts_seg-1) = g.Ac*(1+mmod(iseg)*cos(2*pi*fm*ti)).*sin(2*pi*fc*ti) + sin(2*pi*fm*ti)  + noise_amp*rand(1,length(ti)); %
@@ -193,8 +212,13 @@ if length(mmod) ~= 1
             else
                 ti = t(count:end);
                 phase_signal(count:count+ length(ti)-1) = cos(2*pi*fm*ti);
+                if strcmp(g.method,'tort')
                 % Tort
                 amplitude_mod(count:count+length(ti)-1) = (g.Ac*((1-mmod(iseg))*sin(2*pi*fm*ti)+1+mmod(iseg))/2).*sin(2*pi*fc*ti) + g.Am*sin(2*pi*fm*ti) + noise_amp*rand(1,length(ti));
+                else strcmp(g.method,'wiki')
+                    amplitude_mod(count:count+length(ti)-1) = (1+ mmod(iseg).*cos(2*pi*fm*ti)).*g.Ac.*sin(2*pi*fc*ti) + mmod(iseg).*cos(2*pi*fm*ti) + noise_amp.*rand(1,length(ti));
+                    
+                end
                 amplitude_mod(count:count+length(ti)-1) = awgn(amplitude_mod(count:count+length(ti)-1), g.snr,'measured');
 %                 amplitude_mod(count:count+length(ti)-1) = g.Ac*(1+mmod(iseg)*cos(2*pi*fm*ti)).*sin(2*pi*fc*ti)+ sin(2*pi*fm*ti) + noise_amp*rand(1,length(ti));
             end
@@ -212,31 +236,35 @@ else
 end
 
 if g.plot_flag
-    hfig = figure('Units','Normalized','Position',[2.6042e-01   2.3889e-01   5.2552e-01   5.9722e-01]);
+    figure('Units','normalized','Position',[0.3049 0.2544 0.5486 0.6311]);
     ax(1) = subplot(3,1,1);
     plot(t,phase_signal);
-    title (['Modulator Phase Oscillation f = ' num2str(fm) 'Hz']);
-    ylabel ('Amplitude (au)');
+    title (['Modulator/Phase f = ' num2str(fm) 'Hz']);
+    %ylabel ('Amplitude');
+    ax(1).XTickLabel = [];
     grid on;
+    
     
     % Plot 2. Carrier
     ax(2) = subplot(3,1,2);
     plot(t,carrier_signal);
-    title (['Carrier f = ' num2str(fc) 'Hz']);
-    ylabel ('Amplitude (au)');
+    title (['Carrier/Amplitude f = ' num2str(fc) 'Hz']);
+    %ylabel ('Amplitude (au)');
+    ax(2).XTickLabel = [];
     grid on;
     
     % Plot 3. Modulated signal
     ax(3) =subplot(3,1,3);
     plot(t,amplitude_mod); hold on;
     plot(t,m*max(amplitude_mod),'color',[215 25 25]./255,'linewidth',2)
-    title ('Amplitude Modulated');
+    title ('Amplitude Modulated Signal');
     xlabel ('time(sec)');
-    ylabel ('Amplitude (au)');
+%     ylabel ('Amplitude (au)');
     grid on;
+    hlegend = legend('Signal', 'Modulation');
+    hlegend.Box = 'off';
+    hlegend. Position = [0.755 0.2650 0.1032 0.0431];
+    
     linkaxes(ax,'x');
-    hlegend = legend('Modulated signal','Modulation strength');
-    set(get(hlegend,'BoxFace'),'ColorType','truecoloralpha', 'ColorData',uint8(255*[1;1;1;.5]));
-    set(hlegend,'box', 'on','EdgeColor','None','Location','northeast');
-    set(get(hfig,'Children'),'Fontsize',15);
+    
 end

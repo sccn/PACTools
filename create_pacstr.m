@@ -28,4 +28,5 @@ try pacstr.phaseangles;           catch, pacstr.phaseangles    = []; end
 try pacstr.amplitudes;            catch, pacstr.amplitudes     = []; end
 try pacstr.composites;            catch, pacstr.composites     = []; end
 try pacstr.kconv;                 catch, pacstr.kconv          = []; end
+try pacstr.diffvar;               catch, pacstr.diffvar        = []; end
 

@@ -11,11 +11,10 @@
 %    y      - Time series of the amplitude [ntimes] or [ntrials]
 %
 %   Optional inputs
-             
 %       'alpha'         - Significance level of the statistical test. If
 %                         empty no statistical test is done.
 %                         Default [0.05]
-%       'method'     - {'mvlmi', 'klmi', 'glm'} Method to be use
+%       'method'        - {'mvlmi', 'klmi', 'glm'} Method to be use
 %                         to compute the phase amplitude coupling. 
 %                         mvlmi : Mean Vector Length Modulation Index (Canolty et al. 2006)
 %                         klmi  : Kullback-Leibler Modulation Index (Tort et al. 2010)
@@ -125,6 +124,12 @@ switch g.method
         
         % Normalize mraw
         [pval, surr_mean, surr_std,surrogate_pac] = eeg_pacstatistics(pactmp,x,y,g.method,g.nboot, g.nbinskl,g.ptspercent);
+        if ~isempty(g.alpha)
+           pacstr.significant   = pval<g.alpha;
+           pacstr.pval = pval;
+        else
+            pval = [];
+        end
         normlength           = (abs(m_raw)-surr_mean)/surr_std; 
         normphase            = angle(m_raw);        
         pacstr.peakangle     = normphase;
@@ -155,7 +160,7 @@ switch g.method
         end
         % Put values of interest in pac structure
         pacstr.peakangle   = peakangle;
-        pacstr.nbinskl     = g.nbinskl;
+%         pacstr.nbinskl     = g.nbinskl;
         pacstr.bin_average = bin_average;
         pacstr.nbinskl     = nbins;
         
@@ -177,7 +182,6 @@ switch g.method
         if g.normpac
             pacstr.normpac = atanh(sqrt(pacval));
         end
-        
 end
 
 pacstr.pacval = pacval; % Put the pac value in the pac structure
@@ -191,8 +195,7 @@ if ~isempty(g.alpha)
         fprintf('p value = %.3f \n', pval);
     end
     pacstr.pval          = pval;
-    significant          = pval<g.alpha;
-    pacstr.significant   = significant;
+    pacstr.significant   = pval<g.alpha;
     pacstr.surrogate_pac = surrogate_pac;
 end
 
