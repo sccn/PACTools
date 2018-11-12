@@ -62,7 +62,7 @@ try
             g.(options{i}) = options{i+1};
         end
     else
-        g= [];
+        g = [];
     end
 catch
     disp('std_infocluster() error: calling convention {''key'', value, ... } error'); return;
@@ -76,7 +76,6 @@ try g.bonfcorr;             catch, g.bonfcorr         =  0;           end
 try g.methodpac;            catch, g.methodpac        =  'glm';       end
 try g.nfreqs1;              catch, g.nfreqs1          =  1;           end
 try g.nfreqs2;              catch, g.nfreqs2          =  1;           end
-try g.cleanup,              catch, g.cleanup          = 0;            end
 try g.cleanup,              catch, g.cleanup          = 0;            end
 try g.freqscale,            catch, g.freqscale        = 'linear';     end % may be 'linear' or 'log'
 try g.ptspercent,          catch, g.ptspercent       = 0.05;         end
@@ -323,15 +322,11 @@ for ichan_phase = 1:length(indexphase)
          EEG.etc.eegpac.(g.methodpac){c} = pacstruct.(g.methodpac);       
          EEG.etc.eegpac.freqcell{c}   = [ichan_phase,ichan_amp] ; 
          c = c+1;
-%         EEG.etc.eegpac.(g.methodpac){ichan_phase,ichan_amp} = pacstruct.(g.methodpac);
     end
 end
 
 % Common stuff
 EEG.etc.eegpac.params = pacstruct.params;
-% EEG.etc.eegpac.phaseindx    = indexphase;
-% EEG.etc.eegpac.ampindx      = indexamp;
-% EEG.etc.eegpac.params       = pacstruct.params;
      
 com = sprintf('pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str(phasefreq),num2str(ampfreq),num2str(indexphase),num2str(indexamp), vararg2str(options(5:end)));
 end
