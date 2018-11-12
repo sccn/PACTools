@@ -40,7 +40,7 @@ nfreqsamp         = 15;
                                                          'nfreqs1',        nfreqsphase,...
                                                          'freqs2',         amprange,... 
                                                          'nfreqs2',        nfreqsamp,...                                                                                                             
-                                                         'timefreq',       0, ...
+                                                         'timefreq',       1, ...
                                                          'butterorder',    6, ...
                                                          'mipacvarthresh', mipacvarthreshval,...
                                                          'alpha',          []);
@@ -49,12 +49,12 @@ nfreqsamp         = 15;
 figure('units', 'normalized','position',[0.1203 0.3944 0.5797 0.2722]); 
 instmipac_pacstruct.params.freqs_amp
 instmipac_pacstruct.params.freqs_phase
-plot(instmipac_pacstruct.instmipac.times,squeeze(instmipac_pacstruct.instmipac.pacval(5,8,:)));
+plot(instmipac_pacstruct.instmipac.times,squeeze(instmipac_pacstruct.instmipac.pacval(4,7,:)));
 xlim(minmax(instmipac_pacstruct.instmipac.times)); xlabel('Time (s)');
 
 % Visualizing MIMI comodulogram
 figure('units', 'normalized','position',[0.1187 0.3972 0.2484 0.4083]); 
-imagesc(mvlmi_pacstruct.params.freqs_phase,mvlmi_pacstruct.params.freqs_amp,flipud(mean(instmipac_pacstruct.instmipac.pacval,3)'));
+imagesc(instmipac_pacstruct.params.freqs_phase,instmipac_pacstruct.params.freqs_amp,flipud(mean(instmipac_pacstruct.instmipac.pacval,3)'));
 set(gca,'YDir','normal');
 %% MVLMI (no significance analysis)
 % Parameters
@@ -118,3 +118,5 @@ imagesc(klmi_pacstruct.params.freqs_phase, klmi_pacstruct.params.freqs_amp,flipu
 set(gca,'YDir','normal');
 %==========================================================================
 %==========================================================================
+
+
