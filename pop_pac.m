@@ -1,28 +1,37 @@
-% pop_pac() - Compute phase-amplitude coupling.
-%
+% pop_pac() - Call GUI to compute cross-frequency-coupling coupling.
+%             Second level function to compute CFC by calling eeg_pac.m
 % Usage:
 %   >>  pac = pop_pac(EEG);
-%   >>  pac = pop_pac(EEG,)
 %
 % Inputs:
-%  EEG         - input dataset
-%  pooldata    - ('channels' || 'component' ) 
-%  phasefreq   -
-%  ampfreq     -
-%  indexphase  -
-%  indexamp    -
+%  EEG          - [Structure] Input dataset as an EEGLAB EEG structure
+%  pooldata     - ('channels' || 'component' ). Define if compute CFC in
+%                 channel or ICA decomposed data
+%  freqs1       - [min max] Range of frequency to consider for the phase values.
+%  freqs2       - [min max] Range of frequency to consider for the amplitude values.
+%  nfreqs1      - [Integer]Number of frequencies in the 'freqs1' range
+%  nfreqs2      - [Integer]Number of frequencies in the 'freqs2' range
+%  indexfreqs1  - [Integer]Index of the channel or component to use to in freqs1
+%  indexfreqs2  - [Integer]Index of the channel or component to use to in freqs2
 %
 % Optional inputs:
-%
-%
-%
+% Note: Optional parameters of eeg_pac can be provided as input as well
+%  method       - {'mvlmi','klmi','glm','instmipac', 'ermipac'}.CFC method .
+%                 Default: 'glm'. (currently PAC methods only)
+%  nboot        - [Integer] Number of surrogates generated for statistical significance analysis 
+%  alpha        - [Real] Significance threshold. Default: 0.005
+%  bonfcorr     - [1,0] Flag to perform multiple comparisons correction
+%                 using Bonferroni. Default: [0](do not perform correction)
+%  cleanup      - [1,0] Flag to remove previous results in the EEG
+%                 structure. Default: [1] (clean up structure)
 % Outputs:
-%
+%  EEG          - EEGLAB EEG structure. Results of computing CFC are
+%                  stored in EEG.etc.pac
 % See also:
 %
-% Author: Ramon Martinez-Cancino, SCCN, 2016
+% Author: Ramon Martinez-Cancino, SCCN, 2019
 %
-% Copyright (C) 2016  Ramon Martinez-Cancino,INC, SCCN
+% Copyright (C) 2019  Ramon Martinez-Cancino,INC, SCCN
 %
 % This program is free software; you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -38,9 +47,8 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function [EEG,com] = pop_pac(EEG,pooldata,phasefreq,ampfreq,indexphase,indexamp,varargin)
+function [EEG,com] = pop_pac(EEG,pooldata,freqs1,freqs2,indexfreqs1,indexfreqs2,varargin)
 com = [];
-flag_compute = true;
 
 if nargin == 0
     help pop_pac;
@@ -65,7 +73,7 @@ try
         g = [];
     end
 catch
-    disp('std_infocluster() error: calling convention {''key'', value, ... } error'); return;
+    disp('pop_pac() error: calling convention {''key'', value, ... } error'); return;
 end
 try g.freq1_trialindx;      catch, g.freq1_trialindx  =  1:dim_trial; end % Opt only for pop_pac
 try g.freq2_trialindx;      catch, g.freq2_trialindx  =  1:dim_trial; end % Opt only for pop_pac
@@ -73,36 +81,30 @@ try g.freq2_trialindx;      catch, g.freq2_trialindx  =  1:dim_trial; end % Opt 
 try g.nboot;                catch, g.nboot            =  200;         end
 try g.alpha;                catch, g.alpha            =  0.05;        end
 try g.bonfcorr;             catch, g.bonfcorr         =  0;           end
-try g.methodpac;            catch, g.methodpac        =  'glm';       end
+try g.method;               catch, g.method           =  'glm';       end
 try g.nfreqs1;              catch, g.nfreqs1          =  1;           end
 try g.nfreqs2;              catch, g.nfreqs2          =  1;           end
-try g.cleanup,              catch, g.cleanup          = 0;            end
-try g.freqscale,            catch, g.freqscale        = 'linear';     end % may be 'linear' or 'log'
-try g.ptspercent,          catch, g.ptspercent       = 0.05;         end
+try g.cleanup,              catch, g.cleanup          =  0;           end
+try g.freqscale,            catch, g.freqscale        =  'linear';    end % may be 'linear' or 'log'
+try g.ptspercent,           catch, g.ptspercent       =  0.05;        end 
+try g.forcecomp,            catch, g.forcecomp        =  0;           end
 
 
 if nargin < 6 
     % Defaults for GUI
-    phasefreq      = [4 15];
-    ampfreq        = [EEG.srate/2-20 EEG.srate/2-2];
-    nfreqs1        = length(phasefreq(1):2:phasefreq(2));
-    nfreqs2        = length(ampfreq(1):3:ampfreq(2)) ;
+    freqs1         = [4 15];
+    freqs2         = [EEG.srate/4-20 EEG.srate/4-2];
+    nfreqs1        = length(freqs1(1):2:freqs1(2));
+    nfreqs2        = length(freqs2(1):3:freqs2(2)) ;
     freq1_dataindx = 1;
     freq2_dataindx = 1;
     
-    % Scan here for add-in methods and add to gui list
-    
-    method_defaultlistgui = {'Mean vector length modulation index (Canolty et al.)',...
-                             'Kullback-Leibler modulation index (Tort et al.)',...
-                             'General linear model (Penny et al.)',...
-                             'Instantaneous MIPAC', 'Event related MIPAC'};
-    method_defaultlist    = {'mvlmi','klmi','glm','instmipac', 'ermipac'};
     % ---
     % Checking if ICA
     if isempty(EEG.icawinv)
         datatypel_list = {'Channels'} ;
     else
-        datatypel_list = {'Components','Channels'} ;
+        datatypel_list = {'Channels','Components'} ;
     end
     
     % Here define other types of CFC
@@ -110,11 +112,16 @@ if nargin < 6
     % end of the cell array, and then update 'data1_list' and 'data2_list'
     % in the callback 'callback_setdata'
     
-    cfctype_list = {'Phase-Amp.', 'Amp.-Amp.', 'Phase-Phase'}; 
+    cfctype_list = {'Phase-Amp.'};%, 'Amp.-Amp.', 'Phase-Phase'}; 
  
    
-    method_listgui = {'Mean vector length modulation index (Canolty et al.)', 'Kullback-Leibler modulation index (Tort et al.)','General linear model (Penny et al.)', 'Instantaneous MIPAC', 'Event related MIPAC'};
-    method_list    = {'mvlmi','klmi','glm','instmipac', 'ermipac'};
+    method_listgui = {'Mean vector length modulation index (Canolty et al.)',...
+                      'Kullback-Leibler modulation index (Tort et al.)',...
+                      'General linear model (Penny et al.)',...
+                      'Phase-Locking Value',...
+                      'Instantaneous MIPAC',...
+                      'Event related MIPAC'};
+    method_list    = {'mvlmi','klmi','glm','plv','instmipac', 'ermipac'};
     guititle = 'pop_pac() - Test for event-related Phase/Amplitude Coupling (PAC)'; 
     callback_chkcbxstat = ['label_statsate = {''(on)'', ''(off)''};'... 
                            'set(findobj(''tag'', ''label_statstate''), ''string'', label_statsate{fastif(get(findobj(gcf,''tag'', ''chckbx_stat''), ''value''),1,2)});'...
@@ -151,11 +158,11 @@ if nargin < 6
               {'style' 'text' 'string' 'Comp/chan indices' 'fontweight' 'normal'} {'style' 'text' 'string' 'Freq range [lo hi] Hz' 'fontweight' 'normal'}         {'style' 'text' 'string' '   # Frequencies' 'fontweight' 'normal'} ...
               {'style' 'text' 'string' 'Phase data' 'fontweight' 'normal' 'tag' 'data1'} ...
                                                                                                 {'style' 'edit' 'string' num2str(freq1_dataindx) 'tag' 'freq1_dataindx'}...
-                                                                                                {'style' 'edit' 'string' num2str(phasefreq)      'tag' 'freq1'}...
+                                                                                                {'style' 'edit' 'string' num2str(freqs1)      'tag' 'freq1'}...
                                                                                                 {'style' 'edit' 'string' num2str(nfreqs1)        'tag' 'nfreqs1'}...
               {'style' 'text' 'string' 'Amp data ' 'fontweight' 'normal' 'tag' 'data2'} ...
                                                                                                 {'style' 'edit' 'string' num2str(freq2_dataindx) 'tag' 'freq2_dataindx'}...
-                                                                                                {'style' 'edit' 'string' num2str(ampfreq)        'tag' 'freq2'}...
+                                                                                                {'style' 'edit' 'string' num2str(freqs2)        'tag' 'freq2'}...
                                                                                                 {'style' 'edit' 'string' num2str(nfreqs2)        'tag' 'nfreqs2'}...
               {'style' 'text' 'string' 'PAC method' 'fontweight' 'bold'} {'style' 'popupmenu' 'string' method_listgui 'tag' 'method'}...
                {'style' 'text' 'string' 'Comand line options' 'fontweight' 'bold'} {'style' 'edit' 'string' ' ' 'tag' 'edit_optinput'}...
@@ -170,17 +177,17 @@ if nargin < 6
     % Retreiving Inputs
     if isempty(res), return; end 
     
-    indexphase = str2num(res.freq1_dataindx);
-    indexamp   = str2num(res.freq2_dataindx);
-    pooldata   = datatypel_list{res.datatype};
-    phasefreq  = str2num(res.freq1);
-    ampfreq    = str2num(res.freq2);
+    indexfreqs1 = str2num(res.freq1_dataindx);
+    indexfreqs2 = str2num(res.freq2_dataindx);
+    pooldata    = datatypel_list{res.datatype};
+    freqs1      = str2num(res.freq1);
+    freqs2      = str2num(res.freq2);
     
     % Applying Bonferroni correction for the number of channel/components
     % computed
     if res.chckbx_stat
         if res.bonfcorr && ~isempty(res.pvalue)
-            res.pvalue = str2num(res.pvalue) / (numel(indexphase) * numel(indexamp));
+            res.pvalue = str2num(res.pvalue) / (numel(indexfreqs1) * numel(indexfreqs2));
         else
             res.pvalue = str2num(res.pvalue);
         end
@@ -193,12 +200,12 @@ if nargin < 6
     g.nboot     = str2num(res.nsurrogates);
     g.alpha     = res.pvalue;
     g.bonfcorr  = res.bonfcorr;
-    g.methodpac =  method_list{res.method};
+    g.method    = method_list{res.method};
     g.nfreqs1   = str2num(res.nfreqs1);
     g.nfreqs2   = str2num(res.nfreqs2)  ;
     
     % Options to call eeg_pac
-    options    = {'freqs' str2num(res.freq1)          'freqs2'    str2num(res.freq2)          'methodpac' method_list{res.method}...
+    options    = {'freqs' str2num(res.freq1)          'freqs2'    str2num(res.freq2)          'method' method_list{res.method}...
                   'nboot' str2num(res.nsurrogates)    'alpha'     res.pvalue,                 'nfreqs1',str2num(res.nfreqs1), ...
                   'nfreqs2',str2num(res.nfreqs2)      'bonfcorr'  res.bonfcorr'};
     
@@ -206,7 +213,7 @@ if nargin < 6
     tmpparams = eval( [ '{' res.edit_optinput '}' ] );
     options   = {options{:} tmpparams{:}};
 else
-    options = {'freqs' phasefreq 'freqs2' ampfreq};
+    options = {'freqs' freqs1 'freqs2' freqs2};
     options = {options{:} varargin{:}};
 end
 
@@ -215,7 +222,7 @@ if strcmpi(pooldata,'channels')
     [dim_chan,~,dim_trial] = size(EEG.data); clear tmp;
     
     % Checking channel indices
-    if ~all(all(ismember(indexphase, 1:dim_chan)), all(ismember(indexamp, 1:dim_chan)))
+    if ~all(all(ismember(indexfreqs1, 1:dim_chan)), all(ismember(indexfreqs2, 1:dim_chan)))
         error('Invalid data index');
     end
     
@@ -226,7 +233,7 @@ if strcmpi(pooldata,'channels')
     [dim_comp,~,dim_trial] = size(EEG.data); clear tmp;
     
     % Checking component indices
-    if ~all(all(ismember(indexphase, 1:dim_comp)), all(ismember(indexamp, 1:dim_comp)))
+    if ~all(all(ismember(indexfreqs1, 1:dim_comp)), all(ismember(indexfreqs2, 1:dim_comp)))
         error('Invalid data index');
     end
 end
@@ -237,55 +244,110 @@ if isempty(g.freq1_trialindx) || isempty(g.freq2_trialindx)
     g.freq2_trialindx = 1:dim_trial;
 end
 
-% Check if this was already computed (not implemented)
-
+% Check if this was already computed or clean up is needed.
 %--
-
-timefreq_phase = cell(1,length(indexphase));
-timefreq_amp   = cell(1,length(indexamp));
+timefreq_phase = cell(1,length(indexfreqs1));
+timefreq_amp   = cell(1,length(indexfreqs2));
+LastCellMethod = 0;
 
 if ~isfield(EEG.etc,'eegpac') || g.cleanup
     EEG.etc.eegpac = [];
 elseif isfield(EEG.etc.eegpac,'params')
     
-    if strcmpi(g.freqscale, 'log')      
-        inputparams.freqs_phase = linspace(log(phasefreq(1)), log(phasefreq(end)), g.nfreqs1);
-        inputparams.freqs_phase = exp(inputparams.freqs_phase);
+    if strcmpi(g.freqscale, 'log') 
+        if length(freqs1) ~= 1
+            inputparams.freqs_phase = linspace(log(freqs1(1)), log(freqs1(end)), g.nfreqs1);
+            inputparams.freqs_phase = exp(inputparams.freqs_phase);
+        else
+            inputparams.freqs_phase = freqs1;
+        end
         
-        inputparams.freqs_amp = linspace(log(ampfreq(1)), log(ampfreq(end)), g.nfreqs2);
-        inputparams.freqs_amp = exp(inputparams.freqs_amp);        
+        if length(freqs2) ~= 1
+            inputparams.freqs_amp = linspace(log(freqs2(1)), log(freqs2(end)), g.nfreqs2);
+            inputparams.freqs_amp = exp(inputparams.freqs_amp);
+        else
+            inputparams.freqs_amp = freqs2;
+        end
     else
-        inputparams.freqs_phase = linspace(phasefreq(1), phasefreq(2), g.nfreqs1); % this should be OK for FFT
-        inputparams.freqs_amp   = linspace(ampfreq(1), ampfreq(2), g.nfreqs2);
+        if length(freqs1) ~= 1
+            inputparams.freqs_phase = linspace(freqs1(1), freqs1(2), g.nfreqs1); % this should be OK for FFT
+        else
+            inputparams.freqs_phase = freqs1;
+        end
+        
+        if length(freqs2) ~= 1
+            inputparams.freqs_amp   = linspace(freqs2(1), freqs2(2), g.nfreqs2);
+        else
+            inputparams.freqs_amp = freqs2;
+        end
     end
-    
      inputparams.srate             = EEG.srate;
      inputparams.signif.alpha      = g.alpha;
      inputparams.signif.nboot      = g.nboot;
      inputparams.signif.bonfcorr   = g.bonfcorr;
+     inputparams.pooldata          = find(strcmp({'Channels','Components'},pooldata));
      
      tmpstrc = EEG.etc.eegpac.params;
+     tmpstrc.pooldata = EEG.etc.eegpac.chantype;
      tmpstrc.signif = rmfield(tmpstrc.signif,'ptspercent');
-    if ~isequal(EEG.etc.eegpac.params, inputparams)
-        EEG.etc.eegpac = [];
-    end  
+     if ~isequal(tmpstrc, inputparams)
+         disp('pop_pac: Parameterers provided do not match the ones saved from previous computation.');
+         disp('         Removing stored PAC results!!!!!');
+         EEG.etc.eegpac = [];
+     end
+    
+    if ~isempty(EEG.etc.eegpac)
+        LastCellMethod = length(EEG.etc.eegpac.chanindx);
+        % Checking Method field
+        tmpfield = fieldnames(EEG.etc.eegpac);
+        methodexist = find(strcmp(tmpfield(4:end), g.method));
+        MethodComputed_flag = 0;
+        if ~isempty(methodexist)
+            % Checking computed chanindex
+            [A,B] = meshgrid(indexfreqs1,indexfreqs2);
+            AllFreqComb = reshape(cat(2,A',B'),[],2);
+            for i = 1: size(AllFreqComb,1)                
+                ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==AllFreqComb(i,:)), EEG.etc.eegpac.chanindx, 'UniformOutput', 0)));
+                if ~isempty(ChanIndxExist)
+                    if length(EEG.etc.eegpac.(g.method)) < ChanIndxExist
+                        MethodComputed_flag = 0;
+                    else
+                        MethodComputed_flag = ~isempty(EEG.etc.eegpac.(g.method)(ChanIndxExist));
+                    end
+                    break; 
+                end               
+            end
+        end
+        
+        if MethodComputed_flag 
+            if ~g.forcecomp
+                disp(['pop_pac: Recomputing PAC using : ' g.method])
+            else
+                disp(['pop_pac: PAC has been already computed before using ''' g.method '''']);
+                disp('         Exiting without further action.');
+                return;
+            end
+        end
+    end
 end
-
-c = 1;
-for ichan_phase = 1:length(indexphase)
+%--------------------------------------------------------------------------
+c = LastCellMethod+1;
+for ichan_phase = 1:length(indexfreqs1)
     % Retreiving data for phase (X)
     if strcmpi(pooldata,'channels')
-        X = EEG.data(indexphase(ichan_phase),:,g.freq1_trialindx);
+        X = squeeze(EEG.data(indexfreqs1(ichan_phase),:,g.freq1_trialindx));
     else % Component
-        X = EEG.icaact(indexphase(ichan_phase),:,g.freq1_trialindx);
+        X = squeeze(EEG.icaact(indexfreqs1(ichan_phase),:,g.freq1_trialindx));
     end
     %----    
-    for ichan_amp = 1:length(indexamp)
+    for ichan_amp = 1:length(indexfreqs2)
         % Retreiving data for amplitude (Y)
         if strcmpi(pooldata,'channels')
-            Y = EEG.data(indexamp(ichan_amp),:,g.freq2_trialindx);
+            Y = squeeze(EEG.data(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
+            chantype = 1;
         else % Component
-            Y = EEG.icaact(indexamp(ichan_amp),:,g.freq2_trialindx);
+            Y = squeeze(EEG.icaact(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
+            chantype = 2;
         end
         %----       
         % Running eeg_pac
@@ -319,14 +381,29 @@ for ichan_phase = 1:length(indexphase)
             timefreq_phase{ichan_phase}.freqs    = freqs1;
             timefreq_phase{ichan_phase}.alltf    = alltfX;
         end
-         EEG.etc.eegpac.(g.methodpac){c} = pacstruct.(g.methodpac);       
-         EEG.etc.eegpac.freqcell{c}   = [ichan_phase,ichan_amp] ; 
-         c = c+1;
+        ChanIndxExist = [];
+        if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
+            ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==[indexfreqs1(ichan_phase) indexfreqs2(ichan_amp)]), EEG.etc.eegpac.chanindx, 'UniformOutput', 0)));
+        end
+        if ~isempty(ChanIndxExist)
+            EEG.etc.eegpac.(g.method){ChanIndxExist} = pacstruct.(g.method);
+        elseif ~isfield(EEG.etc.eegpac,'chanindx')
+            EEG.etc.eegpac.(g.method){1} = pacstruct.(g.method);
+            EEG.etc.eegpac.chanindx{1}   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
+            EEG.etc.eegpac.chantype      = chantype;
+            c = c+1;
+        else
+            EEG.etc.eegpac.(g.method){c} = pacstruct.(g.method);
+            EEG.etc.eegpac.chanindx{c}   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
+            c = c+1;
+        end      
     end
 end
 
 % Common stuff
-EEG.etc.eegpac.params = pacstruct.params;
-     
-com = sprintf('pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str(phasefreq),num2str(ampfreq),num2str(indexphase),num2str(indexamp), vararg2str(options(5:end)));
+EEG.etc.eegpac.params = pacstruct.params;   
+tmpval = setdiff( fieldnames(EEG.etc.eegpac),{'chanindx'    'chantype'    'params'})';
+
+EEG.etc.eegpac = orderfields(EEG.etc.eegpac, {'chanindx'    'chantype'    'params' tmpval{:}});
+com = sprintf('pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str(freqs1),num2str(freqs2),num2str(indexfreqs1),num2str(indexfreqs2), vararg2str(options(5:end)));
 end

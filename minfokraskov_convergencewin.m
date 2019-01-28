@@ -1,4 +1,6 @@
 function  [I,Ilocal,kconv,difvarvect, totalIlocal] = minfokraskov_convergencewin(Xorig,Yorig,varargin)
+% ADD HELP here
+% Xorig,Yorig colums vectors for single trials
 
 if nargin < 3
     help minfokraskov;
@@ -23,7 +25,7 @@ try g.ydistmethod;       catch, g.ydistmethod     = 'seuclidean'; end;
 try g.jointdistmethod;   catch, g.jointdistmethod = 'seuclidean'; end;
 try g.yvarnorm_circ;     catch, g.yvarnorm_circ   = 0;            end;
 try g.xvarnorm_circ;     catch, g.xvarnorm_circ   = 0;            end;
-try g.varthresh;         catch, g.varthresh       = 5;            end;
+try g.varthresh;         catch, g.varthresh       = 0.05;         end;
 try g.kstep;             catch, g.kstep           = 1;            end;
 try g.saveItot;          catch, g.saveItot        = 0;            end;
 try g.maxk;              catch, g.maxk            = 40;           end;
@@ -36,7 +38,9 @@ nlatsorig = size(Xorig,1);
 
 % Compute distances
 if strncmpi(g.xdistmethod,'circ',4)
-    dxnorm = abs(squareform(pdist(X,@distfun)));
+    %     dxnorm = abs(squareform(pdist(X,@distfun)));
+    tmparraydist = pdist(X,@distfun);
+    dxnorm = abs(squareform(tmparraydist));
     if g.xvarnorm_circ
          [s,s0] = circ_std(dxnorm(:));
          dxnorm = dxnorm/s0;
@@ -44,11 +48,15 @@ if strncmpi(g.xdistmethod,'circ',4)
 elseif strncmpi(g.xdistmethod,'myeucl',6)
     dxnorm = sqDistance(X',X');
 else
-    dxnorm = squareform(pdist(X,g.xdistmethod));
+    %     dxnorm = squareform(pdist(X,g.xdistmethod));
+    tmparraydist = pdist(X,g.xdistmethod);
+    dxnorm = squareform(tmparraydist);
 end
 
 if strncmpi(g.ydistmethod,'circ',4)
-    dynorm = squareform(pdist(Y,@distfun));
+    %     dynorm = squareform(pdist(Y,@distfun));
+    tmparraydist = pdist(Y,@distfun);
+    dynorm = squareform(tmparraydist);
     if g.yvarnorm_circ
         [s,s0] = circ_std(dynorm(:));
         dynorm = dynorm/s0;
@@ -56,7 +64,9 @@ if strncmpi(g.ydistmethod,'circ',4)
 elseif strncmpi(g.ydistmethod,'myeucl',6)
     dynorm = sqDistance(Y',Y');
 else
-    dynorm = squareform(pdist(Y,g.ydistmethod));
+    %     dynorm = squareform(pdist(Y,g.ydistmethod));
+    tmparraydist = pdist(Y,g.ydistmethod);
+    dynorm = squareform(tmparraydist);
 end
 
 dxnorm = dxnorm/max(max(dxnorm));
@@ -64,11 +74,14 @@ dynorm = dynorm/max(max(dynorm));
 dz = max(dxnorm,dynorm);
 
 dxi = dxnorm;
-dxi(logical(find(eye(size(dxi))))) = []; dxi = reshape(dxi,length(dxnorm),length(dxnorm)-1);
+dxi(logical(find(eye(size(dxi))))) = []; 
+dxi = reshape(dxi,length(dxnorm),length(dxnorm)-1);
 dyi = dynorm;
-dyi(logical(find(eye(size(dyi))))) = []; dyi = reshape(dyi,length(dynorm),length(dynorm)-1);
+dyi(logical(find(eye(size(dyi))))) = []; 
+dyi = reshape(dyi,length(dynorm),length(dynorm)-1);
 dzi = dz;
-dzi(logical(find(eye(size(dzi))))) = []; dzi = reshape(dzi,length(dz),length(dynorm)-1);
+dzi(logical(find(eye(size(dzi))))) = []; 
+dzi = reshape(dzi,length(dz),length(dynorm)-1);
 [~, knntmp] = sort(dzi,2);
 
 % Initializations
@@ -83,7 +96,7 @@ difvar      = Inf;
 difvarvect  = [];
 totalIlocal = [];
 
-% Reducing the dim to the onein the first trial
+% Reducing the dim to the one in the first trial
 knntmp = knntmp(1:nlatsorig,:);
 dxi    = dxi(1:nlatsorig,:);
 dyi    = dyi(1:nlatsorig,:);
@@ -107,7 +120,6 @@ while difvar >= g.varthresh && g.k < g.maxk
         I      = psi(g.k) - 1/g.k - mean(mean(psi(nx)) + mean(psi(ny))) + psi(nlat);
         Ilocal = psi(g.k) - 1/g.k - (psi(nx) + psi(ny)) + psi(nlat);
     end
-    
     
     if counter ~=1
         difvar = 100*abs(Ilocalvark - var(Ilocal))/abs(Ilocalvark);

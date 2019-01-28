@@ -35,8 +35,8 @@ try g.kstep;             catch, g.kstep           = 1;             end;
 try g.saveItot;          catch, g.saveItot        = 1;             end;
 try g.maxkprop;          catch, g.maxkprop        = 40;            end;
 try g.maxkprop;          catch, g.maxkprop        = 40;            end;
-try, g.butterorder;      catch, g.butterorder     = 6;             end;
-try, g.alpha;            catch, g.alpha           = [];            end;
+try g.butterorder;       catch, g.butterorder     = 6;             end;
+try g.alpha;             catch, g.alpha           = [];            end;
 
 [I,Iloc_orig,kconv0,dvarvect, totalIlocalif] = minfokraskov_convergencewin(X,Y,'k0',g.k0...
     ,'kraskovmethod',g.karskovmethod...
@@ -52,7 +52,7 @@ if ~isempty(g.filterfreq)
      [b,a] = butter(g.butterorder,g.filterfreq/(g.srate/2),'low');
      Iloc_origsurr = filtfilt(b,a,Iloc_orig');
 else
-    Iloc_origsurr = Iloc_orig;
+    Iloc_origsurr = Iloc_orig';
 end
 
 if ~isempty(g.alpha)
@@ -123,11 +123,9 @@ if ~isempty(g.alpha)
         surrdata(si,:) = Ilocal;
     end
     
-    Iloc_zscore         = (Iloc_origsurr' - mean(surrdata)) ./ std(surrdata);
-    Iloc_pval           = 1-normcdf(abs(Iloc_zscore));
-    
+    Iloc_zscore = (Iloc_origsurr - mean(surrdata)) ./ std(surrdata);
+    Iloc_pval   = 1-normcdf(abs(Iloc_zscore));
     Iloc_sigval = zeros(size(Iloc_pval));
-    Iloc_sigval(abs(Iloc_sigval) < g.alpha) = 1;    
+    Iloc_sigval(abs(Iloc_pval) < g.alpha) = 1;    
 end
-
 end
