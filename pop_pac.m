@@ -288,7 +288,7 @@ elseif isfield(EEG.etc.eegpac,'params')
      inputparams.pooldata          = find(strcmp({'Channels','Components'},pooldata));
      
      tmpstrc = EEG.etc.eegpac.params;
-     tmpstrc.pooldata = EEG.etc.eegpac.chantype;
+     tmpstrc.pooldata = EEG.etc.eegpac.datatype;
      tmpstrc.signif = rmfield(tmpstrc.signif,'ptspercent');
      if ~isequal(tmpstrc, inputparams)
          disp('pop_pac: Parameterers provided do not match the ones saved from previous computation.');
@@ -297,7 +297,7 @@ elseif isfield(EEG.etc.eegpac,'params')
      end
     
     if ~isempty(EEG.etc.eegpac)
-        LastCellMethod = length(EEG.etc.eegpac.chanindx);
+        LastCellMethod = length(EEG.etc.eegpac.dataindx);
         % Checking Method field
         tmpfield = fieldnames(EEG.etc.eegpac);
         methodexist = find(strcmp(tmpfield(4:end), g.method));
@@ -307,7 +307,7 @@ elseif isfield(EEG.etc.eegpac,'params')
             [A,B] = meshgrid(indexfreqs1,indexfreqs2);
             AllFreqComb = reshape(cat(2,A',B'),[],2);
             for i = 1: size(AllFreqComb,1)                
-                ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==AllFreqComb(i,:)), EEG.etc.eegpac.chanindx, 'UniformOutput', 0)));
+                ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==AllFreqComb(i,:)), EEG.etc.eegpac.dataindx, 'UniformOutput', 0)));
                 if ~isempty(ChanIndxExist)
                     if length(EEG.etc.eegpac.(g.method)) < ChanIndxExist
                         MethodComputed_flag = 0;
@@ -344,10 +344,10 @@ for ichan_phase = 1:length(indexfreqs1)
         % Retreiving data for amplitude (Y)
         if strcmpi(pooldata,'channels')
             Y = squeeze(EEG.data(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
-            chantype = 1;
+            datatype = 1;
         else % Component
             Y = squeeze(EEG.icaact(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
-            chantype = 2;
+            datatype = 2;
         end
         %----       
         % Running eeg_pac
@@ -383,18 +383,18 @@ for ichan_phase = 1:length(indexfreqs1)
         end
         ChanIndxExist = [];
         if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
-            ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==[indexfreqs1(ichan_phase) indexfreqs2(ichan_amp)]), EEG.etc.eegpac.chanindx, 'UniformOutput', 0)));
+            ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==[indexfreqs1(ichan_phase) indexfreqs2(ichan_amp)]), EEG.etc.eegpac.dataindx, 'UniformOutput', 0)));
         end
         if ~isempty(ChanIndxExist)
             EEG.etc.eegpac.(g.method){ChanIndxExist} = pacstruct.(g.method);
-        elseif ~isfield(EEG.etc.eegpac,'chanindx')
+        elseif ~isfield(EEG.etc.eegpac,'dataindx')
             EEG.etc.eegpac.(g.method){1} = pacstruct.(g.method);
-            EEG.etc.eegpac.chanindx{1}   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
-            EEG.etc.eegpac.chantype      = chantype;
+            EEG.etc.eegpac.dataindx{1}   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
+            EEG.etc.eegpac.datatype      = datatype;
             c = c+1;
         else
             EEG.etc.eegpac.(g.method){c} = pacstruct.(g.method);
-            EEG.etc.eegpac.chanindx{c}   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
+            EEG.etc.eegpac.dataindx{c}   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
             c = c+1;
         end      
     end
@@ -402,8 +402,8 @@ end
 
 % Common stuff
 EEG.etc.eegpac.params = pacstruct.params;   
-tmpval = setdiff( fieldnames(EEG.etc.eegpac),{'chanindx'    'chantype'    'params'})';
+tmpval = setdiff( fieldnames(EEG.etc.eegpac),{'dataindx'    'datatype'    'params'})';
 
-EEG.etc.eegpac = orderfields(EEG.etc.eegpac, {'chanindx'    'chantype'    'params' tmpval{:}});
+EEG.etc.eegpac = orderfields(EEG.etc.eegpac, {'dataindx'    'datatype'    'params' tmpval{:}});
 com = sprintf('pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str(freqs1),num2str(freqs2),num2str(indexfreqs1),num2str(indexfreqs2), vararg2str(options(5:end)));
 end

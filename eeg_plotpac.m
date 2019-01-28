@@ -29,8 +29,8 @@
 %     plotopt
 %     plotsignif
 %     cell2plot
-%     phasechanindx
-%     ampchanindx
+%     phasedataindx
+%     ampdataindx
 %     pacmethod
 %     fampval
 %     fphaseval
@@ -77,8 +77,8 @@ end;
 try g.plotopt;                                 catch, g.plotopt         = {};              end;
 try g.plotsignif;                              catch, g.plotsignif      = 0;               end;
 try g.cell2plot;                               catch, g.cell2plot       = 1;               end;
-try g.phasechanindx;                           catch, g.phasechanindx   = [];              end;
-try g.ampchanindx;                             catch, g.ampchanindx     = [];              end;
+try g.phasedataindx;                           catch, g.phasedataindx   = [];              end;
+try g.ampdataindx;                             catch, g.ampdataindx     = [];              end;
 try g.pacmethod;                               catch, g.pacmethod       = [];              end;
 
 try g.fampval;                                 catch, g.fampval         = [];              end;
@@ -97,8 +97,8 @@ if isfield(EEG,'etc') && isfield(EEG,'data')
         end
         methodstructtmp = EEG.etc.eegpac.(g.pacmethod);
         % Determining  cell to plot
-        if ~isempty(g.phasechanindx) && ~isempty(g.ampchanindx)
-            g.cell2plot = find(cell2mat(cellfun(@(x) isequal(x,[g.phasechanindx,g.ampchanindx]), EEG.etc.eegpac.chanindx, 'UniformOutput', 0)));
+        if ~isempty(g.phasedataindx) && ~isempty(g.ampdataindx)
+            g.cell2plot = find(cell2mat(cellfun(@(x) isequal(x,[g.phasedataindx,g.ampdataindx]), EEG.etc.eegpac.dataindx, 'UniformOutput', 0)));
         end
         pacstruct.(g.pacmethod) = methodstructtmp{g.cell2plot};  
     else

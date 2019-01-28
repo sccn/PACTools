@@ -29,7 +29,7 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function [EEG,com] = pop_plotpac(EEG, plottype, pacmethod, phasechanindx, ampchanindx, varargin)
+function [EEG,com] = pop_plotpac(EEG, plottype, pacmethod, phasedataindx, ampdataindx, varargin)
 
 
 try
@@ -66,7 +66,7 @@ if length(fieldnamesval)>3
 else
     error('pop_plotpac() error: PAC must be computed');
 end
-listchanindx     = cellfun(@(x) cellstr(num2str(x)),EEG.etc.eegpac.chanindx)';
+listchanindx     = cellfun(@(x) cellstr(num2str(x)),EEG.etc.eegpac.dataindx)';
 
 
 listplot   = {'Comodulogram',...
@@ -96,8 +96,8 @@ listplot   = {'Comodulogram',...
             plottype      = listplot{res.listbox_plot};
             pacmethod     = listmethod{res.listbox_method};
             tmpchanindx   = str2num(listchanindx{res.listbox_chanindx});
-            phasechanindx = tmpchanindx(1);
-            ampchanindx   = tmpchanindx(2);
+            phasedataindx = tmpchanindx(1);
+            ampdataindx   = tmpchanindx(2);
             g.fampval       = str2num(res.edit_amp);
             g.fphaseval     = str2num(res.edit_phase);
             g.timeval       = str2num(res.edit_time);
@@ -109,8 +109,8 @@ listplot   = {'Comodulogram',...
 end
   
 fighandle = eeg_plotpac(EEG,plottype,'pacmethod',pacmethod,...
-                                     'phasechanindx',phasechanindx,...
-                                     'ampchanindx',ampchanindx,...
+                                     'phasedataindx',phasedataindx,...
+                                     'ampdataindx',ampdataindx,...
                                      'plotopt', g.plotopt,...
                                      'plotsignif', g.plotsignif,...
                                      'fampval', g.fampval,...
