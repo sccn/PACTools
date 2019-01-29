@@ -5,7 +5,7 @@ In addition to traditional methods to compute PAC, the plugin include the Instan
 The toolbox is developed and maintained at the Swartz Center for Computational Neurosciences, UCSD, La Jolla, California.
 
 
-##Table of Contents
+## Table of Contents
 1. [Phase-amplitude coupling in neurosciences](#phase-amplitude-coupling-in-neurosciences)
 2. [Methods implemented in the toolbox](#methods-implemented-in-the-toolbox)
    1. [Continuous signal](#continuous-signal)
