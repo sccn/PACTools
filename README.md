@@ -67,13 +67,13 @@ ERPAC tool provideds a flexible GUI that allow users to take advantage of the sa
   
 <Figure: GUI ===================================================================== >
 <center>
-<img  style="float: center;" src="doc/img/fig_gui_erpac_sample.tiff" alt="drawing" width="500"/>
+<img  style="float: center;" src="doc/img/fig_gui_erpac_sample.jpg" alt="drawing" width="500"/>
 <end>
 </center>
 
 The GUI is divided in four parts designated by the labels: **Data type**/**CFC type**, **PAC method**, **Command line options** and **PAC statistics**.
 In the first section (**Data type**/**CFC type**), the type of data used for PAC computation can be selected in **Data type** between channel data (*Channels*) or ICA decomposed data (*Components*). The label **CFC type** is a static text indicating the type of CFC computation performed. The rationale of keeping this in the GUI is that future releases of the toolbox may contain other CFC methods in addition to PAC.
-Right in the next line, a set of edits are used to input the property values for **Phase data**  and **Amplitude data**. In the first column, the index of the channels/components to use to compute PAC are defined (**Comp/chan indices**). In the second column (**Freq range [lo hi] Hz**), the range of frequencies (in Hz) to compute the instantaneous phase and amplitude can be defined. The number of frequencies in these ranges can be defined in the last column (**# Frequencies**.
+Right in the next line, a set of edits are used to input the property values for **Phase data**  and **Amplitude data**. In the first column, the index of the channels/components to use to compute PAC are defined (**Comp/chan indices**). In the second column (**Freq range [lo hi] Hz**), the range of frequencies (in Hz) to compute the instantaneous phase and amplitude can be defined. The number of frequencies in these ranges can be defined in the last column (**# Frequencies**).
 
 The nex two sections allow for the selection of the PAC method (**PAC Method**) and input of optional parameters at **Command line options**. 
 
@@ -88,8 +88,8 @@ The last section comprises the settings for the computation of PAC statistics (*
 
   struct with fields:
 
-     chanindx: {[1 1]}
-     chantype: 1
+     dataindx: {[1 1]}
+     datatype: 1
        params: [1×1 struct]
     instmipac: {[1×1 struct]}
          klmi: {[1×1 struct]}
