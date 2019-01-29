@@ -74,14 +74,13 @@ As the top-layer function, pop_pac.m  provides the front-end interface for the t
 ### Graphical user interface
 #### Computing PAC with pop_pac 
 ERPAC tool provideds a flexible GUI that allow users to take advantage of the same functionalities provided from the command line. To invoke the GUI from the EEGLAB  GUI, click the menu *Tools >  ERPAC Tool > Estim. PAC*, otherwise you can launch the gui from the command line by typing `EEG = pop_pac(EEG);`. The figure below shows the graphical user interface of the toolbox. 
-
+	
 <Figure: GUI>
 <center>
-<img  style="float: center;" src="
-        pop_pac/doc/img/fig_gui_erpac_sample.jpg
-      "width="300"/>
+<img  style="float: center;" src="doc/img/fig_gui_erpac_sample.jpg"  width="500"/>
 <end>
-</center>
+</center>	
+	
 
 The GUI is divided in four parts designated by the labels: **Data type**/**CFC type**, **PAC method**, **Command line options** and **PAC statistics**.
 In the first section (**Data type**/**CFC type**), the type of data used for PAC computation can be selected in **Data type** between channel data (*Channels*) or ICA decomposed data (*Components*). The label **CFC type** is a static text indicating the type of CFC computation performed. The rationale of keeping this in the GUI is that future releases of the toolbox may contain other CFC methods in addition to PAC.
