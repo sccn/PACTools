@@ -1,6 +1,7 @@
 function vers = eegplugin_pop_pac(fig, trystrs, catchstrs);
-vers = 'beta02';
+vers = 'beta03';
 plotmenu = findobj(fig, 'tag', 'tools');
 submenu = uimenu( plotmenu, 'Label', 'ERPAC Tool', 'separator', 'on');
-uimenu( submenu, 'label', 'Estim. PAC','callback', 'EEG=pop_pac(EEG); eeglab redraw');
+uimenu( submenu, 'label', 'Simulate PAC signal','callback', 'EEG=pop_genpac; eeglab redraw');
+uimenu( submenu, 'label', 'Estimate PAC','callback', 'EEG=pop_pac(EEG); eeglab redraw');
 uimenu( submenu, 'label', 'Visualize PAC','callback', 'EEG=pop_plotpac(EEG); eeglab redraw');
