@@ -29,8 +29,8 @@
 %     plotopt
 %     plotsignif
 %     cell2plot
-%     phasechanindx
-%     ampchanindx
+%     phasedataindx
+%     ampdataindx
 %     pacmethod
 %     fampval
 %     fphaseval
@@ -77,8 +77,8 @@ end;
 try g.plotopt;                                 catch, g.plotopt         = {};              end;
 try g.plotsignif;                              catch, g.plotsignif      = 0;               end;
 try g.cell2plot;                               catch, g.cell2plot       = 1;               end;
-try g.phasechanindx;                           catch, g.phasechanindx   = [];              end;
-try g.ampchanindx;                             catch, g.ampchanindx     = [];              end;
+try g.phasedataindx;                           catch, g.phasedataindx   = [];              end;
+try g.ampdataindx;                             catch, g.ampdataindx     = [];              end;
 try g.pacmethod;                               catch, g.pacmethod       = [];              end;
 
 try g.fampval;                                 catch, g.fampval         = [];              end;
@@ -89,18 +89,22 @@ try g.timeval;                                 catch, g.timeval         = [];   
 if isfield(EEG,'etc') && isfield(EEG,'data')
     if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)  
         % Reconstruct pacstruct from EEG structure
-        pacstruct.params = EEG.etc.eegpac.params;       
+        pacstruct.params = EEG.etc.eegpac(1).params; 
+        
+        % Determining  cell to plot
+        if ~isempty(g.phasedataindx) && ~isempty(g.ampdataindx)
+            g.cell2plot = find(cell2mat(cellfun(@(x) isequal(x,[g.phasedataindx,g.ampdataindx]), {EEG.etc.eegpac.dataindx}, 'UniformOutput', 0)));
+        end
+        
         % if not pacmethod provided use the first available
         if isempty(g.pacmethod)
             fieldnameftmp = fieldnames(EEG.etc.eegpac);
-            g.pacmethod = fieldnameftmp{4};
+            tmpval = find(structfun(@(x) ~isempty(x),EEG.etc.eegpac(g.cell2plot)));
+            tmpval2 = find(tmpval>4);
+            g.pacmethod = fieldnameftmp{tmpval(tmpval2)};
         end
-        methodstructtmp = EEG.etc.eegpac.(g.pacmethod);
-        % Determining  cell to plot
-        if ~isempty(g.phasechanindx) && ~isempty(g.ampchanindx)
-            g.cell2plot = find(cell2mat(cellfun(@(x) isequal(x,[g.phasechanindx,g.ampchanindx]), EEG.etc.eegpac.chanindx, 'UniformOutput', 0)));
-        end
-        pacstruct.(g.pacmethod) = methodstructtmp{g.cell2plot};  
+        pacstruct.(g.pacmethod) = EEG.etc.eegpac(g.cell2plot).(g.pacmethod);
+          
     else
         error('eeg_plotpac() error: Missing or empty structure ''eegpac''');
     end

@@ -5,32 +5,41 @@ In addition to traditional methods to compute PAC, the plugin include the Instan
 The toolbox is developed and maintained at the Swartz Center for Computational Neurosciences, UCSD, La Jolla, California.
 
 
-##Table of Contents
+## Table of Contents
 1. [Phase-amplitude coupling in neurosciences](#phase-amplitude-coupling-in-neurosciences)
 2. [Methods implemented in the toolbox](#methods-implemented-in-the-toolbox)
+   1. [Continuous signal](#continuous-signal)
+   2. [Epoched signal](#epoched-signal)
 3. [Plugin architecture and workflow](#plugin-architecture-and-workflow)
 	1. [Plugin architecture]([#plugin-architecture])
 	2. [Graphical user interface](#graphical-user-interface)
-	3. [Output structure](#Output structure)
+	   1. [Computing PAC with pop_pac](#computing-pac-with-pop_pac)
+	   2. [Visualizing PAC with pop_plotpac](#visualizing-pac-with-pop_plotpac)
+	3. [Structure of outputs](#structure-of-outputs)
 4. [Setting up the plug-in](#setting-up-the-plug-in)  
 5. [Demos](#demos)
-   1. [Demo 1: Using the GUI](#demo-1:-Using-the-GUI)
-   2. [Demo 2: Mean Vector Length modulation Index in a single continuous signal](#demo-2:-mean-vectorlength-modulation-index-in-a-single-continuous-signal)
-   3. [Demo 3: Instantaneous MIPAC in a single continuous signal]([#demo-3:-instantaneous-mipac-in-a-single-continuous-signal])
-   4. [Demo 4: General Linear Model PAC in signals with multiple trials](#demo-4:-general-linear-model-pac-in-signals-with-multiple-trials)
-   5. [Demo 5: Event-Related  MIPAC in signals with multiple trials](#demo-5:-event-related-mipac-in-signals-with-multiple-trials)
+   1. [Computing Mean Vector Length Modulation Index in a continuous signal](#computing-mean-vector-length-modulation-index-in-a-continuous-signal)
+      1. [Computation](#computation)
+      2. [Visualization](#visualization)
+   2. [Computing Instantaneous MIPAC in a continuous signal](#computing-instantaneous-mipac-in-a-continuous-signal)
+      1. [Computation](#computation)
+      2. [Visualization](#visualization)
+   3. [Computing Mean Vector Length Modulation Index in a signal with multiple trials](#computing-mean-vector-length-modulation-index-in-a-signal-with-multiple-trials)
+      1. [Computation](#computation)
+      2. [Visualization](#visualization)
+   4. [Computing Event Related MIPAC in a signal with multiple trials](#computing-event-related-mipac-in-a-signal-with-multiple-trials)
+      1. [Computation](#computation)
+      2. [Visualization](#visualization)
 5. [Contributions and feedback](#contributions-and-feedback)
 
 ## Phase Amplitude Coupling in Neurosciences 
 Cross-frequency coupling (CFC) could refer to any possible interaction between frequencies, phases and amplitudes of oscillatory phenomena (*Sotero, 2016*), most experimental work has focused on three types of CFC: amplitude-amplitude coupling (AAC) or comodulation, phase-phase coupling (PPC) including bicoherence, and phase-amplitude coupling (PAC). Among them, PAC has attracted increasing interest given the growing amount of evidence of its potential role in brain information processing and its changes under pathological conditions including epilepsy (*López-Azcárate et al., 2010; De Hemptinne et al., 2013*). In PAC, the instantaneous amplitude of a higher frequency band within a signal is modulated by (or otherwise linked to) the instantaneous phase of a lower-frequency band of the same (or a different) signal.
 
-
-
 ## Methods Implemented in the Toolbox
 Several methods have been proposed to measure PAC. However, none is currently a gold standard.  In this toolbox, in addition to the recently developed Mutual Information Phase Amplitude Coupling (MIPAC) (*Martinez-Cancino et al., 2019*) , we have currently implemented three of the measures most often cited in the PAC literature: the Mean Vector Length Modulation Index (MVLmi) (*Canolty et al., 2006*), the Kullback-Leibler Modulation Index (KLmi) (*Tort et al., 2010*), and the General Linear Model Modulation Index (GLMmi) (*Penny et al., 2008a*). These measures have the ability to operate either in continues and epoched signals. In the case of epoched signals, a scheme similar to the one proposed by *Voytek et al., 2013* with the use of the method by (*Penny et al., 2008*) in the dimension of the trials (assuming a data matrix of dimensions equal to number of trials by latencies) is implemented.
  
 
-### Continuous signal(s)
+### Continuous signal
 In the table below are listed the methods implemented to compute PAC in continuous signals. References to the specific methods are listed in the second rowof the table. The dimension of the output of the PAC methods  is indiceted in the third row of the table. 
 
 
@@ -43,7 +52,7 @@ Most of the PAC methods in the literature return a single value of the PAC measu
 | General Linear Model Modulation Index | [Penny et al., 2008]()            | Single value     |
 | Instantaneous Mutual Information PAC  | [Martinez-Cancino et al., 2019]() | Unidimensional   |
 
-### Epoched signal(s)
+### Epoched signal
 In the table below are listed the current methods implemented in the toolbox to estimate PAC in epoched data. Epoched data is usually the result of extracting snipets of signals time-locked to an event(s) of interest. Here epoched data is assumed as being formated as a data matrix with dimensions of number of epochs(trials) by number of latencies(timepoints).  The three first methods listed in the table are a natural extension of the methods listed in the previous seccion but applying them onto each latency along the dimension of the epochs. The fisrt application of this scheme was proposed by *Voytek et al., 2013* as an extension of the method by Penny et al., 2008. These methods return a PAC time series describing the 'average' dynamics of the procces in the trials. Event-related MIPAC method, though, return a PAC time series for each trial provided.
 
 | Method                                | Reference                         | Output Dimension | Notes
@@ -63,22 +72,26 @@ The plugin ERPAC is developed as an EEGLAB plugin. Given this, it shares the sam
 As the top-layer function, pop_pac.m  provides the front-end interface for the toolbox it also serves as the bridge to the inner layer function, eeg\_pac.m. Users with a high level of Matlab/EEGLAB expertise can call this function directly by providing all the inputs required. The function eeg\_pac.m is indeed, the core function of the toolbox and is responsible for processing and parsing the input data and options in order to distribute it to the functions in charge of the computation of each of the PAC methods mentioned in the section [Methods Implemented in the Toolbox](#methods-implemented-in-the-toolbox).
 
 ### Graphical user interface
+#### Computing PAC with pop_pac 
 ERPAC tool provideds a flexible GUI that allow users to take advantage of the same functionalities provided from the command line. To invoke the GUI from the EEGLAB  GUI, click the menu *Tools >  ERPAC Tool > Estim. PAC*, otherwise you can launch the gui from the command line by typing `EEG = pop_pac(EEG);`. The figure below shows the graphical user interface of the toolbox. 
-  
-<Figure: GUI ===================================================================== >
+	
+<Figure: GUI>
 <center>
-<img  style="float: center;" src="doc/img/fig_gui_erpac_sample.tiff" alt="drawing" width="500"/>
+<img  style="float: center;" src="doc/img/fig_gui_erpac_sample.jpg"  width="500"/>
 <end>
-</center>
+</center>	
+	
 
 The GUI is divided in four parts designated by the labels: **Data type**/**CFC type**, **PAC method**, **Command line options** and **PAC statistics**.
 In the first section (**Data type**/**CFC type**), the type of data used for PAC computation can be selected in **Data type** between channel data (*Channels*) or ICA decomposed data (*Components*). The label **CFC type** is a static text indicating the type of CFC computation performed. The rationale of keeping this in the GUI is that future releases of the toolbox may contain other CFC methods in addition to PAC.
-Right in the next line, a set of edits are used to input the property values for **Phase data**  and **Amplitude data**. In the first column, the index of the channels/components to use to compute PAC are defined (**Comp/chan indices**). In the second column (**Freq range [lo hi] Hz**), the range of frequencies (in Hz) to compute the instantaneous phase and amplitude can be defined. The number of frequencies in these ranges can be defined in the last column (**# Frequencies**.
+Right in the next line, a set of edits are used to input the property values for **Phase data**  and **Amplitude data**. In the first column, the index of the channels/components to use to compute PAC are defined (**Comp/chan indices**). In the second column (**Freq range [lo hi] Hz**), the range of frequencies (in Hz) to compute the instantaneous phase and amplitude can be defined. The number of frequencies in these ranges can be defined in the last column (**# Frequencies**).
 
 The nex two sections allow for the selection of the PAC method (**PAC Method**) and input of optional parameters at **Command line options**. 
 
 The last section comprises the settings for the computation of PAC statistics (**PAC statistics**). Here the number of surrogates (**# surrogates**), number of blocks to use to shuffle the data for generating the surrogates (**# blocks**), the significance threshold (**Significance threshold (0<p<1)**) and multiple comparison correction (**Correct for multiple comparisons**) can bet set. Three buttons lay at the bottom  of the GUI designated to launch the help documention (button: **Help**), cancel the execution of the GUI without further action (button: **Cancel**) and to start the execution of PAC computation with the settings provided (button: **OK**).
- 
+
+#### Visualizing PAC with pop_plotpac
+
  
 ### Structure of outputs
  When computing PAC from pop\_pac.m,  the results of the computation are stored in the field *EEG.etc.pac.eegpac* structure. As an example, in the snippet below is shown a sample structure storing the computation of PAC using Instantaneous MIPAC (*instmipac*) and Kullback-Leibler Modulation Index methods.
@@ -88,8 +101,8 @@ The last section comprises the settings for the computation of PAC statistics (*
 
   struct with fields:
 
-     chanindx: {[1 1]}
-     chantype: 1
+     dataindx: {[1 1]}
+     datatype: 1
        params: [1×1 struct]
     instmipac: {[1×1 struct]}
          klmi: {[1×1 struct]}
@@ -97,12 +110,11 @@ The last section comprises the settings for the computation of PAC statistics (*
 
 
 The last two fields here indicate that the measure computed was Instantaneous MIPAC (*instmipac*). This field takes the name of the measure computed. In practice, we may find as many fields like this as PAC measures computed. This fields, in general, store the PAC values, the dimension of the output and results specific to the method computed.
- 
-### Signal Processing Prior to Computing PAC
 
- 
+## Setting up the plug-in
+  
 ## Demos
-### Demo 1: Mean Vector Length Modulation Index and Instantaneous MIPAC in a single continuous signal
+### Computing Mean Vector Length Modulation Index in a continuous signal
 
 #### Computation
 
@@ -130,10 +142,17 @@ After loading the dataset, we will proceed to compute PAC using ERPAC  from its 
 `h = eeg_plotpac(EEG,'PhaseAmpTime', 'pacmethod','instmipac'`
 
 
-The
-### Demo 2: Computing Mean Vector Length Modulation Index and Event Related MIPAC in a signal with multiple trials
-#### Computation
+### Computing Instantaneous MIPAC in a continuous signal
 
+#### Computation
+#### Visualization
+
+### Computing Mean Vector Length Modulation Index in a signal with multiple trials
+#### Computation
+#### Visualization
+
+### Computing Event Related MIPAC in a signal with multiple trials
+#### Computation
 #### Visualization
 
 ### Contributions and feedback
