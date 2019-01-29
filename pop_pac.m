@@ -222,7 +222,7 @@ if strcmpi(pooldata,'channels')
     [dim_chan,~,dim_trial] = size(EEG.data); clear tmp;
     
     % Checking channel indices
-    if ~all(all(ismember(indexfreqs1, 1:dim_chan)), all(ismember(indexfreqs2, 1:dim_chan)))
+    if ~all([all(ismember(indexfreqs1, 1:dim_chan)), all(ismember(indexfreqs2, 1:dim_chan))])
         error('Invalid data index');
     end
     
@@ -248,7 +248,9 @@ end
 %--
 timefreq_phase = cell(1,length(indexfreqs1));
 timefreq_amp   = cell(1,length(indexfreqs2));
-LastCellMethod = 0;
+LastCell = 0;
+
+compute_flag = ones(length(indexfreqs1),length(indexfreqs2));
 
 if ~isfield(EEG.etc,'eegpac') || g.cleanup
     EEG.etc.eegpac = [];
@@ -287,8 +289,8 @@ elseif isfield(EEG.etc.eegpac,'params')
      inputparams.signif.bonfcorr   = g.bonfcorr;
      inputparams.pooldata          = find(strcmp({'Channels','Components'},pooldata));
      
-     tmpstrc = EEG.etc.eegpac.params;
-     tmpstrc.pooldata = EEG.etc.eegpac.datatype;
+     tmpstrc = EEG.etc.eegpac(1).params;
+     tmpstrc.pooldata = EEG.etc.eegpac(1).datatype;
      tmpstrc.signif = rmfield(tmpstrc.signif,'ptspercent');
      if ~isequal(tmpstrc, inputparams)
          disp('pop_pac: Parameterers provided do not match the ones saved from previous computation.');
@@ -297,41 +299,32 @@ elseif isfield(EEG.etc.eegpac,'params')
      end
     
     if ~isempty(EEG.etc.eegpac)
-        LastCellMethod = length(EEG.etc.eegpac.dataindx);
+        LastCell = length(EEG.etc.eegpac);
         % Checking Method field
-        tmpfield = fieldnames(EEG.etc.eegpac);
+        tmpfield = fieldnames(EEG.etc.eegpac(1));
         methodexist = find(strcmp(tmpfield(4:end), g.method));
-        MethodComputed_flag = 0;
         if ~isempty(methodexist)
-            % Checking computed chanindex
-            [A,B] = meshgrid(indexfreqs1,indexfreqs2);
-            AllFreqComb = reshape(cat(2,A',B'),[],2);
-            for i = 1: size(AllFreqComb,1)                
-                ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==AllFreqComb(i,:)), EEG.etc.eegpac.dataindx, 'UniformOutput', 0)));
-                if ~isempty(ChanIndxExist)
-                    if length(EEG.etc.eegpac.(g.method)) < ChanIndxExist
-                        MethodComputed_flag = 0;
-                    else
-                        MethodComputed_flag = ~isempty(EEG.etc.eegpac.(g.method)(ChanIndxExist));
+            for ix =1:length(indexfreqs1)
+                for iy = 1:1:length(indexfreqs2)
+                    ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==[indexfreqs1(ix) indexfreqs2(iy)]), {EEG.etc.eegpac.dataindx}, 'UniformOutput', 0)));
+                    if ~isempty(ChanIndxExist) && ~isempty(EEG.etc.eegpac(ChanIndxExist).(g.method))
+                        if g.forcecomp
+                            disp(['pop_pac: Recomputing PAC using : ' g.method])
+                            compute_flag(ix,iy) = 1;
+                        else
+                            disp(['pop_pac: PAC has been already computed before using ''' g.method '''']);
+                            disp(['         Aborting computation for data indices' num2str([indexfreqs1(ix) indexfreqs2(iy)]) ]);
+                            compute_flag(ix,iy) = 0;
+                        end
+                        
                     end
-                    break; 
-                end               
-            end
-        end
-        
-        if MethodComputed_flag 
-            if ~g.forcecomp
-                disp(['pop_pac: Recomputing PAC using : ' g.method])
-            else
-                disp(['pop_pac: PAC has been already computed before using ''' g.method '''']);
-                disp('         Exiting without further action.');
-                return;
+                end
             end
         end
     end
 end
 %--------------------------------------------------------------------------
-c = LastCellMethod+1;
+c = LastCell+1;
 for ichan_phase = 1:length(indexfreqs1)
     % Retreiving data for phase (X)
     if strcmpi(pooldata,'channels')
@@ -341,69 +334,75 @@ for ichan_phase = 1:length(indexfreqs1)
     end
     %----    
     for ichan_amp = 1:length(indexfreqs2)
-        % Retreiving data for amplitude (Y)
-        if strcmpi(pooldata,'channels')
-            Y = squeeze(EEG.data(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
-            datatype = 1;
-        else % Component
-            Y = squeeze(EEG.icaact(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
-            datatype = 2;
+        if compute_flag(ichan_phase, ichan_amp)
+            % Retreiving data for amplitude (Y)
+            if strcmpi(pooldata,'channels')
+                Y = squeeze(EEG.data(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
+                datatype = 1;
+            else % Component
+                Y = squeeze(EEG.icaact(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
+                datatype = 2;
+            end
+            %----
+            % Running eeg_pac
+            % Three options, so we can save the TF decompositions us them later in the loop
+            if all([isempty(timefreq_phase{ichan_phase}),isempty(timefreq_amp{ichan_amp})])
+                [~, timesout, freqs1, freqs2, alltfX, alltfY,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  options{:});
+                
+                % populating  phase cell
+                timefreq_phase{ichan_phase}.timesout = timesout;
+                timefreq_phase{ichan_phase}.freqs    = freqs1;
+                timefreq_phase{ichan_phase}.alltf    = alltfX;
+                
+                timefreq_amp{ichan_amp}.timesout = timesout;
+                timefreq_amp{ichan_amp}.freqs    = freqs2;
+                timefreq_amp{ichan_amp}.alltf    = alltfY;
+                
+            elseif isempty(timefreq_amp{ichan_amp})
+                tmpopt = [options 'alltfXstr' timefreq_phase{ichan_phase}] ;
+                [~, timesout, ~, freqs2, ~, alltfY,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  tmpopt{:}); clear tmpopt;
+                
+                % populating  amp cell
+                timefreq_amp{ichan_amp}.timesout = timesout;
+                timefreq_amp{ichan_amp}.freqs    = freqs2;
+                timefreq_amp{ichan_amp}.alltf    = alltfY;
+                
+            elseif isempty(timefreq_phase{ichan_phase})
+                tmpopt = [options 'alltfYstr' timefreq_amp{ichan_amp}] ;
+                [~, timesout, freqs1, ~,alltfX, ~,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  tmpopt{:}); clear tmpopt;
+                % populating  phase cell
+                timefreq_phase{ichan_phase}.timesout = timesout;
+                timefreq_phase{ichan_phase}.freqs    = freqs1;
+                timefreq_phase{ichan_phase}.alltf    = alltfX;
+            end
+            
+            ChanIndxExist = [];
+            if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
+                ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==[indexfreqs1(ichan_phase) indexfreqs2(ichan_amp)]), {EEG.etc.eegpac.dataindx}, 'UniformOutput', 0)));
+            end
+            
+            if ~isempty(ChanIndxExist)
+                EEG.etc.eegpac(ChanIndxExist).(g.method) = pacstruct.(g.method);
+                
+            elseif ~isfield(EEG.etc.eegpac,'dataindx')
+                EEG.etc.eegpac(1).(g.method) = pacstruct.(g.method);
+                EEG.etc.eegpac(1).dataindx   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
+                EEG.etc.eegpac(1).datatype   = datatype;
+                EEG.etc.eegpac(1).params     = pacstruct.params;
+                c = c+1;
+            else
+                EEG.etc.eegpac(c).(g.method) = pacstruct.(g.method);
+                EEG.etc.eegpac(c).dataindx   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
+                EEG.etc.eegpac(c).datatype   = datatype;
+                EEG.etc.eegpac(c).params     = pacstruct.params;
+                c = c+1;
+            end
         end
-        %----       
-        % Running eeg_pac
-        % Three options, so we can save the TF decompositions us them later in the loop
-        if all([isempty(timefreq_phase{ichan_phase}),isempty(timefreq_amp{ichan_amp})])
-            [~, timesout, freqs1, freqs2, alltfX, alltfY,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  options{:});
-            
-            % populating  phase cell
-            timefreq_phase{ichan_phase}.timesout = timesout;
-            timefreq_phase{ichan_phase}.freqs    = freqs1;
-            timefreq_phase{ichan_phase}.alltf    = alltfX;
-            
-            timefreq_amp{ichan_amp}.timesout = timesout;
-            timefreq_amp{ichan_amp}.freqs    = freqs2;
-            timefreq_amp{ichan_amp}.alltf    = alltfY;
-            
-        elseif isempty(timefreq_amp{ichan_amp})
-            tmpopt = [options 'alltfXstr' timefreq_phase{ichan_phase}] ;
-            [~, timesout, ~, freqs2, ~, alltfY,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  tmpopt{:}); clear tmpopt;
-            
-            % populating  amp cell
-            timefreq_amp{ichan_amp}.timesout = timesout;
-            timefreq_amp{ichan_amp}.freqs    = freqs2;
-            timefreq_amp{ichan_amp}.alltf    = alltfY;
-            
-        elseif isempty(timefreq_phase{ichan_phase})
-            tmpopt = [options 'alltfYstr' timefreq_amp{ichan_amp}] ;  
-            [~, timesout, freqs1, ~,alltfX, ~,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  tmpopt{:}); clear tmpopt;
-            % populating  phase cell
-            timefreq_phase{ichan_phase}.timesout = timesout;
-            timefreq_phase{ichan_phase}.freqs    = freqs1;
-            timefreq_phase{ichan_phase}.alltf    = alltfX;
-        end
-        ChanIndxExist = [];
-        if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
-            ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==[indexfreqs1(ichan_phase) indexfreqs2(ichan_amp)]), EEG.etc.eegpac.dataindx, 'UniformOutput', 0)));
-        end
-        if ~isempty(ChanIndxExist)
-            EEG.etc.eegpac.(g.method){ChanIndxExist} = pacstruct.(g.method);
-        elseif ~isfield(EEG.etc.eegpac,'dataindx')
-            EEG.etc.eegpac.(g.method){1} = pacstruct.(g.method);
-            EEG.etc.eegpac.dataindx{1}   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
-            EEG.etc.eegpac.datatype      = datatype;
-            c = c+1;
-        else
-            EEG.etc.eegpac.(g.method){c} = pacstruct.(g.method);
-            EEG.etc.eegpac.dataindx{c}   = [indexfreqs1(ichan_phase),indexfreqs2(ichan_amp)] ;
-            c = c+1;
-        end      
     end
 end
 
-% Common stuff
-EEG.etc.eegpac.params = pacstruct.params;   
+% Sorting fields stuff 
 tmpval = setdiff( fieldnames(EEG.etc.eegpac),{'dataindx'    'datatype'    'params'})';
-
 EEG.etc.eegpac = orderfields(EEG.etc.eegpac, {'dataindx'    'datatype'    'params' tmpval{:}});
 com = sprintf('pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str(freqs1),num2str(freqs2),num2str(indexfreqs1),num2str(indexfreqs2), vararg2str(options(5:end)));
 end

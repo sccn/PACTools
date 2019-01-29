@@ -66,7 +66,7 @@ if length(fieldnamesval)>3
 else
     error('pop_plotpac() error: PAC must be computed');
 end
-listchanindx     = cellfun(@(x) cellstr(num2str(x)),EEG.etc.eegpac.dataindx)';
+listchanindx     = cellfun(@(x) cellstr(num2str(x)),{EEG.etc.eegpac.dataindx})';
 
 
 listplot   = {'Comodulogram',...
