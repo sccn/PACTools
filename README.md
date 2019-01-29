@@ -90,7 +90,7 @@ The nex two sections allow for the selection of the PAC method (**PAC Method**) 
 
 The last section comprises the settings for the computation of PAC statistics (**PAC statistics**). Here the number of surrogates (**# surrogates**), number of blocks to use to shuffle the data for generating the surrogates (**# blocks**), the significance threshold (**Significance threshold (0<p<1)**) and multiple comparison correction (**Correct for multiple comparisons**) can bet set. Three buttons lay at the bottom  of the GUI designated to launch the help documention (button: **Help**), cancel the execution of the GUI without further action (button: **Cancel**) and to start the execution of PAC computation with the settings provided (button: **OK**).
 
-### Visualizing PAC with pop_plotpac
+#### Visualizing PAC with pop_plotpac
 
  
 ### Structure of outputs
