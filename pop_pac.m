@@ -404,5 +404,5 @@ end
 % Sorting fields stuff 
 tmpval = setdiff( fieldnames(EEG.etc.eegpac),{'dataindx'    'datatype'    'params'})';
 EEG.etc.eegpac = orderfields(EEG.etc.eegpac, {'dataindx'    'datatype'    'params' tmpval{:}});
-com = sprintf('pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str(freqs1),num2str(freqs2),num2str(indexfreqs1),num2str(indexfreqs2), vararg2str(options(5:end)));
+com = sprintf('EEG = pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str([freqs1(1) freqs1(end)]),num2str([freqs2(1) freqs2(end)]),num2str(indexfreqs1),num2str(indexfreqs2), vararg2str(options(5:end)));
 end
