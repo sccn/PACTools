@@ -13,15 +13,15 @@
 %                 'Comodulogram': Standard comodulogram Phase Vs Amplitude
 % 
 %                 For 3D data(single trial with time):
-%                 'PhaseAmpTime': Tri-dimensional plot of Phase Vs Amplitude Vs Time
+%                 'PhaseAmpTime':  Tri-dimensional plot of Phase Vs Amplitude Vs Time
 %                 'Amp-PhaseTime': Bi-dimensional plot of Phase Vs Time for a pinned Amplitude value
 %                 'Phase-AmpTime': Bi-dimensional plot of Amplitude Vs Time for a pinned Phase value
 %                 'Time-PhaseAmp': Bi-dimensional plot of Phase Vs Amp (comodulogram) for a pinned Time value.
 % 
 %                 For 4D data (Multiple trials with time)
-%                 'AmpPhase-TrialTime': 
-%                 'Amp-PhaseTrialTime':
-%                 'Phase-AmpTrialTime':
+%                 'AmpPhase-TrialTime': Trials Vs Time for pinned values of Aplitude and Phase
+%                 'Amp-PhaseTrialTime': Tridimensional plot Phase Vs Trials Vs Time for pinned value of Amplitude
+%                 'Phase-AmpTrialTime': Tridimensional plot Amplitude Vs Trials Vs Times for pinned Phase values
 %    
 %                 For customized plots:
 %                               
