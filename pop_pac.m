@@ -48,7 +48,7 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 function [EEG,com] = pop_pac(EEG,pooldata,freqs1,freqs2,indexfreqs1,indexfreqs2,varargin)
-com = [];
+com = '';
 
 if nargin == 0
     help pop_pac;
@@ -211,7 +211,19 @@ if nargin < 6
     
     % Adding options
     tmpparams = eval( [ '{' res.edit_optinput '}' ] );
-    options   = {options{:} tmpparams{:}};
+    
+    % Updating current function parameters and inputs to eeg_pac
+    opttmp = tmpparams;
+    if ~isempty( tmpparams )
+        for i = 1:2:numel(opttmp)
+            if any(strcmp(opttmp{i},fieldnames(g)))
+            g.(opttmp{i}) = opttmp{i+1};
+            else
+                options{end+1} = opttmp{i};
+                options{end+1} = opttmp{i+1};
+            end
+        end
+    end
 else
     options = {'freqs' freqs1 'freqs2' freqs2};
     options = {options{:} varargin{:}};
