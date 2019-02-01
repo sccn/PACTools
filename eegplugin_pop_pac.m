@@ -1,6 +1,8 @@
-function vers = eegplugin_pop_pac(fig, trystrs, catchstrs);
+function vers = eegplugin_pop_pac(fig,  try_strings, catch_strings);
 vers = 'beta03';
 plotmenu = findobj(fig, 'tag', 'tools');
 submenu = uimenu( plotmenu, 'Label', 'ERPAC Tool', 'separator', 'on');
-uimenu( submenu, 'label', 'Estimate PAC','callback', 'EEG=pop_pac(EEG); eeglab redraw');
-uimenu( submenu, 'label', 'Visualize PAC','callback', 'EEG=pop_plotpac(EEG); eeglab redraw');
+uimenu( submenu, 'label', 'Estimate PAC','callback',...
+    [try_strings.no_check '[EEG LASTCOM]=pop_pac(EEG);' catch_strings.add_to_hist]);
+uimenu( submenu, 'label', 'Visualize PAC','callback',...
+    [try_strings.no_check '[~,LASTCOM]=pop_plotpac(EEG);' catch_strings.add_to_hist]);
