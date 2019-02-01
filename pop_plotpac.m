@@ -29,8 +29,8 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function [EEG,com] = pop_plotpac(EEG, plottype, pacmethod, phasedataindx, ampdataindx, varargin)
-
+function [fighandle com] = pop_plotpac(EEG, plottype, pacmethod, phasedataindx, ampdataindx, varargin)
+fighandle = []; com = '';
 
 try
     options = varargin;
@@ -92,7 +92,7 @@ listplot   = {'Comodulogram',...
                 {4 4 [0 3]    [2 1]}  {4 4 [1.4 3] [2.5 1]}};
 
             [out_param userdat tmp res] = inputgui('title', guititle, 'geom', geometry, 'uilist',uilist, 'helpcom','pophelp(''pop_plotpac'');');
-            
+            if isempty(res), return; end
             plottype      = listplot{res.listbox_plot};
             pacmethod     = listmethod{res.listbox_method};
             tmpchanindx   = str2num(listchanindx{res.listbox_chanindx});
@@ -116,3 +116,21 @@ fighandle = eeg_plotpac(EEG,plottype,'pacmethod',pacmethod,...
                                      'fampval', g.fampval,...
                                      'fphaseval', g.fphaseval,...
                                      'timeval', g.timeval);
+                                 
+ % Creating command
+ if ~isempty(g.plotopt)
+     opt = '{';
+     for i =1:length(g.plotopt)/2
+         if isnumeric(g.plotopt{i+1})
+             opt = ([opt '''' g.plotopt{i} ''' ' num2str(g.plotopt{i+1})]);
+         else
+             opt = ([opt '''' g.plotopt{i} ''' ''' num2str(g.plotopt{i+1}) '''']);
+         end
+     end
+      opt = ([opt '}']);
+ com = sprintf('hfig = pop_plotpac(EEG,''%s'',''%s'',[%s],[%s],''plotsignif'',[%s],''fampval'',[%s],''fphaseval'',[%s],''timeval'',[%s],''plotopt'', %s);',...
+                                   plottype, pacmethod,num2str(phasedataindx),num2str(ampdataindx),num2str(g.plotsignif),num2str(g.fampval),num2str(g.fphaseval),num2str(g.timeval),opt);
+ else
+      com = sprintf('hfig = pop_plotpac(EEG,''%s'',''%s'',[%s],[%s],''plotsignif'',[%s],''fampval'',[%s],''fphaseval'',[%s],''timeval'',[%s]);',...
+                                   plottype, pacmethod,num2str(phasedataindx),num2str(ampdataindx),num2str(g.plotsignif),num2str(g.fampval),num2str(g.fphaseval),num2str(g.timeval));
+ end
