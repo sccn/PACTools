@@ -29,7 +29,7 @@ max_time      = 7;    % Time of the simulation. Recommended: single trial [6], m
 n_trials      = 200;  % Number of trials. Recommended: single trial [1], multiple trials [1000]
 s_rate        = 500;  % Sampling rate. Recommended: single trial [500], multiple trials [250]
 padtime       = 0;    % Padding time at the start and end of the signal. 
-snrval        = 10;   % Signal to noise ratio. Recommended: [5]
+snrval        = 50;   % Signal to noise ratio. Recommended: [5]
 maxshift      = 10;   % Maximum shifts (jitter) injected into the data. Recommended: single trial [1], multiple trials [10]
 nsegm         = 5;    % Number of segments in the data. Each segment is a block with our without modulation
 
@@ -348,6 +348,11 @@ end
 
 %% TESTING pop_pac
 try
+tlimits = [0 7]; 
+padtime = 1;
+snrval = 20;
+EEG  = pop_genpac(fc,fm,tlimits,'Ac',5,'Am',1,'srate',s_rate,'cpfunc','block','blockamp',1, 'nsegm',nsegm,'plot_flag', 1,'padtime',padtime,'snr',snrval,'m',1,'ntrials',1,'nchan',3);
+
 EEG = pop_pac(EEG,'Channels',[4 15],[30 100],[1  2],[1  2],'method','mvlmi',    'nboot',200,'alpha',[],'nfreqs1',6,'nfreqs2',7,'bonfcorr',0);
 EEG = pop_pac(EEG,'Channels',[4 15],[30 100],[1  2],[1  2],'method','klmi',     'nboot',200,'alpha',[],'nfreqs1',6,'nfreqs2',7,'bonfcorr',0);
 EEG = pop_pac(EEG,'Channels',[4 15],[30 100],[1  2],[1  2],'method','glm',      'nboot',200,'alpha',[],'nfreqs1',6,'nfreqs2',7,'bonfcorr',0);
