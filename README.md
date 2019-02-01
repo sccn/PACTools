@@ -77,7 +77,6 @@ In its current version, the toolbox provide basic function to compute and visual
 #### Computing PAC with pop_pac 
 To invoke the GUI to compute PAC from the EEGLAB  GUI, click the menu *Tools >  ERPAC Tool > Estimate PAC*, otherwise you can launch the gui from the command line by typing `EEG = pop_pac(EEG)`. The figure below shows the graphical user interface of the toolbox. 
 	
-<Figure: GUI>
 <center>
 <img  style="float: center;" src="doc/img/fig_gui_erpac_sample.jpg"  width="500"/>
 <end>
@@ -94,8 +93,6 @@ The last section comprises the settings for the computation of PAC statistics (*
 #### Visualizing PAC with pop_plotpac
  Once PAC is computed using *pop_pac.m*, the results are stored in the EEG structure (see details in the next section). Visualization of the results can be done by invoking the function *pop_plotpac* (which call *eeg_plotpac.*) from the command line (`pop_plotpac(EEG)`)or from the EEGLAB menu as *Tools >  ERPAC Tool > Estimate PAC > Visualize PAC* (see figure below). Notice that *pop_plotpac* is the function that gather all the inputs (if incomplete list of inputs are provided then pops the GUI) in order to pass the full list of inputs to *eeg_plotpac.*. The later one is the function that actually perform the plotting.
  
- 
-<Figure: GUI>
 <center>
 <img  style="float: center;" src="doc/img/fig_gui_pop_plopac.jpg"  width="600"/>
 <end>
@@ -178,8 +175,6 @@ This dataset contains a simulated PAC signal where the instantaneous phase at 8H
 
 After loading the dataset, we will proceed to compute PAC using ERPAC Tool from its main GUI. To launch the GUI, select *Tools >  ERPAC Tool > Estimate PAC*  in the main EEGLAB GUI. Alternatively you can use `EEG = pop_pac(EEG)` from the MATLAB command windows. Here we will compute PAC using the Mean Vecto length Modulation Index (*mvlmi*) between the phases in the range [4 15] Hz and the amplitudes  in the range [30 90]Hz. In these ranges, 10 and 20 frequencies will be used respectively. To perform the computation, enter the parameters in the *pop_pac* GUI as shown in the figure below and click **Ok**.
 
-
-<Figure: Demo 1 pop_pac>
 <center>
 <img  style="float: center;" src="doc/img/demo1_pop_pac.jpg"  width="600"/>
 <end>
@@ -193,7 +188,6 @@ The equivalent command to perform this computation can be retreived with the com
 To visualize the modulation index computed previously, click on  *Tools >  ERPAC Tool > Visualize PAC*. The GUI for *pop_plotpac* will pop up.
 Then select the options as in the figure below and click **OK**.
 
-<Figure: Demo 1 pop_plotpac>
 <center>
 <img  style="float: center;" src="doc/img/demo1_pop_plotpac.jpg"  width="600"/>
 <end>
@@ -201,7 +195,6 @@ Then select the options as in the figure below and click **OK**.
 
 After this, a figure showing a comodulogram will pop up.
 
-<Figure: Demo 1 comod>
 <center>
 <img  style="float: center;" src="doc/img/demo1_comod.jpg"  width="400"/>
 <end>
@@ -216,7 +209,6 @@ To compute MIPAC in single trial signals, follow the same steps as in *Demo 1* t
 #### Visualization
 Here we will visualize a 2D comodulogram with the evolution of PAC across time. For this, launch *pop_plotpac* from *Tools >  ERPAC Tool > Visualize PAC* and select the options to match the figure below.
 
- <Figure: Demo 2 demo2_plot_pac>
 <center>
 <img  style="float: center;" src="doc/img/demo2_plot_pac.jpg"  width="600"/>
 <end>
@@ -224,7 +216,6 @@ Here we will visualize a 2D comodulogram with the evolution of PAC across time. 
 
 The figure below  will pop up.
 
- <Figure: demo2_comod2d.jpg>
 <center>
 <img  style="float: center;" src="doc/img/demo2_comod2d.jpg"  width="700"/>
 <end>
@@ -232,5 +223,3 @@ The figure below  will pop up.
 
 ### Contributions and feedback
 This is an open source project, however, since this is still in its Beta Version, please, contact the author (Ramon Martinez-Cancino : ram033@eng.ucsd.edu) for contributions. The use of the issue tracker is encouraged. 
-
-
