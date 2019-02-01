@@ -102,13 +102,13 @@ To procceed to visualize the results with *pop_plotpac.*, start by selecting the
 
 **For 1D data results:** 
 
-Available for: **klmi, glm, mvlmi** on single trial data. (Must have EEG.etc.eegpac.params.dim = 1 **)
+Available for: **klmi, glm, mvlmi** on single trial data. (Must have EEG.etc.eegpac.(methodname).dim = 1 **)
 
 - 'Comodulogram': Standard comodulogram Phase Vs Amplitude
 
 **For 3D data results (Phase-Amplitude-Time):** 
 
-Available for: **instmipac** on sigle trials, and traditional methods (**klmi, glm, mvlmi**) on multiple trials data. (Must have EEG.etc.eegpac.params.dim = 2 **) 
+Available for: **instmipac** on sigle trials, and traditional methods (**klmi, glm, mvlmi**) on multiple trials data. (Must have EEG.etc.eegpac.(methodname).dim = 2 **) 
 
 - 'PhaseAmpTime':  Tri-dimensional plot of Phase Vs Amplitude Vs Time
 - 'Amp-PhaseTime': Bi-dimensional plot of Phase Vs Time for a pinned Amplitude value
@@ -117,7 +117,7 @@ Available for: **instmipac** on sigle trials, and traditional methods (**klmi, g
  
 **For 4D data results (Trials-Phase-Amplitude-Time,):**
 
-Available for: currently only for **instmipac** (Must have EEG.etc.eegpac.params.dim = 3 **) 
+Available for: currently only for **instmipac** (Must have EEG.etc.eegpac.(methodname).dim = 3 **) 
 
 - 'AmpPhase-TrialTime': Trials Vs Time for pinned values of Aplitude and Phase
 - 'Amp-PhaseTrialTime': Tridimensional plot Phase Vs Trials Vs Time for pinned value of Amplitude
