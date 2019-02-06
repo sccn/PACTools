@@ -9,8 +9,6 @@
 %                 channel or ICA decomposed data
 %  freqs1       - [min max] Range of frequency to consider for the phase values.
 %  freqs2       - [min max] Range of frequency to consider for the amplitude values.
-%  nfreqs1      - [Integer]Number of frequencies in the 'freqs1' range
-%  nfreqs2      - [Integer]Number of frequencies in the 'freqs2' range
 %  indexfreqs1  - [Integer]Index of the channel or component to use to in freqs1
 %  indexfreqs2  - [Integer]Index of the channel or component to use to in freqs2
 %
@@ -18,15 +16,23 @@
 % Note: Optional parameters of eeg_pac can be provided as input as well
 %  method       - {'mvlmi','klmi','glm','instmipac', 'ermipac'}.CFC method .
 %                 Default: 'glm'. (currently PAC methods only)
-%  nboot        - [Integer] Number of surrogates generated for statistical significance analysis 
-%  alpha        - [Real] Significance threshold. Default: 0.005
-%  bonfcorr     - [1,0] Flag to perform multiple comparisons correction
+%  nboot        - [Integer] Number of surrogates generated for statistical significance analysis. Default: [200] 
+%  alpha        - [Real] Significance threshold. Default: [0.05]
+%  bonfcorr     - [1,0] Flag to perform multiple comparisons correction.Default: [0] 
 %                 using Bonferroni. Default: [0](do not perform correction)
+%  nfreqs1      - [Integer]Number of frequencies in the 'freqs1' range. Default: [1] 
+%  nfreqs2      - [Integer]Number of frequencies in the 'freqs2' range. Default: [1] 
 %  cleanup      - [1,0] Flag to remove previous results in the EEG
-%                 structure. Default: [1] (clean up structure)
+%                 structure. Default: [0] (Do not clean up structure)
+%  ptspercent   - [0.01:0.5] Size in percentage of data of the segments to shuffle 
+%                 when creating surrogate data. Default: [0.05] 
+%  forcecomp    - [0,1] Flag to force (1) or not (0) the computation of PAC
+%                 in the case it is detected that the measure has been
+%                 computed already. Default:[0]
 % Outputs:
 %  EEG          - EEGLAB EEG structure. Results of computing CFC are
 %                  stored in EEG.etc.pac
+%  com          - Command for EEG history
 % See also:
 %
 % Author: Ramon Martinez-Cancino, SCCN, 2019
