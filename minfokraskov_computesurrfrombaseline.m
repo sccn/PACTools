@@ -8,7 +8,7 @@ if nargin < 5
     return;
 end
 
-trys
+try
     options = varargin;
     if ~isempty( varargin ),
         for i = 1:2:numel(options)

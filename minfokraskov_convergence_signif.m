@@ -80,8 +80,6 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 function [Iloc_origsurr, kconv0, Iloc_sigval, Iloc_pval, difvarvect, AllILocal,surrdata] = minfokraskov_convergence_signif(X,Y,srate,varargin)
-% Compute MI based on kraskov method using the variance reduction loop.
-% Provide a filtered MI if requested in parameters. Used for InstMIPAC ONLY
 
 if nargin < 4
     help minfokraskov_convergence_signif;
@@ -120,9 +118,6 @@ try g.nboot;             catch, g.nboot           = 200;           end
 try g.butterorder;       catch, g.butterorder     = 6;             end
 try g.alpha;             catch, g.alpha           = [];            end
 try g.filterfreq;        catch, g.filterfreq      = [];            end
-
-
-
 
 % Input stuff
 OptionNames = fieldnames(g);
