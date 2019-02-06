@@ -7,106 +7,107 @@
 %   >> [crossfcoh, timesout1, freqs1, freqs2, alltfX, alltfY,crossfcoh_pval, pacstruct] ...
 %                     = eeg_pac(x,y,srate,'key1', 'val1', 'key2', val2' ...);
 % Inputs:
-%    x       = [float array] 2-D data array of size (times,trials) or
+%    x       - [float array] 2-D data array of size (times,trials) or
 %              3-D (1,times,trials)
-%    y       = [float array] 2-D or 3-d data array
-%    srate   = data sampling rate (Hz)
+%    y       - [float array] 2-D or 3-d data array
+%    srate   - data sampling rate (Hz)
 %
 %    Most important optional inputs
-%       'alpha'     = Significance level of the statistical test. If
+%       'alpha'     - Significance level of the statistical test. If
 %                     empty no statistical test is done. Empty by Default.                     
-%       'bonfcorr'  = Logical. Apply Bonferroni correction to the alpha value
+%       'bonfcorr'  - Logical. Apply Bonferroni correction to the alpha value
 %                     if true. Default [false]
-%       'freqs'     = [min max] frequency limits. Default [minfreq 50], 
+%       'freqs'     - [min max] frequency limits. Default [minfreq 50], 
 %                     minfreq being determined by the number of data points, 
 %                     cycles and sampling frequency. Use 0 for minimum frequency
 %                     to compute default minfreq. You may also enter an 
 %                     array of frequencies for the spectral decomposition
 %                     (for FFT, closest computed frequency will be returned; use
 %                     'padratio' to change FFT freq. resolution).
-%       'freqs2'    = [float array] array of frequencies for the second
+%       'freqs2'    - [float array] array of frequencies for the second
 %                     argument. 'freqs' is used for the first argument. 
 %                     By default it is the same as 'freqs'.
-%       'method' = {'mvlmi', 'klmi', 'glm'} Method to be use
+%       'method' - {'mvlmi', 'klmi', 'glm'} Method to be use
 %                     to compute the phase amplitude coupling. 
 %                     mvlmi : Mean Vector Length Modulation Index (Canolty et al. 2006)
 %                     klmi  : Kullback-Leibler Modulation Index (Tort et al. 2010)
 %                     glm   : Generalized Linear Model (Penny et al. 2008)
 %                     Default {'glm'}
-%       'nbinskl'   = Number of bins to use for the Kullback Leibler
+%       'nbinskl'   - Number of bins to use for the Kullback Leibler
 %                     Modulation Index. Default [18].
-%       'nboot'     = Number of surrogate data to use. Default [200]
-%       'ntimesout' = Number of output times (int<frames-winframes). Enter a 
+%       'nboot'     - Number of surrogate data to use. Default [200]
+%       'ntimesout' - Number of output times (int<frames-winframes). Enter a 
 %                     negative value [-S] to subsample original time by S.
-%       'timesout'  = Enter an array to obtain spectral decomposition at 
+%       'timesout'  - Enter an array to obtain spectral decomposition at 
 %                     specific time values (note: algorithm find closest time 
 %                     point in dafreqs1ta and this might result in an unevenly spaced
 %                     time array). Overwrite 'ntimesout'. {def: automatic}
-%       'powerlat'  = [float] latency in ms at which to compute phase
+%       'powerlat'  - [float] latency in ms at which to compute phase
 %                     histogram
-%       'ptspercent'= Size in percentage of the segments to shuffle 
+%       'ptspercent'- Size in percentage of data of the segments to shuffle 
 %                     when creating surrogate data. Default [0.05]
-%       'tlimits'   = [min max] time limits in ms. Default [0 number of
+%       'tlimits'   - [min max] time limits in ms. Default [0 number of
 %                     time points / sampling rate]
 %
 %    Optional Detrending:
-%       'detrend'   = ['on'|'off'], Linearly detrend each data epoch   {'off'}
-%       'rmerp'     = ['on'|'off'], Remove epoch mean from data epochs {'off'}
+%       'detrend'   - ['on'|'off'], Linearly detrend each data epoch   {'off'}
+%       'rmerp'     - ['on'|'off'], Remove epoch mean from data epochs {'off'}
 %
 %    Optional FFT/DFT Parameters:
-%       'winsize'   = If cycles==0: data subwindow length (fastest, 2^n<frames);
+%       'winsize'   - If cycles==0: data subwindow length (fastest, 2^n<frames);
 %                     If cycles >0: *longest* window length to use. This
 %                     determines the lowest output frequency. Note that this
 %                     parameter is overwritten if the minimum frequency has been set
 %                     manually and requires a longer time window {~frames/8}
-%       'padratio'  = FFT-length/winframes (2^k)                    {2}
+%       'padratio'  - FFT-length/winframes (2^k)                    {2}
 %                     Multiplies the number of output frequencies by dividing
 %                     their spacing (standard FFT padding). When cycles~=0, 
 %                     frequency spacing is divided by padratio.
-%       'nfreqs1'    = number of output frequencies for modulating signal (phase). 
+%       'nfreqs1'    - number of output frequencies for modulating signal (phase). 
 %                     For FFT, closest computed frequency will be returned. 
 %                     Overwrite 'padratio' effects for wavelets.
 %                     Default: usfreqs1e 'padratio'.
-%       'nfreqs2'    = number of output frequencies for modulated signal (amplitude). 
+%       'nfreqs2'    - number of output frequencies for modulated signal (amplitude). 
 %                     For FFT, closest computed frequency will be returned. 
 %                     Overwrite 'padratio' effects for wavelets.
 %                     Default: usfreqs1e 'padratio'.
-%       'freqscale' = ['log'|'linear'] frequency scale. Default is 'linear'.
+%       'freqscale' - ['log'|'linear'] frequency scale. Default is 'linear'.
 %                     Note that for obtaining 'log' spaced freqs using FFT, 
 %                     closest correspondant frequencies in the 'linear' space 
 %                     are returned.
-%       'subitc'    = ['on'|'off'] subtract stimulus locked Inter-Trial Coherence 
+%       'subitc'    - ['on'|'off'] subtract stimulus locked Inter-Trial Coherence 
 %                    (ITC) from x and y. This computes the  'intrinsic' coherence
 %                     x and y not arising from common synchronization to 
 %                     experimental events. See notes. {default: 'off'}
-%       'itctype'   = ['coher'|'phasecoher'] For use with 'subitc', see timef()
+%       'itctype'   - ['coher'|'phasecoher'] For use with 'subitc', see timef()
 %                     for more details {default: 'phasecoher'}.
-%       'subwin'    = [min max] sub time window in ms (this windowing is
+%       'subwin'    - [min max] sub time window in ms (this windowing is
 %                     performed after the spectral decomposition).
-%       'alltfXstr' = Structure with the TF decomposition. The strcucture
+%       'alltfXstr' - Structure with the TF decomposition. The strcucture
 %                     have the fields {alltfs, freqs, timesout}. This is intended to be
 %                     used from pop_pac when several channels/components are comuted at a
 %                     time. IN this way the TF decompositio does not have to be computed every time.
-%       'alltfYstr' = same as 'alltfXstr'
+%       'alltfYstr' - same as 'alltfXstr'
 %                     
 % Outputs: 
-%        crossfcoh      = Matrix (nfreqs1,nfreqs2,length(timesout1)) of phase amplitude 
+%        crossfcoh      - Matrix (nfreqs1,nfreqs2,length(timesout1)) of phase amplitude 
 %                       coupling values.
-%        timesout1      = Vector of output times (window centers) (ms).
-%        freqs1         = Vector of frequency bin centers for first argument (Hz).
-%        freqs2         = Vector of frequency bin centers for second argument (Hz).
-%        alltfX         = spectral decomposition of X
-%        alltfY         = spectral decomposition of Y
-%        crossfcoh_pval = Matrix (nfreqs1,nfreqs2,length(timesout1)) of Pvalues for the
+%        timesout1      - Vector of output times (window centers) (ms).
+%        freqs1         - Vector of frequency bin centers for first argument (Hz).
+%        freqs2         - Vector of frequency bin centers for second argument (Hz).
+%        alltfX         - spectral decomposition of X
+%        alltfY         - spectral decomposition of Y
+%        crossfcoh_pval - Matrix (nfreqs1,nfreqs2,length(timesout1)) of Pvalues for the
 %                        phase amplitude coupling values.
-%        pacstruct      = structure containing the paramters and results of the computation             
-% Author: Arnaud Delorme, SCCN/INC, UCSD 2005-
-%
-% Ref: Testing for Nested Oscilations (2008) J Neuro Methods 174(1):50-61
+%        pacstruct      - structure containing the paramters and results of the computation             
+% Authors: Arnaud Delorme, SCCN, INC, UCSD 
+%          Ramon Martinez-Cancino, SCCN, INC, UCSD 
+%          
 %
 % See also: timefreq(), crossf()
-
-% Copyright (C) 2002 Arnaud Delorme, Salk Institute, arno@salk.edu
+%
+% Copyright (C) 2002 Arnaud Delorme, SCCN, INC, UCSD 
+%               2019 Ramon Martinez-Cancino, SCCN, INC, UCSD 
 %
 % This program is free software; you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -174,17 +175,16 @@ g = finputcheck(varargin, ...
                   'vert'             {'real','cell'}  []                        [];
                   'cycles'           'real'           [0 Inf]                   [3 0.5];
                   'cycles2'          'real'           [0 Inf]                   [3 0.5];   
-                  'verbose'          'string'         {'on','off'}              'off';
+                  'verbose'          'string'         {'on','off'}              'off';...
                   'windowsearchsize' 'integer'        [0 (length(X)/srate)/2]   [] ;
                   'k0'               'integer'        [0 size(X,2)/2]           1;    
                   'mipacvarthresh'   'real'           [0 10]                    5;
-                  'pts_seg'          'real'            []                        10;
                   'xdistmethod'      'string'         {'seuclidean', 'myeucl','circular'}       'circular';
                   'ydistmethod'      'string'         {'seuclidean', 'myeucl','circular'}       'myeucl';
                   'timefreq'         'real'           [0 1]                      1; % Flag to use filters or TF decomposition
                   'butterorder'      'real'           [1 20]                     6; 
                   'winsize'          'integer'        [0 Inf]                   max(pow2(nextpow2(frame)-3),4);
-                  'nparpools'        'real'           [1 100]                    1 }, 'pac');
+                  'nparpools'        'real'           [1 100]                    1 }, 'eeg_pac','ignore');
 
 if ischar(g), error(g); end
 
@@ -409,7 +409,7 @@ for find1 = 1:length(freqs1)
                         
             % ERMIPAC
             if strcmp(g.method,'ermipac')
-               [~,pactmp,kconv, difvar] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy'...
+               [~,pactmp,kconv] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy'...
                                                                    ,'k0',         g.k0...
                                                                    ,'xdistmethod','circular'...
                                                                    ,'varthresh', g.mipacvarthresh);                                                      
@@ -418,11 +418,10 @@ for find1 = 1:length(freqs1)
                Xbaseline = single_alltfx(1:zerolat,:);
                Ybaseline = single_alltfy(1:zerolat,:);
                                                           
-                   surrdata = minfokraskov_computesurrfrombaseline([size(single_alltfx,2), windowsearchsize+1] ,Xbaseline, Ybaseline, g.nboot, g.pts_seg,...
-                       'k', kconv,...
-                       'kraskovmethod',1,...
-                       'xdistmethod','circular',...
-                       'filterfreq', []);
+                   surrdata = minfokraskov_computesurrfrombaseline([size(single_alltfx,2), windowsearchsize+1] ,Xbaseline, Ybaseline, g.nboot,...
+                                                                   'k', kconv,...
+                                                                   'xdistmethod','circular',...
+                                                                   'filterfreq', []);
 
                    % Statistical testing
                    Iloc_zscore         = (pactmp' - repmat(mean(surrdata(:)),size(pactmp',1),size(pactmp',2))) ./ repmat(std(surrdata(:)),size(pactmp',1),size(pactmp',2));
@@ -438,16 +437,16 @@ for find1 = 1:length(freqs1)
             elseif strcmp(g.method,'instmipac')
                 
                 % Inst MIPAC with and withoth signif (controled by g.alpha)
-                    [pactmp, kconv, signiftmp, pval, difvar, tmp, surrdata] = minfokraskov_convergence_signif(tmpalltfx,tmpalltfy...
-                                                                                    ,g.nboot,      g.pts_seg...
-                                                                                    ,'k0',         g.k0...
-                                                                                    ,'xdistmethod',g.xdistmethod...
-                                                                                    ,'ydistmethod',g.ydistmethod...
-                                                                                    ,'srate',      srate...
-                                                                                    ,'varthresh',  g.mipacvarthresh...
-                                                                                    ,'filterfreq', freqs1(find1)...
-                                                                                    ,'butterorder', g.butterorder ...
-                                                                                    ,'alpha',       g.alpha);
+                    [pactmp, kconv, signiftmp, pval] = minfokraskov_convergence_signif(tmpalltfx,tmpalltfy,srate ...
+                                                                            ,'nboot',      g.nboot...
+                                                                            ,'ptspercent', g.ptspercent...
+                                                                            ,'k0',         g.k0...
+                                                                            ,'xdistmethod',g.xdistmethod...
+                                                                            ,'ydistmethod',g.ydistmethod...
+                                                                            ,'varthresh',  g.mipacvarthresh...
+                                                                            ,'filterfreq', freqs1(find1)...
+                                                                            ,'butterorder', g.butterorder ...
+                                                                            ,'alpha',       g.alpha);
 
             % PAC Methods.    
             else
@@ -511,7 +510,7 @@ for find1 = 1:length(freqs1)
                     if ~isempty(g.alpha)
                         pacstruct.ermipac.signif.pval(find1,find2,:,ti)          = pval;
                         pacstruct.ermipac.signif.signifmask(find1,find2,:,ti)     = signiftmp;
-                        pacstruct.ermipac.signifsurrogate_pac(find1,find2,:, ti, 1:size(surrdata,1)) = surrdata';
+                        %pacstruct.ermipac.signifsurrogate_pac(find1,find2,:, ti, 1:size(surrdata,1)) = surrdata';
                     end
                 case 'instmipac'
                     pacstruct.instmipac.dim                   = 2;
@@ -522,7 +521,7 @@ for find1 = 1:length(freqs1)
                     if ~isempty(g.alpha)
                         pacstruct.instmipac.signif.pval(find1,find2, :)                  = pval;
                         pacstruct.instmipac.signif.signifmask(find1,find2, :)            = signiftmp;
-                        pacstruct.instmipac.signifsurrogate_pac(find1,find2,1:g.nboot,:) = surrdata;
+                        %pacstruct.instmipac.signifsurrogate_pac(find1,find2,1:g.nboot,:) = surrdata;
                     end                         
             end    
         end
