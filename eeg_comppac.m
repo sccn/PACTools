@@ -27,7 +27,6 @@
 %                        (2008). Not defined for klmi. [0,1] Default [0]
 %       'ptspercent'    - Size in percentage of the segments to shuffle 
 %                         when creating surrogate data. Default [0.05]
-%
 % Outputs:
 %        pacval         - Phase Amplitude Coulping Value
 %        pval           - p value of the pacval
@@ -86,22 +85,6 @@ end
 
 % Initializing pacstr structure
 pacstr = create_pacstr('method', g.method, 'alpha', g.alpha);
-
-% pacstr.method        = g.method;
-% pacstr.pacval        = [];
-% pacstr.pval          = [];
-% pacstr.peakangle     = [];  % Phase of the modulating signal at which the amplitude enveloppe of the modulated signal is the highest
-% pacstr.beta          = [];
-% pacstr.normpac       = [];
-% pacstr.nbinskl       = [];
-% pacstr.normpac       = [];    % No definition for KLMI
-% pacstr.alpha         = g.alpha;
-% pacstr.significant   = [];
-% pacstr.bin_average   = [];
-% pacstr.surrogate_pac = [];
-% pacstr.phaseangles   = [];
-% pacstr.amplitudes    = [];
-% pacstr.composites    = [];
 
 % Compute the pacval depending on the method
 switch g.method
