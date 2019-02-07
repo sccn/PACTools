@@ -138,7 +138,7 @@ if ndims(Y) == 3, Y = reshape(Y, size(Y,2), size(Y,3)); end
 frame = size(X,1);
 pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
 
-g = finputcheck(varargin, ...
+[g,gsubf] = finputcheck(varargin, ...
                 { 'alpha'            'real'           [0 1]                     [];
                   'alltfXstr'        'struct'         struct                    struct;
                   'alltfYstr'        'struct'         struct                    struct;
@@ -167,8 +167,6 @@ g = finputcheck(varargin, ...
                   'powerlat'         'real'           []                        []; ...                  
                   'gammabase'        'real'           []                        []; ...                  
                   'timesout'         'real'           []                        []; ...
-                  'method'        'string'         pacmethods_list           'glm';
-                  'nbinskl'          'integer'        [1 Inf]                   18;
                   'ntimesout'        'integer'        []                        length(X)/2; ...
                   'tlimits'          'real'           []                        [0 frame/srate];
                   'title'            'string'         []                        '';                      
@@ -176,20 +174,18 @@ g = finputcheck(varargin, ...
                   'cycles'           'real'           [0 Inf]                   [3 0.5];
                   'cycles2'          'real'           [0 Inf]                   [3 0.5];   
                   'verbose'          'string'         {'on','off'}              'off';...
-                  'windowsearchsize' 'integer'        [0 (length(X)/srate)/2]   [] ;
-                  'k0'               'integer'        [0 size(X,2)/2]           1;    
-                  'mipacvarthresh'   'real'           [0 10]                    5;
-                  'xdistmethod'      'string'         {'seuclidean', 'myeucl','circular'}       'circular';
-                  'ydistmethod'      'string'         {'seuclidean', 'myeucl','circular'}       'myeucl';
-                  'timefreq'         'real'           [0 1]                      1; % Flag to use filters or TF decomposition
-                  'butterorder'      'real'           [1 20]                     6; 
                   'winsize'          'integer'        [0 Inf]                   max(pow2(nextpow2(frame)-3),4);
+                  'method'           'string'         pacmethods_list           'glm';                    
+                  'timefreq'         'real'           [0 1]                      1; % Flag to use filters or TF decomposition      
                   'nparpools'        'real'           [1 100]                    1 }, 'eeg_pac','ignore');
-
 if ischar(g), error(g); end
 
-% parallelization stuff
+% Parallelization stuff (work in progress)
 parclust = parcluster;
+if g.nparpools>parclust.NumWorkers
+    g.nparpools = parclust.NumWorkers;
+    disp(['eeg_pac: Number of clusters modified to fit the maximum number of workers allowed (' num2str(parclust.NumWorkers)  ')']);
+end
 
 % remove ERP if asked
 % -----------------------
@@ -340,7 +336,6 @@ if g.bonfcorr && ~isempty(g.alpha), g.alpha = g.alpha / (length(freqs1) * length
 alltfX = angle(alltfX);
 alltfY = abs(alltfY);
 % ---
-
 % Loop  phase frequencies
 for find1 = 1:length(freqs1)
     if strcmpi(g.verbose, 'on')
@@ -355,7 +350,6 @@ for find1 = 1:length(freqs1)
         tvector = 1:ti_loopend;
     end
     %---
-    
     % Loop  amplitude frequencies
     for find2 = 1:length(freqs2)
         
@@ -409,48 +403,37 @@ for find1 = 1:length(freqs1)
                         
             % ERMIPAC
             if strcmp(g.method,'ermipac')
-               [~,pactmp,kconv] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy'...
-                                                                   ,'k0',         g.k0...
-                                                                   ,'xdistmethod','circular'...
-                                                                   ,'varthresh', g.mipacvarthresh);                                                      
-           if ~isempty(g.alpha)
-               [trash, zerolat] = min(abs(timesout1));
-               Xbaseline = single_alltfx(1:zerolat,:);
-               Ybaseline = single_alltfy(1:zerolat,:);
-                                                          
-                   surrdata = minfokraskov_computesurrfrombaseline([size(single_alltfx,2), windowsearchsize+1] ,Xbaseline, Ybaseline, g.nboot,...
-                                                                   'k', kconv,...
-                                                                   'xdistmethod','circular',...
-                                                                   'filterfreq', []);
-
-                   % Statistical testing
-                   Iloc_zscore         = (pactmp' - repmat(mean(surrdata(:)),size(pactmp',1),size(pactmp',2))) ./ repmat(std(surrdata(:)),size(pactmp',1),size(pactmp',2));
-                   Iloc_pval           = 1-normcdf(abs(Iloc_zscore));
-%                    Iloc_pval           = 2*normcdf(-abs(Iloc_zscore));
-                   Iloc_sigval = zeros(size(Iloc_pval));
-                   Iloc_sigval(Iloc_pval<g.alpha) = 1;
-                   signiftmp = Iloc_sigval;
-                   pval      = Iloc_pval;
-           end
+                tmparg = {gsubf{:} 'xdistmethod' 'circular'};
+                [~,pactmp,kconv] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy', tmparg{:});
+                
+                if ~isempty(g.alpha)
+                    [trash, zerolat] = min(abs(timesout1));
+                    Xbaseline = single_alltfx(1:zerolat,:);
+                    Ybaseline = single_alltfy(1:zerolat,:);
+                    
+                    tmparg = {gsubf{:} 'k' kconv 'xdistmethod' 'circular'};
+                    surrdata = minfokraskov_computesurrfrombaseline([size(single_alltfx,2), windowsearchsize+1] ,Xbaseline, Ybaseline, g.nboot,tmparg{:});
+                    
+                    % Statistical testing
+                    Iloc_zscore         = (pactmp' - repmat(mean(surrdata(:)),size(pactmp',1),size(pactmp',2))) ./ repmat(std(surrdata(:)),size(pactmp',1),size(pactmp',2));
+                    Iloc_pval           = 1-normcdf(abs(Iloc_zscore));
+                    %                    Iloc_pval           = 2*normcdf(-abs(Iloc_zscore));
+                    Iloc_sigval = zeros(size(Iloc_pval));
+                    Iloc_sigval(Iloc_pval<g.alpha) = 1;
+                    signiftmp = Iloc_sigval;
+                    pval      = Iloc_pval;
+                end
             
             % Inst MIPAC
-            elseif strcmp(g.method,'instmipac')
-                
+            elseif strcmp(g.method,'instmipac')              
                 % Inst MIPAC with and withoth signif (controled by g.alpha)
-                    [pactmp, kconv, signiftmp, pval] = minfokraskov_convergence_signif(tmpalltfx,tmpalltfy,srate ...
-                                                                            ,'nboot',      g.nboot...
-                                                                            ,'ptspercent', g.ptspercent...
-                                                                            ,'k0',         g.k0...
-                                                                            ,'xdistmethod',g.xdistmethod...
-                                                                            ,'ydistmethod',g.ydistmethod...
-                                                                            ,'varthresh',  g.mipacvarthresh...
-                                                                            ,'filterfreq', freqs1(find1)...
-                                                                            ,'butterorder', g.butterorder ...
-                                                                            ,'alpha',       g.alpha);
-
-            % PAC Methods.    
+                tmparg = {gsubf{:} 'xdistmethod' 'circular' 'filterfreq' freqs1(find1) 'alpha' g.alpha};
+                [pactmp, kconv, signiftmp, pval] = minfokraskov_convergence_signif(tmpalltfx,tmpalltfy,srate,tmparg{:});
+                
+            % PAC Methods.
             else
-                [pactmp,~,~,pacstructtmp] = eeg_comppac(tmpalltfx,tmpalltfy,'method', g.method,'alpha', g.alpha,'ptspercent',g.ptspercent,'nboot',g.nboot, 'nbinskl', g.nbinskl) ;
+                tmparg = {gsubf{:} 'alpha' g.alpha};
+                [pactmp,~,~,pacstructtmp] = eeg_comppac(tmpalltfx,tmpalltfy, g.method, tmparg{:}) ;
             end
             
             %--------------------------------------------------------------
@@ -464,26 +447,30 @@ for find1 = 1:length(freqs1)
                         pacstruct.(g.method).dim                       = 1;
                         pacstruct.(g.method).pacval(find1,find2)       = pacstructtmp.pacval;
                         
+                        % Specific to each method
                         if strcmp(g.method, 'mvlmi')
-                            pacstruct.(g.method).composites(find1,find2,:) = pacstructtmp.composites(:); % mvlmi
-                            pacstruct.(g.method).peakangle(find1,find2)    = pacstructtmp.peakangle;     % mvlmi
+                            pacstruct.mvlmi.composites(find1,find2,:) = pacstructtmp.composites(:); % mvlmi
+                            pacstruct.mvlmi.peakangle(find1,find2)    = pacstructtmp.peakangle;     % mvlmi
                         elseif strcmp(g.method, 'klmi')
                             pacstruct.klmi.peakangle(find1,find2)   = pacstructtmp.peakangle; % klmi
                             pacstruct.klmi.nbinskl(find1,find2)     = pacstructtmp.nbinskl;   % klmi
                             [pacstruct.klmi.bin_average{find1,find2,1:pacstructtmp.nbinskl}] = deal(pacstructtmp.bin_average); % klmi
                         elseif strcmp(g.method, 'glm')
                             pacstruct.glm.beta(find1, find2, 1:3) = pacstructtmp.beta(:); % glm
-                        end                       
+                        end   
+                        %-
                         if ~isempty(g.alpha)
                             pacstruct.(g.method).signif.pval(find1,find2)           = pacstructtmp.pval;
                             pacstruct.(g.method).signif.signifmask(find1,find2)     = pacstructtmp.significant;
-                            pacstruct.(g.method).signifsurrogate_pac(find1,find2,:) = pacstructtmp.surrogate_pac;
+                            pacstruct.(g.method).signif.surrogate_pac(find1,find2,:) = pacstructtmp.surrogate_pac;
                         end
                     else
                         % Methods with dimension = 2
                         %---------------------------
                         pacstruct.(g.method).dim                          = 2;
                         pacstruct.(g.method).pacval(find1,find2, ti,:)    = pacstructtmp.pacval;
+                        
+                        % Specific to each method
                         if strcmp(g.method, 'mvlmi')
                             pacstruct.mvlmi.composites(find1,find2,ti,:) = pacstructtmp.composites(:); % mvlmi
                             pacstruct.mvlmi.peakangle(find1,find2,ti)    = pacstructtmp.peakangle;     % mvlmi
@@ -494,11 +481,12 @@ for find1 = 1:length(freqs1)
                         elseif strcmp(g.method, 'glm')
                             pacstruct.glm.beta (find1, find2, 1:3, ti) = pacstructtmp.beta; % glm
                         end
+                        %-
                         if ti==1, pacstruct.(g.method).times              = timesout1; end
                         if ~isempty(g.alpha)
                             pacstruct.(g.method).signif.pval(find1,find2,ti)            = pacstructtmp.pval;
                             pacstruct.(g.method).signif.signifmask(find1,find2,ti)      = pacstructtmp.significant;
-                            pacstruct.(g.method).signifsurrogate_pac(find1,find2,ti, 1:length(pacstructtmp.surrogate_pac)) = pacstructtmp.surrogate_pac;
+                            pacstruct.(g.method).signif.surrogate_pac(find1,find2,ti, 1:length(pacstructtmp.surrogate_pac)) = pacstructtmp.surrogate_pac;
                         end
                     end
                 case 'ermipac'                             
@@ -510,7 +498,7 @@ for find1 = 1:length(freqs1)
                     if ~isempty(g.alpha)
                         pacstruct.ermipac.signif.pval(find1,find2,:,ti)          = pval;
                         pacstruct.ermipac.signif.signifmask(find1,find2,:,ti)     = signiftmp;
-                        %pacstruct.ermipac.signifsurrogate_pac(find1,find2,:, ti, 1:size(surrdata,1)) = surrdata';
+                        %pacstruct.ermipac.signif.surrogate_pac(find1,find2,:, ti, 1:size(surrdata,1)) = surrdata';
                     end
                 case 'instmipac'
                     pacstruct.instmipac.dim                   = 2;
@@ -521,7 +509,7 @@ for find1 = 1:length(freqs1)
                     if ~isempty(g.alpha)
                         pacstruct.instmipac.signif.pval(find1,find2, :)                  = pval;
                         pacstruct.instmipac.signif.signifmask(find1,find2, :)            = signiftmp;
-                        %pacstruct.instmipac.signifsurrogate_pac(find1,find2,1:g.nboot,:) = surrdata;
+                        %pacstruct.instmipac.signif.surrogate_pac(find1,find2,1:g.nboot,:) = surrdata;
                     end                         
             end    
         end
@@ -542,8 +530,6 @@ if  strcmp(g.method,'ermipac')
 end
 %--------------------------------------------------------------------------
 %% Populating pacstruct
-
-% New structure
 pacstruct.params.freqs_phase        = freqs1;
 pacstruct.params.freqs_amp          = freqs2;
 pacstruct.params.signif.alpha       = g.alpha;
