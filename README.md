@@ -4,7 +4,6 @@ While the plug-in is still in its early development, usage and feedback is encou
 In addition to traditional methods to compute PAC, the plugin include the Instantaneuous and Event-Related implementation of the Mutual Information Phase-Amplitude Coupling Method (MIPAC) (see Martinez-Cancino et al 2019).
 The toolbox is developed and maintained at the Swartz Center for Computational Neurosciences, UCSD, La Jolla, California.
 
-
 ## Table of Contents
 1. [Phase-amplitude coupling in neurosciences](#phase-amplitude-coupling-in-neurosciences)
 2. [Methods implemented in the toolbox](#methods-implemented-in-the-toolbox)
@@ -39,22 +38,22 @@ In the table below are listed the methods implemented to compute PAC in continuo
 
 Most of the PAC methods in the literature return a single value of the PAC measure for a given single trial signal (two single trials signals corresponding to different frequency bands of interest can be assumed as well). In the case of Instantaneous MIPAC, though, the result is provided as a unidimensional time series describing the PAC dynamics in the input signal(s). 
 
-| Method                                | Reference                         | Output Dimension | Notes
-| ---------                             | -----------                       | --------------   | ----
-| Mean Vector Length Modulation Index   | [Canolty et al., 2006]()          | Single value     |
-| Kullback-Leibler Modulation Index     | [Tort et al., 2010]()             | Single value     |
-| General Linear Model Modulation Index | [Penny et al., 2008]()            | Single value     |
-| Instantaneous Mutual Information PAC  | [Martinez-Cancino et al., 2019]() | Unidimensional   |
+| Method                                | Reference                                                                              | Output Dimension | 
+| ---------                             | -----------                                                                            | --------------   | 
+| Mean Vector Length Modulation Index   | [Canolty et al., 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2628289/)          | Single value     |
+| Kullback-Leibler Modulation Index     | [Tort et al., 2010](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2941206/)             | Single value     |
+| General Linear Model Modulation Index | [Penny et al., 2008](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2675174/)            | Single value     |
+| Instantaneous Mutual Information PAC  | [Martinez-Cancino et al., 2019](https://www.ncbi.nlm.nih.gov/pubmed/30342235)          | Unidimensional   |
 
 ### Epoched signal
 In the table below are listed the current methods implemented in the toolbox to estimate PAC in epoched data. Epoched data is usually the result of extracting snipets of signals time-locked to an event(s) of interest. Here epoched data is assumed as being formated as a data matrix with dimensions of number of epochs(trials) by number of latencies(timepoints).  The three first methods listed in the table are a natural extension of the methods listed in the previous seccion but applying them onto each latency along the dimension of the epochs. The fisrt application of this scheme was proposed by *Voytek et al., 2013* as an extension of the method by Penny et al., 2008. These methods return a PAC time series describing the 'average' dynamics of the procces in the trials. Event-related MIPAC method, though, return a PAC time series for each trial provided.
 
-| Method                                | Reference                         | Output Dimension | Notes
-| ---------                             | -----------                       | --------------   | ----
-| Mean Vector Length Modulation Index   | [Canolty et al., 2006]()          | Unidimensional   |
-| Kullback-Leibler Modulation Index     | [Tort et al., 2010]()             | Unidimensional   |
-| General Linear Model Modulation Index | [Voytek et al., 2013]()           | Unidimensional   |
-| Event-Related Mutual Information PAC  | [Martinez-Cancino et al., 2019]() | Bidimensional    |
+| Method                                | Reference                                                                             | Output Dimension |
+| ---------                             | -----------                                                                           | --------------   | 
+| Mean Vector Length Modulation Index   | [Canolty et al., 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2628289/)         | Unidimensional   |
+| Kullback-Leibler Modulation Index     | [Tort et al., 2010](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2941206/)            | Unidimensional   |
+| General Linear Model Modulation Index | [Voytek et al., 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2675174/)          | Unidimensional   |
+| Event-Related Mutual Information PAC  | [Martinez-Cancino et al., 2019](https://www.ncbi.nlm.nih.gov/pubmed/30342235)         | Bidimensional    |
 
 
 ## Plugin Architecture and Workflow
