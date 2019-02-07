@@ -57,7 +57,7 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function [pacval,pval,significant,pacstr] = eeg_comppac(x,y,varargin)
+function [pacval,pval,significant,pacstr] = eeg_comppac(x,y,method, varargin)
 pacstr = []; pacval = []; pval = []; significant = [];
 
 % Checking arguments and assigning default values
@@ -72,7 +72,6 @@ catch
     disp('eeg_comppac() error: calling convention {''key'', value, ... } error'); return;
 end;
 
-try g.method;         catch, g.method       = 'glm';      end;
 try g.nbinskl;        catch, g.nbinskl      = 18;         end;
 try g.normpac;        catch, g.normpac      = 0;          end;
 try g.alpha;          catch, g.alpha        = [];         end;
@@ -84,10 +83,10 @@ if ~isequal(size(x),size(y))
 end
 
 % Initializing pacstr structure
-pacstr = create_pacstr('method', g.method, 'alpha', g.alpha);
+pacstr = create_pacstr('alpha', g.alpha);
 
 % Compute the pacval depending on the method
-switch g.method
+switch method
     case 'plv'
         % Phase Locking Value
         pacval = eeg_plv(x,y);
@@ -106,7 +105,7 @@ switch g.method
         [pactmp, m_raw, composites] = eeg_mvlmi(x,y);
         
         % Normalize mraw
-        [pval, surr_mean, surr_std,surrogate_pac] = eeg_pacstatistics(pactmp,x,y,g.method,g.nboot, g.nbinskl,g.ptspercent);
+        [pval, surr_mean, surr_std,surrogate_pac] = eeg_pacstatistics(pactmp,x,y,method,g.nboot, g.nbinskl,g.ptspercent);
         if ~isempty(g.alpha)
            pacstr.significant   = pval<g.alpha;
            pacstr.pval = pval;
@@ -172,7 +171,7 @@ pacstr.pacval = pacval; % Put the pac value in the pac structure
 % Compute the statistical value
 if ~isempty(g.alpha)
     if isempty(pval)
-        [pval, ~, ~, surrogate_pac] = eeg_pacstatistics(pacval,x,y,g.method,g.nboot, pacstr.nbinskl,g.ptspercent, g.verbose);
+        [pval, ~, ~, surrogate_pac] = eeg_pacstatistics(pacval,x,y,method,g.nboot, pacstr.nbinskl,g.ptspercent, g.verbose);
     end
     if g.verbose
         fprintf('p value = %.3f \n', pval);
@@ -326,7 +325,6 @@ catch
     disp('create_pacstr() error: calling convention {''key'', value, ... } error'); return;
 end;
 
-try pacstr.method;                catch, pacstr.method         = []; end
 try pacstr.pacval;                catch, pacstr.pacval         = []; end
 try pacstr.pval;                  catch, pacstr.pval           = []; end
 try pacstr.peakangle;             catch, pacstr.peakangle      = []; end
