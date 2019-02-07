@@ -301,10 +301,10 @@ elseif isfield(EEG.etc.eegpac,'params')
             inputparams.freqs_amp = freqs2;
         end
     end
-     inputparams.srate             = EEG.srate;
      inputparams.signif.alpha      = g.alpha;
      inputparams.signif.nboot      = g.nboot;
      inputparams.signif.bonfcorr   = g.bonfcorr;
+     inputparams.srate             = EEG.srate;
      inputparams.pooldata          = find(strcmp({'Channels','Components'},pooldata));
      
      tmpstrc = EEG.etc.eegpac(1).params;
@@ -330,8 +330,8 @@ elseif isfield(EEG.etc.eegpac,'params')
                             disp(['pop_pac: Recomputing PAC using : ' g.method])
                             compute_flag(ix,iy) = 1;
                         else
-                            disp(['pop_pac: PAC has been already computed before using ''' g.method '''']);
-                            disp(['         Aborting computation for data indices' num2str([indexfreqs1(ix) indexfreqs2(iy)]) ]);
+                            disp(['pop_pac: PAC has been already computed using method: ''' g.method '''']);
+                            disp(['         Aborting computation for data indices [' num2str([indexfreqs1(ix) indexfreqs2(iy)]) ']'] );
                             compute_flag(ix,iy) = 0;
                         end
                         
