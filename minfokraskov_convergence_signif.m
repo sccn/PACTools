@@ -6,8 +6,8 @@
 %   >>  pac = minfokraskov_convergence_signif(X,Y,500); 
 %
 % Inputs:
-%  Xorig        - Vector of signal X
-%  Yorig        - Vector of signal Y
+%  Xorig        - Vector of signal X  (Latency x 1)
+%  Yorig        - Vector of signal Y  (Latency x 1)
 %  srate        - Sampling rate of X and Y
 %
 % Optional inputs:
@@ -141,7 +141,7 @@ end
 if ~isempty(g.alpha)
     % surrogate analyses for significance testing
     surrdata = zeros([g.nboot length(X)]); % initialize
-    pts_seg = ceil(length(tmpalltfx)*g.ptspercent);
+    pts_seg = ceil(length(X)*g.ptspercent);
     for si = 1:g.nboot
         
         if mod(length(X),pts_seg) == 0
@@ -188,8 +188,8 @@ if ~isempty(g.alpha)
             end
             Y_surrogate    = Y_surrogate(:)';
             
-        end
-        arg{4} = kconv0; % Fixing value of 'k' to the one from convergence.
+        end 
+        arg{find(cell2mat(cellfun(@(x) strcmp(x,'k'), arg,'UniformOutput',0)))+1} = kconv0; % Fixing value of 'k' to the one from convergence.
         [Isurrtmp,Ilocal,kconv,difvarvect] = minfokraskov_convergencewin(X_surrogate',Y_surrogate',arg{:});
 
         if ~isempty(g.filterfreq)            
