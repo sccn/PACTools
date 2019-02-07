@@ -221,4 +221,4 @@ The figure below  will pop up.
 </center>	
 
 ### Contributions and feedback
-This is an open source project, however, since this is still in its Beta Version, please, contact the author (Ramon Martinez-Cancino : ram033@eng.ucsd.edu) for contributions. The use of the issue tracker is encouraged. 
+This is an open source project, however, since this is still in its Beta Version, please, contact the authors at ram033@eng.ucsd.edu for contributions. The use of the issue tracker is encouraged. 
