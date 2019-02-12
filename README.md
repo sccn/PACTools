@@ -157,7 +157,7 @@ The set of parameters common to all the methods computed, as phase frequency (*f
 
 #### Computation
 
-In this demo we will show how to compute PAC from the GUI. For this, lets first load the sample dataset *Simpac\_famp\_60\_fphs\_8.set* into EEGLAB. The dataset cab be loaded either from the EEGLAB GUI or from the command windows by using the following code: 
+In this demo we will show how to compute PAC from the GUI. For this, lets first load the sample dataset *Simpac\_famp\_60\_fphs\_8.set* into EEGLAB. The dataset can be loaded either from the EEGLAB GUI or from the command windows by using the following code: 
 
 ```matlab
 EEG = pop_loadset('filename','Simpac_famp_60_fphs_8.set');
