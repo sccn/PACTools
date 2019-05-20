@@ -1,11 +1,10 @@
-% pop_genpac() - Generate a signal with coupled phase and amplitude (PAC)
-%                         in the frequencies defined in the inputs. The PAC
-%                         is inserted in alternated segments The waveform 
-%                         of the PAC segments can be defined as well.
+% pop_genpac() - Generate an EEG set with a syntethic PAC signal. 
+%                The modulation is inserted in alternated segments. 
+%                The waveform  of the PAC segments can be defined as well.
 %                         
 % Usage:
-%   >> [data,simspk.t_out,simspk.phase_signal,simspk.m]  = pop_genpac(fc,fm,tlimits);
-%   >> [data, t_out,phase_signal,m]  = pop_genpac(fc,fm,tlimits,'srate',srate,'cpfunc','block','blockamp',1,'plot_flag',1,'padtime',padtime,'snr',snrval);
+%   >> [EEG, data_pac, time] = pop_genpac(fc,fm,tlimits);
+%   >> [EEG, data_pac, time] = pop_genpac(fc,fm,tlimits,'srate',srate,'cpfunc','block','blockamp',1,'plot_flag',1,'padtime',padtime,'snr',snrval);
 % Inputs:
 %    fc       - Frequency of the carrier [Hz]
 %    fm       - Frequency of the modulator. [Hz]
@@ -14,7 +13,7 @@
 % Optional inputs
 %   cpfunc    - {'linear','sine', 'exp', 'block'} Function to use to generate the waveform in the segments
 %               with PAC ~= 0. Default {'linear'}
-%   srate        - Sampling frequency [Hz]. Default [500]
+%   srate     - Sampling frequency [Hz]. Default [500]
 %   Ac        - Maximun amplitude of the carrier signal. Default [5] 
 %   Am        - Maximun amplitude of the modulator signal . Default [1] 
 %   snr       - Signal to noise ratio for the simulated signal. Default Inf
