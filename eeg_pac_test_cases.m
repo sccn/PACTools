@@ -69,6 +69,7 @@ mipacvarthreshval =0.002;
                                                          'mipacvarthresh', mipacvarthreshval,...
                                                          'timefreq',       1,...
                                                          'ntimesout',      length(data_singletrial));
+    disp(' Successful computation:  INSTMIPAC (no surr)');                                                 
 catch
     disp('Error computing:  INSTMIPAC (no surr)');
 end
@@ -85,6 +86,7 @@ try
                                                          'nboot',     nsurrogate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', length(data_singletrial));
+    disp(' Successful computation:  MVLMI (no surr)');                                                  
 catch
     disp('Error computing:  MVLMI (no surr)');
 end
@@ -115,6 +117,7 @@ try
                                                          'nboot',     nsurrogate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', length(data_singletrial));
+    disp(' Successful computation:  KLMI (no surr)');                                                  
 catch
     disp('Error computing:  KLMI (no surr)');
 end                                                      
@@ -131,6 +134,7 @@ try
                                                          'nboot',     nsurrogate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', length(data_singletrial));
+    disp(' Successful computation:  INSTMIPAC (surr)');                                                 
 catch
     disp('Error computing:  INSTMIPAC (surr)');
 end
@@ -147,6 +151,7 @@ try
                                                          'nboot',     nsurrogate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', length(data_singletrial));
+    disp(' Successful computation:  MVLMI (surr)');                                                 
 catch
     disp('Error computing:  MVLMI (surr)');
 end                                                     
@@ -163,6 +168,7 @@ try
                                                          'nboot',     nsurrogate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', length(data_singletrial));
+    disp(' Successful computation:  GLM (surr)');                                                 
 catch
     disp('Error computing:  GLM (surr)');
 end                                                     
@@ -180,6 +186,7 @@ try
                                                          'nboot',     nsurrogate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', length(data_singletrial));
+    disp(' Successful computation:  KLMI (surr)');                                                 
 catch
     disp('Error computing:  KLMI (surr)');
 end                                                       
@@ -187,8 +194,8 @@ end
 nfreqsphase   = 1;
 nfreqsamp     = 1;
 tlimits       = [-1 1];
-srate         = 100; 
-snrval       = 10;     
+s_rate        = 100; 
+snrval        = 10;     
 
 [~, data_pac,t_outtmp]  = pop_genpac(fc,fm,tlimits,'Ac',5,'Am',1,'srate',srate,'cpfunc','block','blockamp',1, 'nsegm',nsegm,'plot_flag', plot_flag,'padtime',padtime,'snr',snrval,'m',1,'ntrials',n_trials,'maxshift',10);
 
@@ -203,6 +210,7 @@ try
                                                          'winsize',   s_rate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', size(data_pac,2));
+    disp(' Successful computation:  MVLMI (no surr) 2D');                                                  
 catch
     disp('Error computing:  MVLMI (no surr) 2D');
 end                                                     
@@ -221,6 +229,7 @@ try
                                                          'tlimits',   tlimits, ...
                                                          'bonfcorr',  1,...
                                                          'ntimesout', size(data_pac,2));
+    disp(' Successful computation:  MVLMI (w surr) 2D');                                                  
 catch
     disp('Error computing:  MVLMI (w surr) 2D');
 end                                                     
@@ -235,6 +244,7 @@ try
                                                          'winsize',   s_rate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', size(data_pac,2));
+    disp(' Successful computation:  KLMI (no surr) 2D');                                                  
 catch
     disp('Error computing:  KLMI (no surr) 2D');
 end                                                     
@@ -253,6 +263,7 @@ try
                                                          'tlimits',   tlimits, ...
                                                          'bonfcorr',  1,...
                                                          'ntimesout', size(data_pac,2));
+    disp(' Successful computation:  KLMI (w surr) 2D');                                                  
 catch
     disp('Error computing:  KLMI (w surr) 2D');
 end                                                      
@@ -267,6 +278,7 @@ try
                                                          'winsize',   s_rate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', size(data_pac,2));
+    disp(' Successful computation:  GLMmi (no surr) 2D');                                                  
 catch
     disp('Error computing:  GLMmi (no surr) 2D');
 end                                                     
@@ -285,6 +297,7 @@ try
                                                          'tlimits',   tlimits, ...
                                                          'bonfcorr',  1,...
                                                          'ntimesout', size(data_pac,2));
+    disp(' Successful computation:  GLMmi (w surr)  2D');                                                    
 catch
     disp('Error computing:   GLMmi (w surr)  2D');
 end                                                     
@@ -302,6 +315,7 @@ end
                                                          'tlimits',   tlimits, ...
                                                          'bonfcorr',  1,...
                                                          'ntimesout', size(data_pac,2));
+    disp(' Successful computation:  ERMIPAC (no surr)  2D');                                                  
 catch
     disp('Error computing:   ERMIPAC (no surr)  2D');
 end                                                       
@@ -320,6 +334,7 @@ end
                                                          'tlimits',   tlimits, ...
                                                          'bonfcorr',  1,...
                                                          'ntimesout', size(data_pac,2));  
+   disp(' Successful computation:   ERMIPAC (w surr)  2D');                                                  
 catch
     disp('Error computing:   ERMIPAC (w surr)  2D');
 end                                                     
@@ -342,6 +357,7 @@ try
                                                          'winsize',   s_rate,...
                                                          'timefreq',  1,...
                                                          'ntimesout', size(data_pac,2));
+    disp(' Successful computation:   MVLMI (no surr)  multiple freqs');                                                  
 catch
     disp('Error computing:   MVLMI (no surr)  multiple freqs');
 end
@@ -357,6 +373,7 @@ EEG = pop_pac(EEG,'Channels',[4 15],[30 100],[1  2],[1  2],'method','mvlmi',    
 EEG = pop_pac(EEG,'Channels',[4 15],[30 100],[1  2],[1  2],'method','klmi',     'nboot',200,'alpha',[],'nfreqs1',6,'nfreqs2',7,'bonfcorr',0);
 EEG = pop_pac(EEG,'Channels',[4 15],[30 100],[1  2],[1  2],'method','glm',      'nboot',200,'alpha',[],'nfreqs1',6,'nfreqs2',7,'bonfcorr',0);
 EEG = pop_pac(EEG,'Channels',[4 15],[30 100],[1  2],[1  2],'method','instmipac','nboot',200,'alpha',[],'nfreqs1',6,'nfreqs2',7,'bonfcorr',0);
+disp(' Successful computation:   pop_pac.m'); 
 catch
     disp('Error computing:   pop_pac.m');
 end
