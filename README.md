@@ -43,6 +43,7 @@ Most of the PAC methods in the literature return a single value of the PAC measu
 | Mean Vector Length Modulation Index   | [Canolty et al., 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2628289/)          | Single value     |
 | Kullback-Leibler Modulation Index     | [Tort et al., 2010](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2941206/)             | Single value     |
 | General Linear Model Modulation Index | [Penny et al., 2008](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2675174/)            | Single value     |
+| Phase Locking Value                   | [Lachaux et al., 1999](https://www.ncbi.nlm.nih.gov/pubmed/10619414)                   | Single value     |
 | Instantaneous Mutual Information PAC  | [Martinez-Cancino et al., 2019](https://www.ncbi.nlm.nih.gov/pubmed/30342235)          | Unidimensional   |
 
 ### Epoched signal
@@ -53,6 +54,7 @@ In the table below are listed the current methods implemented in the toolbox to 
 | Mean Vector Length Modulation Index   | [Canolty et al., 2006](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2628289/)         | Unidimensional   |
 | Kullback-Leibler Modulation Index     | [Tort et al., 2010](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2941206/)            | Unidimensional   |
 | General Linear Model Modulation Index | [Voytek et al., 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2675174/)          | Unidimensional   |
+| Phase Locking Value                   | [Lachaux et al., 1999](https://www.ncbi.nlm.nih.gov/pubmed/10619414)                  | Unidimensional   |
 | Event-Related Mutual Information PAC  | [Martinez-Cancino et al., 2019](https://www.ncbi.nlm.nih.gov/pubmed/30342235)         | Bidimensional    |
 
 
