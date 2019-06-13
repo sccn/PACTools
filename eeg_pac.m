@@ -8,8 +8,9 @@
 %                     = eeg_pac(x,y,srate,'key1', 'val1', 'key2', val2' ...);
 % Inputs:
 %    x       - [float array] 2-D data array of size (times,trials) or
-%              3-D (1,times,trials)
-%    y       - [float array] 2-D or 3-d data array
+%              3-D (1,times,trials). Note that data channel dimensions is 1.
+%    y       - [float array] 2-D data array of size (times,trials) or
+%              3-D (1,times,trials). Note that data channel dimensions is 1.
 %    srate   - data sampling rate (Hz)
 %
 %    Most important optional inputs
