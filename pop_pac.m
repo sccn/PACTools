@@ -124,6 +124,7 @@ if nargin < 6
     method_listgui = {'Mean vector length modulation index (Canolty et al.)',...
                       'Kullback-Leibler modulation index (Tort et al.)',...
                       'General linear model (Penny et al.)',...
+                      'Phase Locking Value',...
                       'Instantaneous MIPAC',...
                       'Event related MIPAC'};
     method_list    = {'mvlmi','klmi','glm','plv','instmipac', 'ermipac'};
@@ -243,7 +244,7 @@ if strcmpi(pooldata,'channels')
         error('Invalid data index');
     end
     
-    else % Component
+else % Component
     if isempty(EEG.icaact)
         EEG.icaact = eeg_getdatact( EEG,'component',1:length(EEG.icawinv));
     end
@@ -349,6 +350,7 @@ for ichan_phase = 1:length(indexfreqs1)
     else % Component
         X = squeeze(EEG.icaact(indexfreqs1(ichan_phase),:,g.freq1_trialindx));
     end
+    X = reshape(X,EEG.pnts,EEG.trials);
     %----    
     for ichan_amp = 1:length(indexfreqs2)
         if compute_flag(ichan_phase, ichan_amp)
@@ -360,11 +362,12 @@ for ichan_phase = 1:length(indexfreqs1)
                 Y = squeeze(EEG.icaact(indexfreqs2(ichan_amp),:,g.freq2_trialindx));
                 datatype = 2;
             end
+            Y = reshape(Y,EEG.pnts,EEG.trials);
             %----
             % Running eeg_pac
             % Three options, so we can save the TF decompositions us them later in the loop
             if all([isempty(timefreq_phase{ichan_phase}),isempty(timefreq_amp{ichan_amp})])
-                [~, timesout, freqs1, freqs2, alltfX, alltfY,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  options{:});
+                [~, timesout, freqs1, freqs2, alltfX, alltfY,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  options{:});
                 
                 % populating  phase cell
                 timefreq_phase{ichan_phase}.timesout = timesout;
@@ -377,7 +380,7 @@ for ichan_phase = 1:length(indexfreqs1)
                 
             elseif isempty(timefreq_amp{ichan_amp})
                 tmpopt = [options 'alltfXstr' timefreq_phase{ichan_phase}] ;
-                [~, timesout, ~, freqs2, ~, alltfY,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  tmpopt{:}); clear tmpopt;
+                [~, timesout, ~, freqs2, ~, alltfY,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  tmpopt{:}); clear tmpopt;
                 
                 % populating  amp cell
                 timefreq_amp{ichan_amp}.timesout = timesout;
@@ -386,7 +389,7 @@ for ichan_phase = 1:length(indexfreqs1)
                 
             elseif isempty(timefreq_phase{ichan_phase})
                 tmpopt = [options 'alltfYstr' timefreq_amp{ichan_amp}] ;
-                [~, timesout, freqs1, ~,alltfX, ~,~, pacstruct] = eeg_pac(X', Y', EEG.srate,  tmpopt{:}); clear tmpopt;
+                [~, timesout, freqs1, ~,alltfX, ~,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  tmpopt{:}); clear tmpopt;
                 % populating  phase cell
                 timefreq_phase{ichan_phase}.timesout = timesout;
                 timefreq_phase{ichan_phase}.freqs    = freqs1;
