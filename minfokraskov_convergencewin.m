@@ -99,7 +99,7 @@ try g.kstep;             catch, g.kstep           = 1;            end
 try g.saveallmi;         catch, g.saveallmi       = 0;            end
 try g.maxk;              catch, g.maxk            = 40;           end
 try g.normmethod;        catch, g.normmethod      = 'norm';       end 
-try g.scaledistmat;      catch, g.scaledistmat    = 0;            end
+try g.scaledistmat;      catch, g.scaledistmat    = 1;            end
 
 % Check dimension of signals
 X         = Xorig(:);
@@ -108,14 +108,14 @@ nlat      = size(X,1);
 nlatsorig = size(Xorig,1);
 
 % Normalizing data
-switch g.normmethod
-    case  'norm'
-        X = X./norm(X);
-        Y = Y./norm(Y); 
-    case 'zscore'
-        X = zscore(X);
-        Y = zscore(Y);
-end
+% switch g.normmethod
+%     case  'norm'
+%         X = X./norm(X);
+%         Y = Y./norm(Y); 
+%     case 'zscore'
+%         X = zscore(X);
+%         Y = zscore(Y);
+% end
 
 % Compute distances
 if strncmpi(g.xdistmethod,'circ',4)
