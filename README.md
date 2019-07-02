@@ -1,5 +1,5 @@
-# EEGLAB Event Related PAC Tool
-The Event Related PAC Tool (ERPAC Tool) is an EEGLAB plug-in to compute phase-amplitude coupling. 
+# EEGLAB Event Related PAC Tools
+The Event Related PAC Tools (PAC Tools) is an EEGLAB plug-in to compute phase-amplitude coupling. 
 While the plug-in is still in its early development, usage and feedback is encouraged.
 In addition to traditional methods to compute PAC, the plugin include the Instantaneuous and Event-Related implementation of the Mutual Information Phase-Amplitude Coupling Method (MIPAC) (see Martinez-Cancino et al 2019).
 The toolbox is developed and maintained at the Swartz Center for Computational Neurosciences, UCSD, La Jolla, California.
