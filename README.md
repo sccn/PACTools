@@ -79,7 +79,7 @@ In its current version, the toolbox provide basic function to compute and visual
 To invoke the GUI to compute PAC from the EEGLAB  GUI, click the menu *Tools >  PAC Tools > Estimate PAC*, otherwise you can launch the gui from the command line by typing `EEG = pop_pac(EEG)`. The figure below shows the graphical user interface of the toolbox. 
 	
 <center>
-<img  style="float: center;" src="doc/img/fig_gui_erpac_sample.jpg"  width="500"/>
+<img  style="float: center;" src="doc/img/pop_pac_gui.jpg"  width="500"/>
 <end>
 </center>	
 	
@@ -95,7 +95,7 @@ The last section comprises the settings for the computation of PAC statistics (*
  Once PAC is computed using *pop_pac.m*, the results are stored in the EEG structure (see details in the next section). Visualization of the results can be done by invoking the function *pop_plotpac* (which call *eeg_plotpac.*) from the command line (`pop_plotpac(EEG)`)or from the EEGLAB menu as *Tools >  PAC Tools > Visualize PAC* (see figure below). Notice that *pop_plotpac* is the function that gather all the inputs (if incomplete list of inputs are provided then pops the GUI) in order to pass the full list of inputs to *eeg_plotpac.*. The later one is the function that actually perform the plotting.
  
 <center>
-<img  style="float: center;" src="doc/img/fig_gui_pop_plopac.jpg"  width="600"/>
+<img  style="float: center;" src="doc/img/pop_plotpac_gui.jpg"  width="600"/>
 <end>
 </center>	
 
@@ -183,7 +183,7 @@ After loading the dataset, we will proceed to compute PAC using PAC Tools from i
 
 The equivalent command to perform this computation can be retreived with the command `eegh`. In this case will return in it last entry:
 
-`EEG = pop_pac(EEG,'Channels',[4  15],[30  90],[1],[1],'method','mvlmi','nboot',200,'alpha',[],'nfreqs1',10,'nfreqs2',20,'bonfcorr',0);`
+`EEG = pop_pac(EEG,'Channels',[4  15],[30  90],[1],[1],'method','mvlmi','nboot',200,'alpha',[],'nfreqs1',10,'nfreqs2',20,'freqscale','linear','bonfcorr',0);`
 
 #### Visualization
 To visualize the modulation index computed previously, click on  *Tools >  PAC Tools > Visualize PAC*. The GUI for *pop_plotpac* will pop up.
@@ -206,7 +206,7 @@ Note that this computation was performed to illustrate the procces of PAC comput
 In this demo  we will compute MIPAC on a the same single trial data used in *Demo 1*.
 
 #### Computation
-To compute MIPAC in single trial signals, follow the same steps as in *Demo 1* to open the *pop_pac* GUI. Then enter the same parameters as in *Demo 1* but select *instmipac* from **PAC method**. Then click **OK**.
+To compute MIPAC in single trial signals, follow the same steps as in *Demo 1* to open the *pop_pac* GUI. Then enter the same parameters as in *Demo 1* but select *Instaneous MIPAC* from **PAC method**. Then click **OK**.
 #### Visualization
 Here we will visualize a 2D comodulogram with the evolution of PAC across time. For this, launch *pop_plotpac* from *Tools >  PAC Tools > Visualize PAC* and select the options to match the figure below.
 
