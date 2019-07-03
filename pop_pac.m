@@ -84,16 +84,17 @@ end
 try g.freq1_trialindx;      catch, g.freq1_trialindx  =  1:dim_trial; end % Opt only for pop_pac
 try g.freq2_trialindx;      catch, g.freq2_trialindx  =  1:dim_trial; end % Opt only for pop_pac
 
-try g.nboot;                catch, g.nboot            =  200;         end
-try g.alpha;                catch, g.alpha            =  0.05;        end
-try g.bonfcorr;             catch, g.bonfcorr         =  0;           end
-try g.method;               catch, g.method           =  'glm';       end
-try g.nfreqs1;              catch, g.nfreqs1          =  1;           end
-try g.nfreqs2;              catch, g.nfreqs2          =  1;           end
-try g.cleanup,              catch, g.cleanup          =  0;           end
-try g.freqscale,            catch, g.freqscale        =  'log';       end % may be 'linear' or 'log'
-try g.ptspercent,           catch, g.ptspercent       =  0.05;        end 
-try g.forcecomp,            catch, g.forcecomp        =  0;           end
+try g.nboot;                catch, g.nboot            =  200;                  end
+try g.alpha;                catch, g.alpha            =  0.05;                 end  
+try g.bonfcorr;             catch, g.bonfcorr         =  0;                    end
+try g.method;               catch, g.method           =  'glm';                end
+try g.nfreqs1;              catch, g.nfreqs1          =  1;                    end
+try g.nfreqs2;              catch, g.nfreqs2          =  1;                    end
+try g.tlimits,              catch, g.tlimits          =  [EEG.xmin, EEG.xmax]; end
+try g.cleanup,              catch, g.cleanup          =  0;                    end
+try g.freqscale,            catch, g.freqscale        =  'log';                end % may be 'linear' or 'log'
+try g.ptspercent,           catch, g.ptspercent       =  0.05;                 end 
+try g.forcecomp,            catch, g.forcecomp        =  0;                    end
 
 
 if nargin < 6 
@@ -227,7 +228,8 @@ if nargin < 6
     % Options to call eeg_pac
     options    = {'freqs'   str2num(res.freq1)       'freqs2'     str2num(res.freq2)   'method'    g.method...
                   'nboot'   g.nboot                  'alpha'      g.alpha              'nfreqs1'   g.nfreqs1 ...
-                  'nfreqs2' g.nfreqs2                'freqscale'  g.freqscale          'bonfcorr'  g.bonfcorr'};
+                  'nfreqs2' g.nfreqs2                'freqscale'  g.freqscale          'bonfcorr'  g.bonfcorr'...
+                  'tlimits' g.tlimits};
     
     % Adding options
     tmpparams = eval( [ '{' res.edit_optinput '}' ] );
@@ -237,7 +239,7 @@ if nargin < 6
     if ~isempty( tmpparams )
         for i = 1:2:numel(opttmp)
             if any(strcmp(opttmp{i},fieldnames(g)))
-            g.(opttmp{i}) = opttmp{i+1};
+                g.(opttmp{i}) = opttmp{i+1};
             else
                 options{end+1} = opttmp{i};
                 options{end+1} = opttmp{i+1};
@@ -245,7 +247,7 @@ if nargin < 6
         end
     end
 else
-    options = {'freqs' freqs1 'freqs2' freqs2};
+    options = {'freqs' freqs1 'freqs2' 'tlimits' g.tlimits};
     options = {options{:} varargin{:}};
 end
 
