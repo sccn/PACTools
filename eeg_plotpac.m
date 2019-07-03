@@ -162,6 +162,9 @@ end
          plotopttmp = g.plotopt;
          g.plotopt(end+1:end+10) = {'title', 'Modulation Index', 'zlabel', 'Phase Frequency (Hz)','ylabel', 'Amplitude Frequency (Hz)', 'xlabel', 'Time(sec)', 'cbartext', 'Modulation Index'};
          g.plotopt(end+1:end+length(plotopttmp)) = plotopttmp;
+         if ~isempty(g.timeval)
+             g.plotopt(end+1:end+2) = {'timeval', g.timeval};
+         end
          hfig = comodulogramt(pacstruct.params.freqs_phase,pacstruct.params.freqs_amp,pacstruct.(g.pacmethod).times, pacstruct.(g.pacmethod).pacval, g.plotopt{:});
       
      case 'Amp-PhaseTime'   
@@ -409,7 +412,7 @@ catch
 end;
 
 try g.ntimepoints;                     catch, g.ntimepoints = 10;                     end;
-try g.times;                           catch, g.times = [];                           end;
+try g.timeval;                         catch, g.timeval = [];                           end;
 try g.title;                           catch, g.title = 'Modulation Index';           end;
 try g.zlabel;                          catch, g.zlabel = 'Phase Frequency (Hz)';      end;
 try g.ylabel;                          catch, g.ylabel = 'Amplitude Frequency (Hz)';  end;
@@ -419,10 +422,10 @@ try g.comodtazimuth;                   catch, g.comodtazimuth = -10;            
 try g.comodtelevation;                 catch, g.comodtelevation = 23;                 end;
 
 % Determining nearest time
-if isempty(g.times)
+if isempty(g.timeval)
     times = min(timevect):((max(timevect)-min(timevect))/(g.ntimepoints-1)):max(timevect);
 else
-    times = g.times;
+    times = g.timeval;
 end
 [~, timeidx] = min(abs(repmat(timevect,length(times),1)-repmat(times',1,length(timevect))),'',2);
 tplot = timevect(timeidx);   
