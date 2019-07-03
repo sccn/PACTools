@@ -47,7 +47,7 @@ Most of the PAC methods in the literature return a single value of the PAC measu
 | Instantaneous Mutual Information PAC  | [Martinez-Cancino et al., 2019](https://www.ncbi.nlm.nih.gov/pubmed/30342235)          | Unidimensional   |
 
 ### Epoched signal
-In the table below are listed the current methods implemented in the toolbox to estimate PAC in epoched data. Epoched data is usually the result of extracting snipets of signals time-locked to an event(s) of interest. Here epoched data is assumed as being formated as a data matrix with dimensions of number of epochs(trials) by number of latencies(timepoints).  The three first methods listed in the table are a natural extension of the methods listed in the previous seccion but applying them onto each latency along the dimension of the epochs. The fisrt application of this scheme was proposed by *Voytek et al., 2013* as an extension of the method by Penny et al., 2008. These methods return a PAC time series describing the 'average' dynamics of the procces in the trials. Event-related MIPAC method, though, return a PAC time series for each trial provided.
+In the table below are listed the current methods implemented in the toolbox to estimate PAC in epoched data. Epoched data is usually the result of extracting snipets of signals time-locked to an event(s) of interest. Here epoched data is assumed as being formated as a data matrix with dimensions of number of epochs(trials) by number of latencies(timepoints).  The four first methods listed in the table are a natural extension of the methods listed in the previous seccion but applying them onto each latency along the dimension of the epochs. The fisrt application of this scheme was proposed by *Voytek et al., 2013* as an extension of the method by Penny et al., 2008. These methods return a PAC time series describing the 'average' dynamics of the procces in the trials. Event-related MIPAC method, though, return a PAC time series for each trial provided.
 
 | Method                                | Reference                                                                             | Output Dimension |
 | ---------                             | -----------                                                                           | --------------   | 
@@ -60,23 +60,23 @@ In the table below are listed the current methods implemented in the toolbox to 
 
 ## Plugin Architecture and Workflow
 ### Plugin architecture
-The plugin ERPAC is developed as an EEGLAB plugin. Given this, it shares the same philosophy regarding the functions structure and hierarchy as well as data formats(.set) as EEGLAB. Functions in EEGLAB are designed to provide users, both novice and expert Matlab users, with an easy and flexible usage. Depending on their level of Matlab expertise, users can either interact only with the graphics interface (GUI), else they can call functions directly from the Matlab command line or write their own Matlab scripts using EEGLAB functions and structures. This arrangement defines the hierarchy implemented by the two-level functions used in ERPAC toolbox. 
+The plugin PAC Tools is developed as an EEGLAB plugin. Given this, it shares the same philosophy regarding the functions structure and hierarchy as well as data formats(.set) as EEGLAB. Functions in EEGLAB are designed to provide users, both novice and expert Matlab users, with an easy and flexible usage. Depending on their level of Matlab expertise, users can either interact only with the graphics interface (GUI), else they can call functions directly from the Matlab command line or write their own Matlab scripts using EEGLAB functions and structures. This arrangement defines the hierarchy implemented by the two-level functions used in PAC Tools. 
  
  Specifically in the plugin, the top layer function pop_pac.m provides its own GUI. Called with no (or few) arguments (as from the EEGLAB GUI), this function pops up a query window to gather additional parameter choices. The pop\_pac.m function can also be called directly from the Matlab command line or from Matlab scripts. 
  
 As the top-layer function, pop_pac.m  provides the front-end interface for the toolbox it also serves as the bridge to the inner layer function, eeg\_pac.m. Users with a high level of Matlab/EEGLAB expertise can call this function directly by providing all the inputs required. The function eeg\_pac.m is indeed, the core function of the toolbox and is responsible for processing and parsing the input data and options in order to distribute it to the functions in charge of the computation of each of the PAC methods mentioned in the section [Methods Implemented in the Toolbox](#methods-implemented-in-the-toolbox).
 
 ### Plug-in setup
-To setup the plugin copy the *pop_pac* folder to the EEGLAB folder located in *../eeglab/plugins/* and then restart EEGLAB. Once a dataset is loaded, the toolbox can be located under the menu *Tools* in EEGLAB (see figure below).
+To setup PAC Tools, copy the *pop_pac* folder to the EEGLAB folder located in *../eeglab/plugins/* and then restart EEGLAB. Once a dataset is loaded, the toolbox can be located under the menu *Tools* in EEGLAB (see figure below).
 <center>
 <img src="doc/img/eeglab_toolbox_menu.jpg" alt="drawing" width="400"/>
 </center>
 
 ### Graphical user interface
-In its current version, the toolbox provide basic function to compute and visualize PAC that can be executed either from command line calls or from graphical user interfaces (GUI) created for these ends. The GUI can be invoked from the mEEGLAB menu *Tools >  ERPAC Tool*. Here we will be given the option to *Estimate PAC* or *Visualize PAC*. In the following subsections we explain each of these two options.
+In its current version, the toolbox provide basic function to compute and visualize PAC that can be executed either from command line calls or from graphical user interfaces (GUI) created for these ends. The GUI can be invoked from the mEEGLAB menu *Tools >  PAC Tools*. Here we will be given the option to *Estimate PAC* or *Visualize PAC*. In the following subsections we explain each of these two options.
 
 #### Computing PAC with pop_pac 
-To invoke the GUI to compute PAC from the EEGLAB  GUI, click the menu *Tools >  ERPAC Tool > Estimate PAC*, otherwise you can launch the gui from the command line by typing `EEG = pop_pac(EEG)`. The figure below shows the graphical user interface of the toolbox. 
+To invoke the GUI to compute PAC from the EEGLAB  GUI, click the menu *Tools >  PAC Tools > Estimate PAC*, otherwise you can launch the gui from the command line by typing `EEG = pop_pac(EEG)`. The figure below shows the graphical user interface of the toolbox. 
 	
 <center>
 <img  style="float: center;" src="doc/img/fig_gui_erpac_sample.jpg"  width="500"/>
@@ -84,22 +84,22 @@ To invoke the GUI to compute PAC from the EEGLAB  GUI, click the menu *Tools >  
 </center>	
 	
 The GUI is divided in four parts designated by the labels: **Data type**/**CFC type**, **PAC method**, **Command line options** and **PAC statistics**.
-In the first section (**Data type**/**CFC type**), the type of data used for PAC computation can be selected in **Data type** between channel data (*Channels*) or ICA decomposed data (*Components*). The label **CFC type** is a static text indicating the type of CFC computation performed. The rationale of keeping this in the GUI is that future releases of the toolbox may contain other CFC methods in addition to PAC.
-Right in the next line, a set of edits are used to input the property values for **Phase data**  and **Amplitude data**. In the first column, the index of the channels/components to use to compute PAC are defined (**Comp/chan indices**). In the second column (**Freq range [lo hi] Hz**), the range of frequencies (in Hz) to compute the instantaneous phase and amplitude can be defined. The number of frequencies in these ranges can be defined in the last column (**# Frequencies**).
+In the first section (**Data type**/**CFC type**), the type of data used for PAC computation can be selected in **Data type** between channel data (*Channels*) or ICA decomposed data (*Components*). The label **CFC type** is currently a static text indicating the type of CFC computation performed. The rationale of keeping this in the GUI is that future releases of the toolbox may contain other CFC methods in addition to PAC.
+Right in the next line, a set of edits are used to input the property values for **Phase data**  and **Amplitude data**. In the first column, the index of the channels/components to use to compute PAC are defined (**Comp/chan indices**). In the second column (**Freq range [lo hi] (Hz)**), the range of frequencies (in Hz) to compute the instantaneous phase and amplitude can be defined. The number of frequencies in these ranges can be defined in the fourth column (**# Frequencies**). Additional checkboxes  indicating the frequency scaling used can be found in the last column. By defaul a log scaling is set. Notice that currently, scaling of the frequency values is applied to both Phase and Amplitude values (checkboxes selection are linked).
 
 The next two sections allow for the selection of the PAC method (**PAC Method**) and input of optional parameters at **Command line options**. 
 
-The last section comprises the settings for the computation of PAC statistics (**PAC statistics**). Here the number of surrogates (**# surrogates**), number of blocks to use to shuffle the data for generating the surrogates (**# blocks**), the significance threshold (**Significance threshold (0<p<1)**) and multiple comparison correction (**Correct for multiple comparisons**) can bet set. Three buttons lay at the bottom  of the GUI designated to launch the help documention (button: **Help**), cancel the execution of the GUI without further action (button: **Cancel**) and to start the execution of PAC computation with the settings provided (button: **OK**).
+The last section comprises the settings for the computation of PAC statistics (**Significance testing**). Here the number of surrogates (**# surrogates**), number of blocks to use to shuffle the data for generating the surrogates (**# blocks**), the significance threshold (**Significance threshold (0<p<1)**) and multiple comparison correction (**Correct for multiple comparisons**) can bet set. Three buttons lay at the bottom  of the GUI designated to launch the help documention (button: **Help**), cancel the execution of the GUI without further action (button: **Cancel**) and to start the execution of PAC computation with the settings provided (button: **OK**).
 
 #### Visualizing PAC with pop_plotpac
- Once PAC is computed using *pop_pac.m*, the results are stored in the EEG structure (see details in the next section). Visualization of the results can be done by invoking the function *pop_plotpac* (which call *eeg_plotpac.*) from the command line (`pop_plotpac(EEG)`)or from the EEGLAB menu as *Tools >  ERPAC Tool > Estimate PAC > Visualize PAC* (see figure below). Notice that *pop_plotpac* is the function that gather all the inputs (if incomplete list of inputs are provided then pops the GUI) in order to pass the full list of inputs to *eeg_plotpac.*. The later one is the function that actually perform the plotting.
+ Once PAC is computed using *pop_pac.m*, the results are stored in the EEG structure (see details in the next section). Visualization of the results can be done by invoking the function *pop_plotpac* (which call *eeg_plotpac.*) from the command line (`pop_plotpac(EEG)`)or from the EEGLAB menu as *Tools >  PAC Tools > Visualize PAC* (see figure below). Notice that *pop_plotpac* is the function that gather all the inputs (if incomplete list of inputs are provided then pops the GUI) in order to pass the full list of inputs to *eeg_plotpac.*. The later one is the function that actually perform the plotting.
  
 <center>
 <img  style="float: center;" src="doc/img/fig_gui_pop_plopac.jpg"  width="600"/>
 <end>
 </center>	
 
-To procceed to visualize the results with *pop_plotpac.*, start by selecting the method (**Method**) and the data stream indices (**Chan/Comp. Indx.**) used to compute in this case the instantaneous phase and amplitude needed to compute PAC (e.g., [1 2] means that phase was extracted from channel or component 1 and amplitude was computed from channel or component 2). Then proceed to select the type of plot you want to generate. Notice that at this point this list contain  all the list of plot available, and not the plots that can be generated from your computed PAC values (this option will be added in next releases). See below a list of the plots that can be generated according to the dimension of the PAC results.
+To procceed to visualize the results with *pop_plotpac.*, start by selecting the method (**Method**) and the data stream indices (**[Phase Amp] Comp/chan indices**) used to compute in this case the instantaneous phase and amplitude needed to compute PAC (e.g., [1 2] means that phase was extracted from channel or component 1 and amplitude was computed from channel or component 2). Then proceed to select the type of plot you want to generate. Notice that at this point this list contain  all the list of plot available, and not the plots that can be generated from your computed PAC values (this option will be added in next releases). See below a list of the plots that can be generated according to the dimension of the PAC results.
 
 **For 1D data results:** 
 
@@ -174,7 +174,7 @@ This dataset contains a simulated PAC signal where the instantaneous phase at 8H
 <img src="doc/img/fig_sim_signal_1trial.jpg" alt="drawing" width="600"/>
 </center>
 
-After loading the dataset, we will proceed to compute PAC using ERPAC Tool from its main GUI. To launch the GUI, select *Tools >  ERPAC Tool > Estimate PAC*  in the main EEGLAB GUI. Alternatively you can use `EEG = pop_pac(EEG)` from the MATLAB command windows. Here we will compute PAC using the Mean Vecto length Modulation Index (*mvlmi*) between the phases in the range [4 15] Hz and the amplitudes  in the range [30 90]Hz. In these ranges, 10 and 20 frequencies will be used respectively. To perform the computation, enter the parameters in the *pop_pac* GUI as shown in the figure below and click **Ok**.
+After loading the dataset, we will proceed to compute PAC using PAC Tools from its main GUI. To launch the GUI, select *Tools >  PAC Tools > Estimate PAC*  in the main EEGLAB GUI. Alternatively you can use `EEG = pop_pac(EEG)` from the MATLAB command windows. Here we will compute PAC using the Mean Vecto length Modulation Index (*mvlmi*) between the phases in the range [4 15] Hz and the amplitudes  in the range [30 90]Hz. In these ranges, 10 and 20 frequencies will be used respectively. To perform the computation, enter the parameters in the *pop_pac* GUI as shown in the figure below and click **Ok**.
 
 <center>
 <img  style="float: center;" src="doc/img/demo1_pop_pac.jpg"  width="600"/>
@@ -186,7 +186,7 @@ The equivalent command to perform this computation can be retreived with the com
 `EEG = pop_pac(EEG,'Channels',[4  15],[30  90],[1],[1],'method','mvlmi','nboot',200,'alpha',[],'nfreqs1',10,'nfreqs2',20,'bonfcorr',0);`
 
 #### Visualization
-To visualize the modulation index computed previously, click on  *Tools >  ERPAC Tool > Visualize PAC*. The GUI for *pop_plotpac* will pop up.
+To visualize the modulation index computed previously, click on  *Tools >  PAC Tools > Visualize PAC*. The GUI for *pop_plotpac* will pop up.
 Then select the options as in the figure below and click **OK**.
 
 <center>
@@ -201,14 +201,14 @@ After this, a figure showing a comodulogram will pop up.
 <end>
 </center>	
 
-Note that this computation was performed to illustrate the procces of PAC computation and it did not envolved computation of statistical significance. In a real life situation, the computation of significance (which is allowed from ERPAC Tool) must be performed. 
+Note that this computation was performed to illustrate the procces of PAC computation and it did not envolved computation of statistical significance. In a real life situation, the computation of significance (which is allowed from PAC Tools) must be performed. 
 ### Computing Instantaneous MIPAC in a continuous signal
 In this demo  we will compute MIPAC on a the same single trial data used in *Demo 1*.
 
 #### Computation
 To compute MIPAC in single trial signals, follow the same steps as in *Demo 1* to open the *pop_pac* GUI. Then enter the same parameters as in *Demo 1* but select *instmipac* from **PAC method**. Then click **OK**.
 #### Visualization
-Here we will visualize a 2D comodulogram with the evolution of PAC across time. For this, launch *pop_plotpac* from *Tools >  ERPAC Tool > Visualize PAC* and select the options to match the figure below.
+Here we will visualize a 2D comodulogram with the evolution of PAC across time. For this, launch *pop_plotpac* from *Tools >  PAC Tools > Visualize PAC* and select the options to match the figure below.
 
 <center>
 <img  style="float: center;" src="doc/img/demo2_plot_pac.jpg"  width="600"/>
