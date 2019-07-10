@@ -88,20 +88,17 @@ pacstr = create_pacstr('alpha', g.alpha);
 % Compute the pacval depending on the method
 switch method
     case 'plv'
-        % Phase Locking Value
+        % Phase Locking Value 
+        % (Normalized value by construction)
         pacval = eeg_plv(x,y);
         % Print results
         if g.verbose
           fprintf('Phase Locking Value = %.3f \n', pacval);
         end
-        % Put values of interest in pac structure
-        % Normalizing pacval following Penny et al. (2008)
-        if g.normpac
-            pacstr.normpac = asin(2*pacval-1);
-        end
-        
+             
     case 'mvlmi'
         % Mean Vector Length modulation index
+        % (Normalized value by construction)
         [pactmp, m_raw, composites] = eeg_mvlmi(x,y);
         
         % Normalize mraw
@@ -117,10 +114,6 @@ switch method
         pacstr.peakangle     = normphase;
         pacval               = normlength;
         pacstr.composites    = composites;
-
-        if g.normpac
-            pacstr.normpac = log(pacval);
-        end
         
         % Apply the same transformation to the surrogate_pac data so they
         % are comparable with the pacval
@@ -146,12 +139,13 @@ switch method
         pacstr.bin_average = bin_average;
         pacstr.nbinskl     = nbins;
         
-        if nbins < g.nbinskl,
+        if nbins < g.nbinskl
             disp('eeg_comppac() warning: number of bins for KL computation was reduced');
         end
         
     case 'glm'
         % General Linear Model
+        % (Normalized value (%) by construction)
         [pacval, beta] = eeg_glm(x,y);
         % Print results
         if g.verbose
@@ -160,10 +154,6 @@ switch method
         end
         % Put values of interest in pac structure
         pacstr.beta = beta;
-        % Normalizing pacval following Penny et al. (2008)
-        if g.normpac
-            pacstr.normpac = atanh(sqrt(pacval));
-        end
 end
 
 pacstr.pacval = pacval; % Put the pac value in the pac structure
