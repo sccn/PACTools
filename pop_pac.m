@@ -247,7 +247,7 @@ if nargin < 6
         end
     end
 else
-    options = {'freqs' freqs1 'freqs2' 'tlimits' g.tlimits};
+    options = {'freqs' freqs1 'freqs2' freqs2 'tlimits' g.tlimits};
     options = {options{:} varargin{:}};
 end
 
