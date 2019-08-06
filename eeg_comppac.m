@@ -208,7 +208,7 @@ function [pacval, peakangle, bin_average, nbins] = eeg_klmi(phase, amplitude, nb
         % If some bins are empty, then the KL distance cannot be computed (log of a null value)
          if sum(bin_average>0)<nbins && modbin_flag
             oldnbins = nbins;
-            nbins = ceil(nbins/2);
+            nbins = ceil(nbins)-1; % Initially divided by 2, but this is too agressive.
             if verbose,
                 fprintf('Too many bins to compute Kullback Leibler MI. Reducing the number of bins from %d to %d \n', oldnbins, nbins);
             end
