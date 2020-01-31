@@ -175,9 +175,10 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'cycles'           'real'           [0 Inf]                   [3 0.5];
                   'cycles2'          'real'           [0 Inf]                   [3 0.5];   
                   'verbose'          'string'         {'on','off'}              'off';...
+                  'butterorder'      'real'           [1 20]                     6; 
                   'winsize'          'integer'        [0 Inf]                   max(pow2(nextpow2(frame)-3),4);
                   'method'           'string'         pacmethods_list           'glm';                    
-                  'timefreq'         'real'           [0 1]                      1; % Flag to use filters or TF decomposition      
+                  'timefreq'         'real'           [0 1]                      1; % Flag to use filters or TF decomposition  
                   'nparpools'        'real'           [1 100]                    1 }, 'eeg_pac','ignore');
 if ischar(g), error(g); end
 
