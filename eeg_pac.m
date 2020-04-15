@@ -28,11 +28,13 @@
 %       'freqs2'    - [float array] array of frequencies for the second
 %                     argument. 'freqs' is used for the first argument. 
 %                     By default it is the same as 'freqs'.
-%       'method' - {'mvlmi', 'klmi', 'glm'} Method to be use
-%                     to compute the phase amplitude coupling. 
-%                     mvlmi : Mean Vector Length Modulation Index (Canolty et al. 2006)
-%                     klmi  : Kullback-Leibler Modulation Index (Tort et al. 2010)
-%                     glm   : Generalized Linear Model (Penny et al. 2008)
+%       'method'    - {'mvlmi', 'klmi', 'glm', 'ermipac', 'instmipac'}
+%                     Method to used for computing the phase amplitude coupling. 
+%                     mvlmi     : Mean Vector Length Modulation Index (Canolty et al. 2006)
+%                     klmi      : Kullback-Leibler Modulation Index (Tort et al. 2010)
+%                     glm       : Generalized Linear Model (Penny et al. 2008)
+%                     ermipac   : Event related MIPAC (Martinez-Cancino et al, 2019)
+%                     instmipac : Instantaneous MIPAC (Martinez-Cancino et al, 2019)
 %                     Default {'glm'}
 %       'nbinskl'   - Number of bins to use for the Kullback Leibler
 %                     Modulation Index. Default [18].
@@ -86,7 +88,7 @@
 %                     performed after the spectral decomposition).
 %       'alltfXstr' - Structure with the TF decomposition. The strcucture
 %                     have the fields {alltfs, freqs, timesout}. This is intended to be
-%                     used from pop_pac when several channels/components are comuted at a
+%                     used from pop_pac when several channels/components are computed at a
 %                     time. IN this way the TF decompositio does not have to be computed every time.
 %       'alltfYstr' - same as 'alltfXstr'
 %                     
@@ -131,18 +133,29 @@ if nargin < 3
     return; 
 end
 
-% deal with 3-D inputs
-% --------------------
-if ndims(X) == 3, X = reshape(X, size(X,2), size(X,3)); end
-if ndims(Y) == 3, Y = reshape(Y, size(Y,2), size(Y,3)); end
-
-frame = size(X,1);
+if isempty(X)
+    [tfstruct,gsubinit] = finputcheck(varargin, ...
+        { 'alltfXstr'        'struct'         struct                    struct;
+          'alltfYstr'        'struct'         struct                    struct}, 'eeg_pac','ignore');
+      if ~isfield(tfstruct.alltfXstr, 'alltf')
+          disp('eeg_pac: Unsuported value for input alltfXstr and/or alltfYstr');
+          return
+      end
+      frame = length(tfstruct.alltfXstr.timesout);
+      srate =  round(frame/(max(tfstruct.alltfXstr.timesout)-min(tfstruct.alltfXstr.timesout))*1000);
+      trials = size(tfstruct.alltfXstr.alltf,3);
+else
+    % deal with 3-D inputs
+    % --------------------
+    if ndims(X) == 3, X = reshape(X, size(X,2), size(X,3)); end
+    if ndims(Y) == 3, Y = reshape(Y, size(Y,2), size(Y,3)); end
+    
+    frame = size(X,1);
+end
 pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
 
-[g,gsubf] = finputcheck(varargin, ...
+[g,gsubf] = finputcheck(gsubinit, ...
                 { 'alpha'            'real'           [0 1]                     [];
-                  'alltfXstr'        'struct'         struct                    struct;
-                  'alltfYstr'        'struct'         struct                    struct;
                   'ptspercent'       'float'          [0 1]                     0.05;
                   'nboot'            'real'           [0 Inf]                   200;
                   'baseboot'         'float'          []                        0;                       
@@ -151,7 +164,7 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'detrend'          'string'         {'on','off'}              'off';
                   'freqs'            'real'           [0 Inf]                   [0 srate/2];
                   'freqs2'           'real'           [0 Inf]                   [];
-                  'freqscale'        'string'         { 'linear','log' }        'linear';
+                   
                   'itctype'          'string'         {'phasecoher','phasecoher2','coher'}  'phasecoher';
                   'nfreqs1'          'integer'        [0 Inf]                   [];
                   'nfreqs2'          'integer'        [0 Inf]                   [];
@@ -191,12 +204,14 @@ end
 
 % remove ERP if asked
 % -----------------------
-X = squeeze(X);
-Y = squeeze(Y);
-trials = size(X,2);
-if strcmpi(g.rmerp, 'on')
-    X = X - repmat(mean(X,2), [1 trials]);
-    Y = Y - repmat(mean(Y,2), [1 trials]);
+if ~isempty(X)
+    X = squeeze(X);
+    Y = squeeze(Y);
+    trials = size(X,2);
+    if strcmpi(g.rmerp, 'on')
+        X = X - repmat(mean(X,2), [1 trials]);
+        Y = Y - repmat(mean(Y,2), [1 trials]);
+    end
 end
 
 % Check validity of the method to be run and the data provided
@@ -208,28 +223,31 @@ if trials ==1 && strcmp(g.method, 'ermipac'),   disp('eeg_pac: Method not suppor
 % ------------------------------
 if g.timefreq
     % Using TF decomposition here
-    if isempty(fieldnames(g.alltfXstr))
+    if isempty(fieldnames(tfstruct.alltfXstr))
         [alltfX, freqs1, timesout1] = timefreq(X, srate, 'ntimesout',  g.ntimesout, 'timesout',  g.timesout,  'winsize',  g.winsize, ...
                                                 'tlimits',    g.tlimits,   'detrend',   g.detrend,   'itctype',  g.itctype, ...
                                                 'subitc',     g.subitc,    'cycles',    g.cycles,    'padratio', g.padratio, ...
                                                 'freqs',      g.freqs,     'freqscale', g.freqscale, 'nfreqs',   g.nfreqs1,...
                                                 'verbose',    g.verbose);
+        % Correct sampling rate
+        
     else
-        alltfX    = g.alltfXstr.alltf;
-        freqs1    = g.alltfXstr.freqs;
-        timesout1 = g.alltfXstr.timesout;
+        alltfX    = tfstruct.alltfXstr.alltf;
+        freqs1    = tfstruct.alltfXstr.freqs;
+        timesout1 = tfstruct.alltfXstr.timesout;
     end
     
-    if isempty(fieldnames(g.alltfYstr))
+    if isempty(fieldnames(tfstruct.alltfYstr))
         [alltfY, freqs2, timesout2] = timefreq(Y, srate, 'ntimesout',  g.ntimesout, 'timesout',  g.timesout,  'winsize',  g.winsize, ...
                                                 'tlimits',    g.tlimits,   'detrend',   g.detrend,   'itctype',  g.itctype, ...
                                                 'subitc',     g.subitc,    'cycles',    g.cycles2,   'padratio', g.padratio, ...
                                                 'freqs',      g.freqs2,    'freqscale', g.freqscale, 'nfreqs',   g.nfreqs2,...
                                                 'verbose',    g.verbose);
+        % Correct sampling rate
     else
-        alltfY    = g.alltfYstr.alltf;
-        freqs2    = g.alltfYstr.freqs;
-        timesout2 = g.alltfYstr.timesout;
+        alltfY    = tfstruct.alltfYstr.alltf;
+        freqs2    = tfstruct.alltfYstr.freqs;
+        timesout2 = tfstruct.alltfYstr.timesout;
     end
     
 else
@@ -312,11 +330,9 @@ end
 if numel(size(alltfX)) ==2
     ti_loopend = 1; 
     strial_flag = 1; 
-    ntrials = 1;
 else
     ti_loopend = length(timesout1);
     strial_flag = 0;
-    ntrials = size(alltfX,3);
 end
 
 % Getting array length to store results
@@ -334,7 +350,7 @@ if g.bonfcorr && ~isempty(g.alpha), g.alpha = g.alpha / (length(freqs1) * length
 % ---
 % alltfYlooptmp = alltfY; if iscell(alltfY), alltfYlooptmp = alltfY{find1};end
 
-% Angle and abs from phase and amp
+% Angle and abs from phase and amp.This is specific for PAC
 alltfX = angle(alltfX);
 alltfY = abs(alltfY);
 % ---
@@ -347,9 +363,9 @@ for find1 = 1:length(freqs1)
     if strcmp(g.method, 'ermipac')
         windowsearchsize = round(srate/freqs1(find1));
         micomplimits    = [round(windowsearchsize/2)+1 ti_loopend-round(windowsearchsize/2)-1];
-        tvector         = micomplimits(1):micomplimits(2);
+        tindxvector         = micomplimits(1):micomplimits(2);
     else
-        tvector = 1:ti_loopend;
+        tindxvector = 1:ti_loopend;
     end
     %---
     % Loop  amplitude frequencies
@@ -357,7 +373,7 @@ for find1 = 1:length(freqs1)
         
         % Time loop here( ti =1 if single trial, otherwise the number of timepoints)
         % Check for parpool and adjust the number of workers to the value in parpools.
-        if g.nparpools > 1 && length(tvector) > 1
+        if g.nparpools > 1 && length(tindxvector) > 1
             hpool = gcp('nocreate');
             if isempty(hpool)
                 parpool(g.nparpools)
@@ -371,7 +387,7 @@ for find1 = 1:length(freqs1)
         end
             
 %         parfor (ti = 1:length(tvector), parforArg)
-         for ti = 1:length(tvector)
+         for ti = 1:length(tindxvector)
             
             % Retreiving the data
             if strial_flag % Single trial case
@@ -387,20 +403,20 @@ for find1 = 1:length(freqs1)
                 tmpalltfx = nan(windowsearchsize+1 ,size(single_alltfx,2));
                 tmpalltfy = nan(windowsearchsize+1 ,size(single_alltfy,2));
                 
-                tmpalltfx(1,:) = single_alltfx(tvector(ti),:);
-                tmpalltfy(1,:) = single_alltfy(tvector(ti),:);
+                tmpalltfx(1,:) = single_alltfx(tindxvector(ti),:);
+                tmpalltfy(1,:) = single_alltfy(tindxvector(ti),:);
                 
                 for k = 1:round(windowsearchsize/2)
-                    tmpalltfx(k+1,:) = single_alltfx(tvector(ti)-k,:);
-                    tmpalltfy(k+1,:) = single_alltfy(tvector(ti)-k,:);
+                    tmpalltfx(k+1,:) = single_alltfx(tindxvector(ti)-k,:);
+                    tmpalltfy(k+1,:) = single_alltfy(tindxvector(ti)-k,:);
                     
-                    tmpalltfx(end-k+1,:) = single_alltfx(tvector(ti)+k,:);
-                    tmpalltfy(end-k+1,:) = single_alltfy(tvector(ti)+k,:);
+                    tmpalltfx(end-k+1,:) = single_alltfx(tindxvector(ti)+k,:);
+                    tmpalltfy(end-k+1,:) = single_alltfy(tindxvector(ti)+k,:);
                 end
                 %---
             else
-                tmpalltfx = squeeze(alltfX(find1,tvector(ti),:));
-                tmpalltfy = squeeze(alltfY(find2,tvector(ti),:));
+                tmpalltfx = squeeze(alltfX(find1,tindxvector(ti),:));
+                tmpalltfy = squeeze(alltfY(find2,tindxvector(ti),:));
             end
                         
             % ERMIPAC
@@ -445,7 +461,7 @@ for find1 = 1:length(freqs1)
                 case {'mvlmi', 'klmi', 'glm', 'plv'}
                     % Methods with dimension = 1
                     %---------------------------
-                    if length(tvector)==1
+                    if length(tindxvector)==1
                         pacstruct.(g.method).dim                       = 1;
                         pacstruct.(g.method).pacval(find1,find2)       = pacstructtmp.pacval;
                         
@@ -495,7 +511,7 @@ for find1 = 1:length(freqs1)
                     pacstruct.ermipac.dim                             = 3;
                     pacstruct.ermipac.pacval(find1,find2,1:trials,ti) = pactmp;
                     pacstruct.ermipac.kconv(find1,find2,ti)           = kconv;
-                    pacstruct.ermipac.times                           = timesout1(tvector);
+                    pacstruct.ermipac.times                           = timesout1(tindxvector);
                     
                     if ~isempty(g.alpha)
                         pacstruct.ermipac.signif.pval(find1,find2,:,ti)          = pval;
@@ -519,17 +535,17 @@ for find1 = 1:length(freqs1)
 end
 %--------------------------------------------------------------------------
 % Just for ER MIPAC methods
-if  strcmp(g.method,'ermipac')
-    for i = 1:length(freqs1)
-        for j = 1:length(freqs2)
-            for k = 1:trials
-                % Filtering the MIPAC etsimates
-                [b,a] = butter(g.butterorder,freqs1(find1)/(srate/2),'low');
-                pacstruct.ermipac.pacval(find1,find2,k,:) = filtfilt(b,a,squeeze(pacstruct.ermipac.pacval(i,j,k,:))');
-            end
-        end
-    end
-end
+% if  strcmp(g.method,'ermipac')
+%     for i = 1:length(freqs1)
+%         for j = 1:length(freqs2)
+%             for k = 1:trials
+%                 % Filtering the MIPAC etsimates
+%                 [b,a] = butter(g.butterorder,freqs1(find1)/(srate/2),'low');
+%                 pacstruct.ermipac.pacval(find1,find2,k,:) = filtfilt(b,a,squeeze(pacstruct.ermipac.pacval(i,j,k,:))');
+%             end
+%         end
+%     end
+% end
 %--------------------------------------------------------------------------
 %% Populating pacstruct
 pacstruct.params.freqs_phase        = freqs1;
