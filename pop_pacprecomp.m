@@ -180,13 +180,13 @@ end
  % Removing fields not needed in std_pacprecomp
 fields2rm = {'freqrange1', 'freqrange2', 'nfreqs1', 'nfreqs2', 'freqscale'};
 g = rmfield(g,fields2rm);
-opt = struct2args(g)
+opt = struct2args(g);
 
 % Calling std_precomp
 [STUDY, ALLEEG] = std_pacprecomp(STUDY, ALLEEG, freqs1, freqs2, g.datatype, g.dataindx, opt{:});
 
 % Command call
-com = sprintf('[STUDY, ALLEEG] = std_pacprecomp(STUDY, ALLEEG, %s);', eval(vararg2str(options(3:end))));
+com = sprintf('[STUDY, ALLEEG] = std_pacprecomp(STUDY, ALLEEG, %s);', vararg2str(opt(3:end)));
 
 
 function freqs = compfreq(freqrange, nfreqs, freqscale)
