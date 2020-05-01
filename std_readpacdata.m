@@ -177,29 +177,7 @@ for iSubj = 1:length(subjectList)
         else
             [dataTmp{iSubj}, params, xvals, yvals, zvals, eventsTmp{iSubj} ] = std_readpacfile( fileName, 'designvar', struct(bigstruct.design.variable), opts{:}, 'components', compList);
         end
-% 
-%         if ~strcmpi(opt.datatype, 'ersp') && ~strcmpi(opt.datatype, 'itc') && ~strcmpi(opt.datatype, 'erpim') % ERP or spectrum
-%             % inverting ERP polarity when relevant
-%             if strcmpi(opt.datatype, 'erp') && ~isempty(opt.clusters) && strcmpi(opt.componentpol, 'on')
-%                 polList = reshape(polList,[1 1 length(polList)]); % components are in the 3rd dim
-%                 dataTmp{iSubj} = cellfun(@(x)bsxfun(@times, x, fastif(isempty(x), [], polList)), dataTmp{iSubj}, 'uniformoutput', false);
-%             end
-%             if strcmpi(opt.singletrials, 'off')
-%                 dataTmp{iSubj} = cellfun(@(x)squeeze(mean(x,2)), dataTmp{iSubj}, 'uniformoutput', false); % average
-%             end
-%             if strcmpi(opt.datatype, 'spec') && isfield(params, 'logtrials') && strcmpi(params.logtrials, 'off') % if log trial if off it means that single trials are raw power so we need to take the log of the mean
-%                 dataTmp{iSubj} = cellfun(@(x)squeeze(10*log10(x)), dataTmp{iSubj}, 'uniformoutput', false); % average
-%             end
-%         elseif strcmpi(opt.datatype, 'erpim')
-%             %dataTmp{iSubj} = cellfun(@(x)processerpim(x, xvals, params), dataTmp{iSubj}, 'uniformoutput', false);
-%             for iCond = 1:length(dataTmp{iSubj}(:))
-%                 if all(isnan(eventsTmp{iSubj}{iCond})), eventsTmp{iSubj}{iCond} = []; end
-%                 [dataTmp{iSubj}{iCond}, eventsTmp{iSubj}{iCond}] = processerpim(dataTmp{iSubj}{iCond}, eventsTmp{iSubj}{iCond}, xvals, params);
-%             end
-%             yvals = 1:size(dataTmp{iSubj}{1},1);
-%         else
-%             dataTmp{iSubj} = cellfun(@(x)processtf(x, xvals, opt.datatype, opt.singletrials, params), dataTmp{iSubj}, 'uniformoutput', false);
-%         end
+        % Data manipulation removed here(--)
         STUDY.cache = eeg_cache(STUDY.cache, hashcode, { dataTmp{iSubj} xvals yvals zvals eventsTmp{iSubj} params });
     end
 end
@@ -237,7 +215,6 @@ else
         dim = 3;
     end
 end
-
 
 events = {};
 if ~isempty(opt.clusters)
