@@ -142,7 +142,9 @@ if isempty(X)
           return
       end
       frame = length(tfstruct.alltfXstr.timesout);
-      srate =  round(frame/(max(tfstruct.alltfXstr.timesout)-min(tfstruct.alltfXstr.timesout))*1000);
+      if isempty(srate)
+          srate =  round(frame/(max(tfstruct.alltfXstr.timesout)-min(tfstruct.alltfXstr.timesout))*1000);
+      end
       trials = size(tfstruct.alltfXstr.alltf,3);
 else
     % deal with 3-D inputs
@@ -547,7 +549,7 @@ end
 %     end
 % end
 %--------------------------------------------------------------------------
-%% Populating pacstruct
+%% Populating pacstruct and output
 pacstruct.params.freqs_phase        = freqs1;
 pacstruct.params.freqs_amp          = freqs2;
 pacstruct.params.signif.alpha       = g.alpha;
@@ -562,4 +564,9 @@ if ~isempty(g.alpha)
 else
     crossfcoh_pval = [];
 end
+
+if strcmp(g.method, 'ermipac')
+    timesout1 = timesout1(tindxvector);
+end
+
 end
