@@ -94,7 +94,9 @@ try g.cleanup,              catch, g.cleanup          =  0;           end
 try g.freqscale,            catch, g.freqscale        =  'log';       end % may be 'linear' or 'log'
 try g.ptspercent,           catch, g.ptspercent       =  0.05;        end 
 try g.forcecomp,            catch, g.forcecomp        =  0;           end
-
+try g.compflag,             catch, g.compflag         = 'local';      end
+try g.runtime,              catch, g.runtime          = 1;            end
+try g.jobid,                catch, g.jobid            = ['pacssnsg_' num2str(floor(rand(1)*1000000))]; end
 
 if nargin < 6 
     
@@ -103,6 +105,14 @@ if nargin < 6
     if ~isempty(openfig)
         disp('pop_pac warning: there can be only one pop_pac window, closing old one...')
         close(openfig); 
+    end
+    
+    % Checking NSG
+    nsginstalled_flag = 1;
+    try
+        nsg_info;  % From here, get information on where to create the temporary file
+    catch
+        nsginstalled_flag = 0;
     end
     
     % Defaults for GUI
@@ -125,6 +135,11 @@ if nargin < 6
     % Note: In case of adding more methods, add the modality here at the
     % end of the cell array, and then update 'data1_list' and 'data2_list'
     % in the callback 'callback_setdata'
+    
+    nsgcheck = ['if ' num2str(nsginstalled_flag) ',if get(findobj(''tag'',''chckbx_nsgt''),''value''),' ...
+                        'set(findobj(''tag'',''nsgopt''),''enable'', ''on'');'...
+                     'else, set(findobj(''tag'',''nsgopt''),''enable'', ''off'');end;'...
+                   'else, set(findobj(''tag'',''nsgopt''),''enable'', ''off''); set(findobj(''tag'',''chckbx_nsgt''),''value'',0); end'];
     
     cfctype_list = {'Phase-Amp'};%, 'Amp.-Amp.', 'Phase-Phase'}; 
  
@@ -158,17 +173,31 @@ if nargin < 6
     callback_chkcbx_logphs = 'set(findobj(''tag'',''chckbx_logamp''), ''value'', get(findobj(''tag'',''chckbx_logphs''),''value''))';
     callback_chkcbx_logamp = 'set(findobj(''tag'',''chckbx_logphs''), ''value'', get(findobj(''tag'',''chckbx_logamp''),''value''))';
     
-    geometry = { {2.7 9 [0 0]    [1 1]}  {2.7 9 [0.3  0] [0.8 1] }...%  {2.7 9 [1.58 0]  [1 1]}    {2.7 9 [1.9 0] [0.83 1] }...
-                                         {2.7 9 [0.6  1] [0.58 1]}  {2.7 9 [1.18 1] [0.62 1]} {2.7 9 [1.8 1] [0.45 1]} {2.7 9 [2.3 1] [0.4 1]}...
-                 {2.7 9 [0.18 2] [1 1]}  {2.7 9 [0.6  2] [0.58 1]}  {2.7 9 [1.18 2] [0.62 1]} {2.7 9 [1.8 2] [0.45 1]} {2.7 9 [2.4 2] [0.3 1]}...
-                 {2.7 9 [0.18 3] [1 1]}  {2.7 9 [0.6  3] [0.58 1]}  {2.7 9 [1.18 3] [0.62 1]} {2.7 9 [1.8 3] [0.45 1]} {2.7 9 [2.4 3] [0.3 1]}...
-                 {2.7 9 [0 4]    [1 1]}  {2.7 9 [0.58  4] [2.13 1]}...
-                 {2.7 9 [0 5]    [1 1]}  {2.7 9 [0.6  5] [2.1  1]}...
-                 {2.7 9 [0 6]    [1 1]}  {2.7 9 [0.6  6] [2.1  1]}...
-                 {2.7 9 [0.2 7]  [1 1]}  {2.7 9 [1.24 7] [0.5  1]}  {2.7 9 [1.8  7] [1 1]} {2.7 9 [2.2  7] [0.5 1]}...
-                 {2.7 9 [0.2 8]  [1 1]}  {2.7 9 [1.24 8] [0.5  1]}...
-                 {2.7 9 [0.2 9]  [1 1]}  {2.7 9 [1.24 9] [0.5  1]}...
-                 {2.7 9 [0  10]  [1 1]}};
+    if nsginstalled_flag
+    guiheight = 12
+    nsgdefaultopt = ['''runtime'',' num2str(g.runtime) ',''jobid'','''  g.jobid ''''];
+    nsgmenugeom = {{2.7 guiheight [0 10]    [1 1]}  {2.7 guiheight [0.6 10] [0.5  1]}...
+               {2.7 guiheight [0 11]    [1 1]}  {2.7 guiheight [0.6 11] [2.1  1]}...
+               {2.7 guiheight [0 12]    [1 1]}};
+    nsgmenuuilist = {{'style' 'text' 'string' 'Compute on NSG' 'fontweight' 'bold'} {'style' 'checkbox' 'tag' 'chckbx_nsgt' 'callback' nsgcheck 'value' fastif(strcmpi(g.compflag,'nsg'), 1, 0)}...
+                    {'style' 'text' 'string' 'NSG options'}    {'style' 'edit'       'string'  nsgdefaultopt           'tag' 'nsgopt' 'enable' fastif( strcmpi(g.compflag,'nsg'), 'on','off')}...
+                    {}};
+    else
+        guiheight = 9
+        nsgmenugeom =  {{2.7 guiheight [0 10]    [1 1]}};
+        nsgmenuuilist = {{}};
+    end
+    geometry = { {2.7 guiheight [0 0]     [1 1]}  {2.7 guiheight [0.3  0] [0.8 1] }...%  {2.7 9 [1.58 0]  [1 1]}    {2.7 9 [1.9 0] [0.83 1] }...
+                                           {2.7 guiheight [0.6  1] [0.58 1]}  {2.7 guiheight [1.18 1] [0.62 1]} {2.7 guiheight [1.8 1] [0.45 1]} {2.7 guiheight [2.3 1] [0.4 1]}...
+                 {2.7 guiheight [0.18 2]  [1 1]}  {2.7 guiheight [0.6  2] [0.58 1]}  {2.7 guiheight [1.18 2] [0.62 1]} {2.7 guiheight [1.8 2] [0.45 1]} {2.7 guiheight [2.4 2] [0.3 1]}...
+                 {2.7 guiheight [0.18 3]  [1 1]}  {2.7 guiheight [0.6  3] [0.58 1]}  {2.7 guiheight [1.18 3] [0.62 1]} {2.7 guiheight [1.8 3] [0.45 1]} {2.7 guiheight [2.4 3] [0.3 1]}...
+                 {2.7 guiheight [0 4]     [1 1]}  {2.7 guiheight [0.58  4] [2.13 1]}...
+                 {2.7 guiheight [0 5]     [1 1]}  {2.7 guiheight [0.6  5] [2.1  1]}...
+                 {2.7 guiheight [0 6]     [1 1]}  {2.7 guiheight [0.6  6] [2.1  1]}...
+                 {2.7 guiheight [0.15 7]  [1 1]}  {2.7 guiheight [1.24 7] [0.5  1]}  {2.7 guiheight [1.8  7] [1 1]} {2.7 guiheight [2.2  7] [0.5 1]}...
+                 {2.7 guiheight [0.15 8]  [1 1]}  {2.7 guiheight [1.24 8] [0.5  1]}...
+                 {2.7 guiheight [0.15 9]  [1 1]}  {2.7 guiheight [1.24 9] [0.5  1]}...
+                 nsgmenugeom{:}};
              
     uilist = {{'style' 'text' 'string' 'Data type' 'fontweight' 'bold' } {'style' 'popupmenu' 'string' datatypel_list 'tag' 'datatype' 'value' 1}...% {'style' 'text' 'string' 'CFC type' 'fontweight' 'bold' } {'style' 'popupmenu' 'string' cfctype_list 'tag' 'datatyppac' 'value' 1 'callback' callback_setdata}...% 
               {'style' 'text' 'string' 'Comp/chan indices' 'fontweight' 'normal'} {'style' 'text' 'string' 'Freq range [lo hi] (Hz)' 'fontweight' 'normal'} {'style' 'text' 'string' '# Frequencies' 'fontweight' 'normal'} {'style' 'text' 'string' 'Log-scaling' 'fontweight' 'normal'} ...
@@ -188,7 +217,7 @@ if nargin < 6
               {'style' 'text' 'string' '# Surrogates' 'callback' 'close(gcbf);' } {'style' 'edit' 'string' num2str(g.nboot) 'tag' 'nsurrogates' 'enable' 'off'}  {'style' 'text' 'string' '# data blocks' 'callback' 'close(gcbf);' } {'style' 'edit' 'string' num2str(1/g.ptspercent) 'tag' 'nblocks_edit' 'enable' 'off'} ...
               {'style' 'text' 'string' 'Significance threshold (0<p<1)' 'callback' 'close(gcbf);' } {'style' 'edit' 'string' num2str(g.alpha) 'tag' 'pvalue' 'enable' 'off'}... 
               {'style' 'text' 'string' 'Correct for multiple comparisons' 'callback' 'close(gcbf);' } {'style' 'checkbox' 'tag' 'bonfcorr' 'enable' 'off'}...
-              {}};
+              nsgmenuuilist{:}};
           
     [out_param userdat tmp res] = inputgui('title', guititle, 'geom', geometry, 'uilist',uilist,'eval', 'set(gcf,''tag'', ''pop_pacgui'')', 'helpcom','pophelp(''pop_pac'');');
 %%
@@ -223,13 +252,24 @@ if nargin < 6
     g.nfreqs1   = str2num(res.nfreqs1);
     g.nfreqs2   = str2num(res.nfreqs2)  ;
     g.freqscale = freqscale;
+    if nsginstalled_flag
+        g.compflag = fastif(res.chckbx_nsgt, 'nsg', 'local');
+        tmpnsg = eval( [ '{' res.nsgopt '}' ] );
+        if ~isempty( tmpnsg )
+            for i = 1:2:numel(tmpnsg)
+                if any(strcmp(tmpnsg{i},fieldnames(g)))
+                    g.(tmpnsg{i}) = tmpnsg{i+1};
+                end
+            end
+        end
+    end
     
     % Options to call eeg_pac
-    options    = {'freqs'   str2num(res.freq1)       'freqs2'     str2num(res.freq2)   'method'    g.method...
-                  'nboot'   g.nboot                  'alpha'      g.alpha              'nfreqs1'   g.nfreqs1 ...
-                  'nfreqs2' g.nfreqs2                'freqscale'  g.freqscale          'bonfcorr'  g.bonfcorr'};
+    options    = {'freqs'     str2num(res.freq1)       'freqs2'     str2num(res.freq2)   'nfreqs1'   g.nfreqs1 ...
+                  'nfreqs2'   g.nfreqs2                'freqscale'  g.freqscale          'method'     g.method...
+                  'nboot'     g.nboot                  'alpha'      g.alpha              'bonfcorr'  g.bonfcorr'};
     
-    % Adding options
+    % Adding pop_pac options
     tmpparams = eval( [ '{' res.edit_optinput '}' ] );
     
     % Updating current function parameters and inputs to eeg_pac
@@ -243,12 +283,14 @@ if nargin < 6
                 options{end+1} = opttmp{i+1};
             end
         end
-    end
+    end    
 else
     options = {'freqs' freqs1 'freqs2' freqs2};
     options = {options{:} varargin{:}};
 end
 
+
+if strcmpi(g.compflag, 'local')
 % Retreiving data
 if strcmpi(pooldata,'channels')
     [dim_chan,~,dim_trial] = size(EEG.data); clear tmp;
@@ -381,8 +423,8 @@ for ichan_phase = 1:length(indexfreqs1)
             % Running eeg_pac
             % Three options, so we can save the TF decompositions us them later in the loop
             if all([isempty(timefreq_phase{ichan_phase}),isempty(timefreq_amp{ichan_amp})])
-                [~, timesout, freqs1, freqs2, alltfX, alltfY,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  options{:});
-                
+                %[~, timesout, freqs1, freqs2, alltfX, alltfY,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  options{:});
+                tmpopt = options;
                 % populating  phase cell
                 timefreq_phase{ichan_phase}.timesout = timesout;
                 timefreq_phase{ichan_phase}.freqs    = freqs1;
@@ -394,7 +436,7 @@ for ichan_phase = 1:length(indexfreqs1)
                 
             elseif isempty(timefreq_amp{ichan_amp})
                 tmpopt = [options 'alltfXstr' timefreq_phase{ichan_phase}] ;
-                [~, timesout, ~, freqs2, ~, alltfY,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  tmpopt{:}); clear tmpopt;
+                %[~, timesout, ~, freqs2, ~, alltfY,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  tmpopt{:}); clear tmpopt;
                 
                 % populating  amp cell
                 timefreq_amp{ichan_amp}.timesout = timesout;
@@ -403,13 +445,16 @@ for ichan_phase = 1:length(indexfreqs1)
                 
             elseif isempty(timefreq_phase{ichan_phase})
                 tmpopt = [options 'alltfYstr' timefreq_amp{ichan_amp}] ;
-                [~, timesout, freqs1, ~,alltfX, ~,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  tmpopt{:}); clear tmpopt;
+                %[~, timesout, freqs1, ~,alltfX, ~,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  tmpopt{:}); clear tmpopt;
                 % populating  phase cell
                 timefreq_phase{ichan_phase}.timesout = timesout;
                 timefreq_phase{ichan_phase}.freqs    = freqs1;
                 timefreq_phase{ichan_phase}.alltf    = alltfX;
             end
+            [~, timesout, freqs1, ~,alltfX, ~,~, pacstruct] = eeg_pac(X, Y, EEG.srate,  tmpopt{:}); clear tmpopt;
             
+            % ---
+   
             ChanIndxExist = [];
             if isfield(EEG.etc,'eegpac') && ~isempty(EEG.etc.eegpac)
                 ChanIndxExist = find(cell2mat(cellfun(@(x) all(x==[indexfreqs1(ichan_phase) indexfreqs2(ichan_amp)]), {EEG.etc.eegpac.dataindx}, 'UniformOutput', 0)));
@@ -439,4 +484,44 @@ end
 tmpval = setdiff( fieldnames(EEG.etc.eegpac),{'dataindx'    'datatype'    'params'})';
 EEG.etc.eegpac = orderfields(EEG.etc.eegpac, {'dataindx'    'datatype'    'params' tmpval{:}});
 com = sprintf('EEG = pop_pac(EEG,''%s'',[%s],[%s],[%s],[%s],%s);',pooldata,num2str([freqs1(1) freqs1(end)]),num2str([freqs2(1) freqs2(end)]),num2str(indexfreqs1),num2str(indexfreqs2), vararg2str(options(5:end)));
+else
+    %%%%%%%%%%%%%%%%%%%%%%
+    %%% NSG Submission %%%
+    %%%%%%%%%%%%%%%%%%%%%%
+    try
+        nsg_info;  % get information on where to create the temporary file
+    catch
+        error('Plugin nsgportal needs to be in the MATLAB path');
+    end
+    
+    %  Section 1: Create temporary folder and save data
+    tmpJobPath = fullfile(outputfolder, 'pactmp');
+    if exist(tmpJobPath,'dir'), rmdir(tmpJobPath,'s'); end
+    mkdir(tmpJobPath);
+    
+    % Save data in temporary folder previously created.
+    % Here you may change the file name to match the one in the script you will run in NSG
+    pop_saveset(EEG,'filename', EEG.filename, 'filepath', tmpJobPath);
+    
+    % Copy toolbox to folder. temporary until updated in NSG
+    pactoolfolder = which('pop_pac.m');
+    pacpath = fileparts(pactoolfolder);
+    copyfile(pacpath,tmpJobPath);
+    
+    %  Section 2
+    %  Manage m-file to be executed in NSG
+    %  Write m-file to be run in NSG.
+    %  Options defined in plugin are written into the file
+    pac_singlesubj_writejobfile
+    
+    % Section 3
+    % Submit job to NSG
+    pop_nsg('run',tmpJobPath,'filename', 'pacnsg_job.m', 'jobid', g.jobid,'runtime', g.runtime);
+    display([char(10) 'PACTools job (jobID:'  g.jobid ') has been submitted to NSG' char(10) ...
+        'Copy or keep in mind the jobID assigned to this job to retreive the results later on.' char(10)...
+        'You may follow the status of your job through pop_nsg'...
+        char(10)]);
+    rmdir(tmpJobPath,'s');
+    return;  
+end
 end
