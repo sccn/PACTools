@@ -62,7 +62,7 @@ if nargin < 6
  %%   
 fieldnamesval = fieldnames(EEG.etc.eegpac);
 if length(fieldnamesval)>3
-    listmethod   = fieldnamesval(4:end); % getting computed method
+    listmethod   = fieldnamesval(5:end); % getting computed method
 else
     error('pop_plotpac() error: PAC must be computed');
 end
