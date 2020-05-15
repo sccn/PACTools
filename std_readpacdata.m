@@ -64,7 +64,8 @@ STUDY = pop_erspparams(STUDY, 'default');
     'channels'      'cell'    []               {};
     'clusters'      'integer' []               [];
     'timerange'     'real'    []               [];
-    'freqrange'     'real'    []               [];
+    'freqrange1'     'real'    []               [];
+    'freqrange2'     'real'    []               [];
     'datatype'      'string'  { 'pac' 'mipac'} 'pac';
     'singletrials'  'string'  { 'on','off' }   'off';
     'componentpol'  'string'  { 'on','off' }   'on';
@@ -78,8 +79,10 @@ dtype = opt.datatype; % data type
 % get the file extension
 % ----------------------
 tmpDataType = opt.datatype;
-if isempty(opt.timerange), opt.timerange = STUDY.etc.erspparams.timerange;  end
-if isempty(opt.freqrange), opt.freqrange = STUDY.etc.erspparams.freqrange;  end
+if isempty(opt.timerange),  opt.timerange  = STUDY.etc.pacparams.timerange;  end
+if isempty(opt.freqrange1), opt.freqrange1 = STUDY.etc.pacparams.freqrange1;  end
+if isempty(opt.freqrange2), opt.freqrange2 = STUDY.etc.pacparams.freqrange2;  end
+
 if ~isempty(opt.channels), fileExt = '.datpac';
 else                       fileExt = '.icapac';
 end
@@ -99,12 +102,12 @@ end
 % options
 % -------
 opts = {};
-if ~isempty(opt.timerange), opts = { 'timelimits', opt.timerange }; end
-if ~isempty(opt.freqrange), opts = { 'freqlimits', opt.freqrange }; end
+if ~isempty(opt.timerange),  opts = { 'timelimits', opt.timerange };   end
+if ~isempty(opt.freqrange1), opts = { 'freqlimits1', opt.freqrange1 }; end
+if ~isempty(opt.freqrange2), opts = { 'freqlimits1', opt.freqrange2 }; end
+
 opts = { opts{:} 'singletrials' opt.singletrials };
 fprintf('Reading subjects'' data or looking up measure values in EEGLAB cache\n');
-
-
 
 % get all sessions (same code as std_readdat)
 % -------------------------------------------
@@ -158,9 +161,9 @@ for iSubj = 1:length(subjectList)
     end
     
     % read all channels/components at once
-    hashcode = gethashcode(std_serialize(bigstruct));
-    [STUDY.cache, tmpstruct] = eeg_cache(STUDY.cache, hashcode);
-    
+%     hashcode = gethashcode(std_serialize(bigstruct));
+%     [STUDY.cache, tmpstruct] = eeg_cache(STUDY.cache, hashcode);
+    tmpstruct = []; % RAMONcheck cache management for PAC
     if ~isempty(tmpstruct)
         dataTmp{iSubj}   = tmpstruct{1};
         xvals            = tmpstruct{2};
@@ -178,7 +181,7 @@ for iSubj = 1:length(subjectList)
             [dataTmp{iSubj}, params, xvals, yvals, zvals, eventsTmp{iSubj} ] = std_readpacfile( fileName, 'designvar', struct(bigstruct.design.variable), opts{:}, 'components', compList);
         end
         % Data manipulation removed here(--)
-        STUDY.cache = eeg_cache(STUDY.cache, hashcode, { dataTmp{iSubj} xvals yvals zvals eventsTmp{iSubj} params });
+%         STUDY.cache = eeg_cache(STUDY.cache, hashcode, { dataTmp{iSubj} xvals yvals zvals eventsTmp{iSubj} params });
     end
 end
 fprintf('\n');
@@ -186,40 +189,43 @@ fprintf('\n');
 % if single trials, swap the last 2 dim (put channels before trials) %
 % RAMON: Check when more than one channel
 if strcmpi(opt.singletrials, 'on') && length(opt.channels) > 1
-    if ndims(dataTmp{1}{1}) == 3
-        for iCase = 1:length(dataTmp)
-            for iItem = 1:length(dataTmp{1}(:))
-                dataTmp{iCase}{iItem} = permute(dataTmp{iCase}{iItem}, [1 3 2]);
-            end
-        end
-    else
+%     if ndims(dataTmp{1}{1}) == 4
+%         for iCase = 1:length(dataTmp)
+%             for iItem = 1:length(dataTmp{1}(:))
+%                 dataTmp{iCase}{iItem} = permute(dataTmp{iCase}{iItem}, [1 3 2]);
+%             end
+%         end
+%     else
+  if ndims(dataTmp{1}{1}) == 5
         for iCase = 1:length(dataTmp)
             for iItem = 1:length(dataTmp{1}(:))
                 dataTmp{iCase}{iItem} = permute(dataTmp{iCase}{iItem}, [1 2 3 5 4]);
             end
         end
-    end
+  end
+%     end
 end
 
 % store data for all subjects
 if strcmp(opt.datatype, 'MIPAC')
-    if length(opt.channels) > 1 || size(dataTmp,2) > 1
-        dim = 5;
+    if length(opt.channels) > 1
+        dim = 5; % 6
     else
         dim = 4;
     end
 else
-    if length(opt.channels) > 1 || size(dataTmp,2) > 1
-        dim = 4;
+    if length(opt.channels) > 1
+        dim = 5;
     else
-        dim = 3;
+        dim = 4; % ok for single channels no mipac
     end
 end
 
 events = {};
 if ~isempty(opt.clusters)
     % Split ICA components from the same subjects need to be made 
-    % as if coming from different subjects
+    % as if coming from different subjects. E.g. 3 componets 2 S01 1S02 and
+    % 2 cond -> will yield  dataTmp2 = {2×1 cell}    {2×1 cell}    {2×1 cell} 
     dataTmp2 = {};
     realDim  = dim;
     if strcmpi(opt.singletrials, 'on'), realDim = realDim+1; end
@@ -242,7 +248,7 @@ if ~isempty(opt.clusters)
     end
     dataTmp = dataTmp2;
 end
-datavals = reorganizedata(dataTmp, dim);
+datavals = reorganizedata(dataTmp, dim); % here will pile up thee trials from all subjects in condition groups.
 
 % reorganize data
 % ---------------
@@ -260,6 +266,7 @@ function datavals = reorganizedata(dataTmp, dim)
                 case 3, datavals{iItem} = zeros([ size(dataTmp{ind}{iItem},1) size(dataTmp{ind}{iItem},2) numItems], 'single'); 
                 case 4, datavals{iItem} = zeros([ size(dataTmp{ind}{iItem},1) size(dataTmp{ind}{iItem},2) size(dataTmp{ind}{iItem},3) numItems], 'single'); 
                 case 5, datavals{iItem} = zeros([ size(dataTmp{ind}{iItem},1) size(dataTmp{ind}{iItem},2) size(dataTmp{ind}{iItem},3) size(dataTmp{ind}{iItem},4) numItems], 'single'); 
+                case 6, datavals{iItem} = zeros([ size(dataTmp{ind}{iItem},1) size(dataTmp{ind}{iItem},2) size(dataTmp{ind}{iItem},3) size(dataTmp{ind}{iItem},4)  size(dataTmp{ind}{iItem},5) numItems], 'single'); 
             end
         end
     end
@@ -272,6 +279,8 @@ function datavals = reorganizedata(dataTmp, dim)
                     case 2, datavals{iItem}(:,count:count+numItems-1) = dataTmp{iCase}{iItem}; 
                     case 3, datavals{iItem}(:,:,count:count+numItems-1) = dataTmp{iCase}{iItem};
                     case 4, datavals{iItem}(:,:,:,count:count+numItems-1) = dataTmp{iCase}{iItem};
+                    case 5, datavals{iItem}(:,:,:,:,count:count+numItems-1) = dataTmp{iCase}{iItem};
+                    case 6, datavals{iItem}(:,:,:,:,:,count:count+numItems-1) = dataTmp{iCase}{iItem};
                 end
                 count = count+numItems;
             end
