@@ -126,38 +126,42 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function [crossfcoh, timesout1, freqs1, freqs2, alltfX, alltfY,crossfcoh_pval, pacstruct] = eeg_pac(X, Y, srate, varargin)
+function [crossfcoh, timesout1, freqs1, freqs2, tfX, tfY,crossfcoh_pval, pacstruct, tfXtimes, tfYtimes] = eeg_pac(X, Y, srate, varargin)
     
 if nargin < 3
     help pac; 
     return; 
 end
 
-if isempty(X)
-    [tfstruct,gsubinit] = finputcheck(varargin, ...
-        { 'alltfXstr'        'struct'         struct                    struct;
-          'alltfYstr'        'struct'         struct                    struct}, 'eeg_pac','ignore');
-      if ~isfield(tfstruct.alltfXstr, 'alltf')
-          disp('eeg_pac: Unsuported value for input alltfXstr and/or alltfYstr');
-          return
-      end
-      frame = length(tfstruct.alltfXstr.timesout);
-      if isempty(srate)
-          srate =  round(frame/(max(tfstruct.alltfXstr.timesout)-min(tfstruct.alltfXstr.timesout))*1000);
-      end
-      trials = size(tfstruct.alltfXstr.alltf,3);
-else
+% if isempty(X) || isempty(Y) 
+%     [tfstruct,gsubinit] = finputcheck(varargin, ...
+%         { 'alltfXstr'        'struct'         struct                    struct;
+%           'alltfYstr'        'struct'         struct                    struct}, 'eeg_pac','ignore');
+%       if ~isfield(tfstruct.alltfXstr, 'alltf')
+%           disp('eeg_pac: Unsuported value for input alltfXstr and/or alltfYstr');
+%           return
+%       end
+%       frame = length(tfstruct.alltfXstr.timesout);
+%       if isempty(srate)
+%           srate =  round(frame/(max(tfstruct.alltfXstr.timesout)-min(tfstruct.alltfXstr.timesout))*1000);
+%       end
+%       trials = size(tfstruct.alltfXstr.alltf,3);
+% else
+%     gsubinit = varargin;
     % deal with 3-D inputs
     % --------------------
     if ndims(X) == 3, X = reshape(X, size(X,2), size(X,3)); end
     if ndims(Y) == 3, Y = reshape(Y, size(Y,2), size(Y,3)); end
     
     frame = size(X,1);
-end
+% end
+
 pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
 
-[g,gsubf] = finputcheck(gsubinit, ...
+[g,gsubf] = finputcheck(varargin, ...
                 { 'alpha'            'real'           [0 1]                     [];
+                  'alltfXstr'        'struct'         struct                    struct;
+                  'alltfYstr'        'struct'         struct                    struct;
                   'ptspercent'       'float'          [0 1]                     0.05;
                   'nboot'            'real'           [0 Inf]                   200;
                   'baseboot'         'float'          []                        0;                       
@@ -166,7 +170,7 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'detrend'          'string'         {'on','off'}              'off';
                   'freqs'            'real'           [0 Inf]                   [0 srate/2];
                   'freqs2'           'real'           [0 Inf]                   [];
-                   
+                  'freqscale'        'string'         { 'linear','log' }        'linear';
                   'itctype'          'string'         {'phasecoher','phasecoher2','coher'}  'phasecoher';
                   'nfreqs1'          'integer'        [0 Inf]                   [];
                   'nfreqs2'          'integer'        [0 Inf]                   [];
@@ -184,7 +188,7 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'gammabase'        'real'           []                        []; ...                  
                   'timesout'         'real'           []                        []; ...
                   'ntimesout'        'integer'        []                        length(X)/2; ...
-                  'tlimits'          'real'           []                        [0 frame/srate];
+                  'tlimits'          'real'           []                        [];
                   'title'            'string'         []                        '';                      
                   'vert'             {'real','cell'}  []                        [];
                   'cycles'           'real'           [0 Inf]                   [3 0.5];
@@ -192,138 +196,144 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'verbose'          'string'         {'on','off'}              'off';...
                   'butterorder'      'real'           [1 20]                     6; 
                   'winsize'          'integer'        [0 Inf]                   max(pow2(nextpow2(frame)-3),4);
-                  'method'           'string'         pacmethods_list           'glm';                    
-                  'timefreq'         'real'           [0 1]                      1; % Flag to use filters or TF decomposition  
-                  'nparpools'        'real'           [1 100]                    1 }, 'eeg_pac','ignore');
+                  'method'           'string'         pacmethods_list           'glm';      
+                  'resample'         'real'           [0 1]                      0;      
+                  'useparallel'      'real'           [0 1]                      1;
+                  'nparpools'        'real'           [1 100]                    [] }, 'eeg_pac','ignore');
 if ischar(g), error(g); end
 
-% Parallelization stuff (work in progress)
-parclust = parcluster;
-if g.nparpools>parclust.NumWorkers
-    g.nparpools = parclust.NumWorkers;
-    disp(['eeg_pac: Number of clusters modified to fit the maximum number of workers allowed (' num2str(parclust.NumWorkers)  ')']);
+% Parallelization stuff
+if g.useparallel
+    parclust = parcluster;
+    if isempty(g.nparpools) || g.nparpools>parclust.NumWorkers
+        g.nparpools = parclust.NumWorkers;
+    end
 end
 
 % remove ERP if asked
 % -----------------------
-if ~isempty(X)
-    X = squeeze(X);
-    Y = squeeze(Y);
-    trials = size(X,2);
-    if strcmpi(g.rmerp, 'on')
-        X = X - repmat(mean(X,2), [1 trials]);
-        Y = Y - repmat(mean(Y,2), [1 trials]);
-    end
+X = squeeze(X);
+Y = squeeze(Y);
+trials = size(X,2);
+if strcmpi(g.rmerp, 'on')
+    X = X - repmat(mean(X,2), [1 trials]);
+    Y = Y - repmat(mean(Y,2), [1 trials]);
 end
+
 
 % Check validity of the method to be run and the data provided
 if trials ~=1 && strcmp(g.method, 'instmipac'), disp('eeg_pac: Method not supported for data format provided'); return; end
 if trials ==1 && strcmp(g.method, 'ermipac'),   disp('eeg_pac: Method not supported for data format provided'); return; end
 
 %%
-% perform timefreq decomposition
+% Perform timefreq decomposition
 % ------------------------------
-if g.timefreq
+ if isempty(fieldnames(g.alltfXstr)) && ~isempty(fieldnames(g.alltfYstr))
+     g.timesout = g.alltfYstr.timesout;
+ end
+ 
+  if ~isempty(fieldnames(g.alltfXstr)) && isempty(fieldnames(g.alltfYstr))
+     g.timesout = g.alltfXstr.timesout;
+ end
+ 
     % Using TF decomposition here
-    if isempty(fieldnames(tfstruct.alltfXstr))
-        [alltfX, freqs1, timesout1] = timefreq(X, srate, 'ntimesout',  g.ntimesout, 'timesout',  g.timesout,  'winsize',  g.winsize, ...
+    if isempty(fieldnames(g.alltfXstr))
+        [tfX, freqs1, tfXtimes] = timefreq(X, srate, 'ntimesout',  g.ntimesout, 'timesout',  g.timesout,  'winsize',  g.winsize, ...
                                                 'tlimits',    g.tlimits,   'detrend',   g.detrend,   'itctype',  g.itctype, ...
                                                 'subitc',     g.subitc,    'cycles',    g.cycles,    'padratio', g.padratio, ...
                                                 'freqs',      g.freqs,     'freqscale', g.freqscale, 'nfreqs',   g.nfreqs1,...
-                                                'verbose',    g.verbose);
-        % Correct sampling rate
+                                                'verbose',    g.verbose); 
+        % Update timestamps
+        g.timesout = tfXtimes;
         
     else
-        alltfX    = tfstruct.alltfXstr.alltf;
-        freqs1    = tfstruct.alltfXstr.freqs;
-        timesout1 = tfstruct.alltfXstr.timesout;
+        tfX       = g.alltfXstr.alltf;
+        freqs1    = g.alltfXstr.freqs;
+        tfXtimes  = g.alltfXstr.timesout;
     end
     
-    if isempty(fieldnames(tfstruct.alltfYstr))
-        [alltfY, freqs2, timesout2] = timefreq(Y, srate, 'ntimesout',  g.ntimesout, 'timesout',  g.timesout,  'winsize',  g.winsize, ...
+    if isempty(fieldnames(g.alltfYstr))
+        [tfY, freqs2, tfYtimes] = timefreq(Y, srate, 'ntimesout',  g.ntimesout, 'timesout',  g.timesout,  'winsize',  g.winsize, ...
                                                 'tlimits',    g.tlimits,   'detrend',   g.detrend,   'itctype',  g.itctype, ...
                                                 'subitc',     g.subitc,    'cycles',    g.cycles2,   'padratio', g.padratio, ...
                                                 'freqs',      g.freqs2,    'freqscale', g.freqscale, 'nfreqs',   g.nfreqs2,...
                                                 'verbose',    g.verbose);
-        % Correct sampling rate
     else
-        alltfY    = tfstruct.alltfYstr.alltf;
-        freqs2    = tfstruct.alltfYstr.freqs;
-        timesout2 = tfstruct.alltfYstr.timesout;
+        tfY    = g.alltfYstr.alltf;
+        freqs2    = g.alltfYstr.freqs;
+        tfYtimes = g.alltfYstr.timesout;
     end
-    
-else
-    % Using Filters here
-    timesout1 = g.tlimits(1):1/srate:g.tlimits(2);
-    timesout2 = timesout1;
-    
-    % PHS
-    if numel(g.freqs)>1
-        freqs1 = g.freqs(1):(g.freqs(2)-g.freqs(1))/g.nfreqs1:g.freqs(2);
-    else
-        freqs1 = g.freqs;
-    end
-    
-    if numel(g.freqs2)>1
-        freqs2 = g.freqs2(1):(g.freqs2(2)-g.freqs2(1))/g.nfreqs2:g.freqs2(2);
-    else
-        freqs2 = g.freqs2;
-    end
-       
-    for ifreq1 =1: length(freqs1)
-        % Phases
-        for itrials = 1:size(X,3)         
-            alltfX(ifreq1,:,itrials) = eegfilt(X', srate, freqs1(ifreq1) - 1, 0);
-            alltfX(ifreq1,:,itrials) = eegfilt(alltfX(ifreq1,:,itrials), srate, 0, freqs1(ifreq1) + 1);
-            alltfX(ifreq1,:,itrials) = hilbert(alltfX(ifreq1,:,itrials));
-            
-            % Amplitude
-            for ifreq2 =1:length(freqs2)
-                alltfY{ifreq1}(ifreq2,:,itrials) = eegfilt(Y', srate, freqs2(ifreq2) - freqs1(ifreq1) - 1, 0);
-                alltfY{ifreq1}(ifreq2,:,itrials) = eegfilt(alltfY{ifreq1}(ifreq2,:,itrials), srate, 0, freqs2(ifreq2) + freqs1(ifreq1) + 1);
-                alltfY{ifreq1}(ifreq2,:,itrials) = hilbert(alltfY{ifreq1}(ifreq2,:,itrials));
-            end
-        end
-    end
-end
- 
+
 %%
 % check time limits
 % -----------------
 if ~isempty(g.subwin)
-    ind1      = find(timesout1 > g.subwin(1) & timesout1 < g.subwin(2));
-    ind2      = find(timesout2 > g.subwin(1) & timesout2 < g.subwin(2));
-    alltfX    = alltfX(:, ind1, :);
-    if ~iscell(alltfY)
-        alltfY    = alltfY(:, ind2, :);
-    else
-        for icell = 1:length(alltfY)
-            alltfY{icell} = alltfY{icell}(:, ind2, :);
-        end
-    end
-    timesout1 = timesout1(ind1);
-    timesout2 = timesout2(ind2);
+    ind1      = find(tfXtimes > g.subwin(1) & tfXtimes < g.subwin(2));
+    ind2      = find(tfYtimes > g.subwin(1) & tfYtimes < g.subwin(2));
+    tfX       = tfX(:, ind1, :);
+    tfY       = tfY(:, ind2, :);
+    tfXtimes = tfXtimes(ind1);
+    tfYtimes = tfYtimes(ind2);
 end
 
-if length(timesout1) ~= length(timesout2) || any( timesout1 ~= timesout2)
-    if strcmpi(g.verbose, 'on')
-        disp('Warning: Time points are different for X and Y. Use ''timesout'' to specify common time points');
-    end
-    [vals, ind1, ind2 ] = intersect_bc(timesout1, timesout2);
-    if strcmpi(g.verbose, 'on')
-        fprintf('Searching for common time points: %d found\n', length(vals));
-    end
-    if length(vals) < 10, error('Less than 10 common data points'); end
-    timesout1 = vals;
-    %timesout2 = vals;
-    alltfX = alltfX(:, ind1, :);
-    if ~iscell(alltfY)
-        alltfY    = alltfY(:, ind2, :);
+%%
+if ~g.resample && ~any(strcmp(g.method,{'mipac', 'ermipac'}))
+    if length(tfXtimes) ~= length(tfYtimes) || any( tfXtimes ~= tfYtimes)
+        if strcmpi(g.verbose, 'on')
+            disp('Warning: Time points are different for X and Y. Use ''timesout'' to specify common time points');
+        end
+        [vals, ind1, ind2 ] = intersect_bc(tfXtimes, tfYtimes);
+        if strcmpi(g.verbose, 'on')
+            fprintf('Searching for common time points: %d found\n', length(vals));
+        end
+        if length(vals) < 10, error('Less than 10 common data points'); end
+        timesout1 = vals;
+        tfX = tfX(:, ind1, :);
+        tfY = tfY(:, ind2, :);
     else
-        for icell = 1:length(alltfY)
-            alltfY{icell} = alltfY{icell}(:, ind2, :);
+        timesout1 = tfXtimes;
+    end
+end
+
+% Angle and abs from phase and amp.This is specific for PAC
+alltfXtmp = angle(tfX);
+alltfYtmp = abs(tfY);
+
+% Resampling Instantaneous Phase and Amplitude 
+% It may be non-uniformly sampled
+if g.resample || any(strcmp(g.method,{'mipac', 'ermipac'}))
+    alltfX = []; alltfY =[];
+    for i = 1:size(alltfXtmp,3)
+        for j = 1:size(alltfXtmp,1)
+            [tmpalltfX, tmptime1] = resample(alltfXtmp(j,:,i),tfXtimes, srate);
+            alltfX(j,:,i)  = tmpalltfX';
+        end
+        
+        for j = 1:size(alltfYtmp,1)
+            [tmpalltfy,tmptime2] = resample(alltfYtmp(j,:,i),tfYtimes, srate);
+            alltfY(j,:,i)  = tmpalltfy';
         end
     end
+    
+    t12 = finddelay(tmptime1,tmptime2);
+    if isequal(tmptime1,tmptime2)
+        timesout1 = tmptime1;
+    elseif floor(t12)==t12
+         [vals, ind1, ind2 ] = intersect_bc(tmptime1, tmptime2);
+        if strcmpi(g.verbose, 'on')
+            fprintf('Searching for common time points: %d found\n', length(vals));
+        end
+        if length(vals) < 10, error('Less than 10 common data points'); end
+        timesout1 = vals;
+        alltfX = alltfX(:, ind1, :);
+        alltfY = alltfY(:, ind2, :);          
+    else
+        disp('Time-frequency latencies for phase and aplitude values do not match');
+        return;
+    end
+else
+    alltfX = alltfXtmp;
+    alltfY = alltfYtmp;
 end
 
 %%
@@ -348,13 +358,10 @@ end
 if g.bonfcorr && ~isempty(g.alpha), g.alpha = g.alpha / (length(freqs1) * length(freqs2) * arraylength); end
 
 %--------------------------------------------------------------------------
-% get data and transform it
-% ---
-% alltfYlooptmp = alltfY; if iscell(alltfY), alltfYlooptmp = alltfY{find1};end
 
-% Angle and abs from phase and amp.This is specific for PAC
-alltfX = angle(alltfX);
-alltfY = abs(alltfY);
+% % Angle and abs from phase and amp.This is specific for PAC
+% alltfX = angle(alltfX);
+% alltfY = abs(alltfY);
 % ---
 % Loop  phase frequencies
 for find1 = 1:length(freqs1)
@@ -368,6 +375,7 @@ for find1 = 1:length(freqs1)
         tindxvector         = micomplimits(1):micomplimits(2);
     else
         tindxvector = 1:ti_loopend;
+        windowsearchsize = [];
     end
     %---
     % Loop  amplitude frequencies
@@ -387,10 +395,11 @@ for find1 = 1:length(freqs1)
         else
             parforArg = 0;
         end
-            
-%         parfor (ti = 1:length(tvector), parforArg)
+
+%%
+%          parfor (ti = 1:length(tindxvector), parforArg)
          for ti = 1:length(tindxvector)
-            
+         single_alltfx = []; single_alltfy = [];   
             % Retreiving the data
             if strial_flag % Single trial case
                 tmpalltfx = squeeze(alltfX(find1,:))';
@@ -398,7 +407,7 @@ for find1 = 1:length(freqs1)
                 
             elseif strcmp (g.method,'ermipac')
                 
-                % Extracting windows of data for ERMPAC
+                % Extracting windows of data for ERMIPAC
                 single_alltfx = squeeze(alltfX(find1,:,:));
                 single_alltfy = squeeze(alltfY(find2,:,:));
                 
@@ -420,11 +429,11 @@ for find1 = 1:length(freqs1)
                 tmpalltfx = squeeze(alltfX(find1,tindxvector(ti),:));
                 tmpalltfy = squeeze(alltfY(find2,tindxvector(ti),:));
             end
-                        
+             % Computation starts here
             % ERMIPAC
             if strcmp(g.method,'ermipac')
                 tmparg = {gsubf{:} 'xdistmethod' 'circular'};
-                [~,pactmp,kconv] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy', tmparg{:});
+                [~,cell_pactmp{ti},cell_kconv{ti}] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy', tmparg{:});
                 
                 if ~isempty(g.alpha)
                     [trash, zerolat] = min(abs(timesout1));
@@ -440,114 +449,117 @@ for find1 = 1:length(freqs1)
                     %                    Iloc_pval           = 2*normcdf(-abs(Iloc_zscore));
                     Iloc_sigval = zeros(size(Iloc_pval));
                     Iloc_sigval(Iloc_pval<g.alpha) = 1;
-                    signiftmp = Iloc_sigval;
-                    pval      = Iloc_pval;
+                    cell_signiftmp{ti} = Iloc_sigval;
+                    cell_pval{ti}      = Iloc_pval;
                 end
             
             % Inst MIPAC
             elseif strcmp(g.method,'instmipac')              
                 % Inst MIPAC with and withoth signif (controled by g.alpha)
                 tmparg = {gsubf{:} 'xdistmethod' 'circular' 'filterfreq' freqs1(find1) 'alpha' g.alpha};
-                [pactmp, kconv, signiftmp, pval] = minfokraskov_convergence_signif(tmpalltfx,tmpalltfy,srate,tmparg{:});
+                [cell_pactmp{ti}, cell_kconv{ti}, cell_signiftmp{ti}, cell_pval{ti}] = minfokraskov_convergence_signif(tmpalltfx,tmpalltfy,srate,tmparg{:});
                 
             % PAC Methods.
             else
                 tmparg = {gsubf{:} 'alpha' g.alpha};
-                [pactmp,~,~,pacstructtmp] = eeg_comppac(tmpalltfx,tmpalltfy, g.method, tmparg{:}) ;
+                [cell_pactmp{ti},~,~,cell_pacstructtmp{ti}] = eeg_comppac(tmpalltfx,tmpalltfy, g.method, tmparg{:}) ;
             end
-            
-            %--------------------------------------------------------------
-            % Specific for methods
-            % Default methods
-            switch g.method
-                case {'mvlmi', 'klmi', 'glm', 'plv'}
-                    % Methods with dimension = 1
-                    %---------------------------
-                    if length(tindxvector)==1
-                        pacstruct.(g.method).dim                       = 1;
-                        pacstruct.(g.method).pacval(find1,find2)       = pacstructtmp.pacval;
-                        
-                        % Specific to each method
-                        if strcmp(g.method, 'mvlmi')
-                            pacstruct.mvlmi.composites(find1,find2,:) = pacstructtmp.composites(:); % mvlmi
-                            pacstruct.mvlmi.peakangle(find1,find2)    = pacstructtmp.peakangle;     % mvlmi
-                        elseif strcmp(g.method, 'klmi')
-                            pacstruct.klmi.peakangle(find1,find2)   = pacstructtmp.peakangle; % klmi
-                            pacstruct.klmi.nbinskl(find1,find2)     = pacstructtmp.nbinskl;   % klmi
-                            [pacstruct.klmi.bin_average{find1,find2,1:pacstructtmp.nbinskl}] = deal(pacstructtmp.bin_average); % klmi
-                        elseif strcmp(g.method, 'glm')
-                            pacstruct.glm.beta(find1, find2, 1:3) = pacstructtmp.beta(:); % glm
-                        end   
-                        %-
-                        if ~isempty(g.alpha)
-                            pacstruct.(g.method).signif.pval(find1,find2)           = pacstructtmp.pval;
-                            pacstruct.(g.method).signif.signifmask(find1,find2)     = pacstructtmp.significant;
-                            pacstruct.(g.method).signif.surrogate_pac(find1,find2,:) = pacstructtmp.surrogate_pac;
-                        end
-                    else
-                        % Methods with dimension = 2
-                        %---------------------------
-                        pacstruct.(g.method).dim                          = 2;
-                        pacstruct.(g.method).pacval(find1,find2, ti,:)    = pacstructtmp.pacval;
-                        
-                        % Specific to each method
-                        if strcmp(g.method, 'mvlmi')
-                            pacstruct.mvlmi.composites(find1,find2,ti,:) = pacstructtmp.composites(:); % mvlmi
-                            pacstruct.mvlmi.peakangle(find1,find2,ti)    = pacstructtmp.peakangle;     % mvlmi
-                        elseif strcmp(g.method, 'klmi')
-                            pacstruct.klmi.peakangle(find1,find2, ti)   = pacstructtmp.peakangle; % klmi
-                            pacstruct.klmi.nbinskl(find1,find2, ti)     = pacstructtmp.nbinskl;   % klmi
-                            [pacstruct.klmi.bin_average{find1,find2, ti, 1:pacstructtmp.nbinskl}] = deal(pacstructtmp.bin_average); % klmi
-                        elseif strcmp(g.method, 'glm')
-                            pacstruct.glm.beta (find1, find2, 1:3, ti) = pacstructtmp.beta; % glm
-                        end
-                        %-
-                        if ti==1, pacstruct.(g.method).times              = timesout1; end
-                        if ~isempty(g.alpha)
-                            pacstruct.(g.method).signif.pval(find1,find2,ti)            = pacstructtmp.pval;
-                            pacstruct.(g.method).signif.signifmask(find1,find2,ti)      = pacstructtmp.significant;
-                            pacstruct.(g.method).signif.surrogate_pac(find1,find2,ti, 1:length(pacstructtmp.surrogate_pac)) = pacstructtmp.surrogate_pac;
-                        end
-                    end
-                case 'ermipac'                             
-                    pacstruct.ermipac.dim                             = 3;
-                    pacstruct.ermipac.pacval(find1,find2,1:trials,ti) = pactmp;
-                    pacstruct.ermipac.kconv(find1,find2,ti)           = kconv;
-                    pacstruct.ermipac.times                           = timesout1(tindxvector);
-                    
-                    if ~isempty(g.alpha)
-                        pacstruct.ermipac.signif.pval(find1,find2,:,ti)          = pval;
-                        pacstruct.ermipac.signif.signifmask(find1,find2,:,ti)     = signiftmp;
-                        %pacstruct.ermipac.signif.surrogate_pac(find1,find2,:, ti, 1:size(surrdata,1)) = surrdata';
-                    end
-                case 'instmipac'
-                    pacstruct.instmipac.dim                   = 2;
-                    pacstruct.instmipac.pacval(find1,find2,:) = pactmp;
-                    pacstruct.instmipac.kconv(find1,find2)    = kconv;
-                    pacstruct.instmipac.times                 = timesout1;
-                    
-                    if ~isempty(g.alpha)
-                        pacstruct.instmipac.signif.pval(find1,find2, :)                  = pval;
-                        pacstruct.instmipac.signif.signifmask(find1,find2, :)            = signiftmp;
-                        %pacstruct.instmipac.signif.surrogate_pac(find1,find2,1:g.nboot,:) = surrdata;
-                    end                         
-            end    
+         end
+         %%
+        
+   % Asigning results from PARFOR     
+       for ti = 1:length(tindxvector)
+           %--------------------------------------------------------------
+           % Specific for methods
+           % Default methods
+           switch g.method
+               case {'mvlmi', 'klmi', 'glm', 'plv'}
+                   % Methods with dimension = 1
+                   %---------------------------
+                   if length(tindxvector)==1
+                       pacstruct.(g.method).dim                       = 1;
+                       pacstruct.(g.method).pacval(find1,find2)       = cell_pacstructtmp{ti}.pacval;
+
+                       % Specific to each method
+                       if strcmp(g.method, 'mvlmi')
+                           pacstruct.mvlmi.composites(find1,find2,:) = cell_pacstructtmp{ti}.composites(:); % mvlmi
+                           pacstruct.mvlmi.peakangle(find1,find2)    = cell_pacstructtmp{ti}.peakangle;     % mvlmi
+                       elseif strcmp(g.method, 'klmi')
+                           pacstruct.klmi.peakangle(find1,find2)   = cell_pacstructtmp{ti}.peakangle; % klmi
+                           pacstruct.klmi.nbinskl(find1,find2)     = cell_pacstructtmp{ti}.nbinskl;   % klmi
+                           [pacstruct.klmi.bin_average{find1,find2,1:cell_pacstructtmp{ti}.nbinskl}] = deal(cell_pacstructtmp{ti}.bin_average); % klmi
+                       elseif strcmp(g.method, 'glm')
+                           pacstruct.glm.beta(find1, find2, 1:3) = cell_pacstructtmp{ti}.beta(:); % glm
+                       end
+                       %-
+                       if ~isempty(g.alpha)
+                           pacstruct.(g.method).signif.pval(find1,find2)           = cell_pacstructtmp{ti}.pval;
+                           pacstruct.(g.method).signif.signifmask(find1,find2)     = cell_pacstructtmp{ti}.significant;
+                           pacstruct.(g.method).signif.surrogate_pac(find1,find2,:) = cell_pacstructtmp{ti}.surrogate_pac;
+                       end
+                   else
+                       % Methods with dimension = 2
+                       %---------------------------
+                       pacstruct.(g.method).dim                          = 2;
+                       pacstruct.(g.method).pacval(find1,find2, ti,:)    = cell_pacstructtmp{ti}.pacval;
+
+                       % Specific to each method
+                       if strcmp(g.method, 'mvlmi')
+                           pacstruct.mvlmi.composites(find1,find2,ti,:) = cell_pacstructtmp{ti}.composites(:); % mvlmi
+                           pacstruct.mvlmi.peakangle(find1,find2,ti)    = cell_pacstructtmp{ti}.peakangle;     % mvlmi
+                       elseif strcmp(g.method, 'klmi')
+                           pacstruct.klmi.peakangle(find1,find2, ti)   = cell_pacstructtmp{ti}.peakangle; % klmi
+                           pacstruct.klmi.nbinskl(find1,find2, ti)     = cell_pacstructtmp{ti}.nbinskl;   % klmi
+                           [pacstruct.klmi.bin_average{find1,find2, ti, 1:cell_pacstructtmp{ti}.nbinskl}] = deal(cell_pacstructtmp{ti}.bin_average); % klmi
+                       elseif strcmp(g.method, 'glm')
+                           pacstruct.glm.beta (find1, find2, 1:3, ti) = cell_pacstructtmp{ti}.beta; % glm
+                       end
+                       %-
+                       if ti==1, pacstruct.(g.method).times              = timesout1; end
+                       if ~isempty(g.alpha)
+                           pacstruct.(g.method).signif.pval(find1,find2,ti)            = cell_pacstructtmp{ti}.pval;
+                           pacstruct.(g.method).signif.signifmask(find1,find2,ti)      = cell_pacstructtmp{ti}.significant;
+                           pacstruct.(g.method).signif.surrogate_pac(find1,find2,ti, 1:length(cell_pacstructtmp{ti}.surrogate_pac)) = cell_pacstructtmp{ti}.surrogate_pac;
+                       end
+                   end
+               case 'ermipac'
+                   pacstruct.ermipac.dim                             = 3;
+                   pacstruct.ermipac.pacval(find1,find2,1:trials,ti) = cell_pactmp{ti};
+                   pacstruct.ermipac.kconv(find1,find2,ti)           = cell_kconv{ti};
+                   pacstruct.ermipac.times                           = timesout1(tindxvector);
+
+                   if ~isempty(g.alpha)
+                       pacstruct.ermipac.signif.pval(find1,find2,:,ti)          = cell_pval{ti};
+                       pacstruct.ermipac.signif.signifmask(find1,find2,:,ti)    = cell_signiftmp{ti};
+                   end
+               case 'instmipac'
+                   pacstruct.instmipac.dim                   = 2;
+                   pacstruct.instmipac.pacval(find1,find2,:) = cell_pactmp{ti};
+                   pacstruct.instmipac.kconv(find1,find2)    = cell_kconv{ti};
+                   pacstruct.instmipac.times                 = timesout1;
+
+                   if ~isempty(g.alpha)
+                       pacstruct.instmipac.signif.pval(find1,find2, :)                  = cell_pval{ti};
+                       pacstruct.instmipac.signif.signifmask(find1,find2, :)            = cell_signiftmp{ti};
+                   end
+           end
+       end
+    end
+end
+
+%--------------------------------------------------------------------------
+% Just for ER MIPAC methods
+if  strcmp(g.method,'ermipac')
+    for i = 1:length(freqs1)
+        for j = 1:length(freqs2)
+            for k = 1:trials
+                % Filtering the MIPAC etsimates
+                [b,a] = butter(g.butterorder,freqs1(i)/(srate/2),'low');
+                pacstruct.ermipac.pacval(i,j,k,:) = filtfilt(b,a,squeeze(pacstruct.ermipac.pacval(i,j,k,:))');
+            end
         end
     end
 end
-%--------------------------------------------------------------------------
-% Just for ER MIPAC methods
-% if  strcmp(g.method,'ermipac')
-%     for i = 1:length(freqs1)
-%         for j = 1:length(freqs2)
-%             for k = 1:trials
-%                 % Filtering the MIPAC etsimates
-%                 [b,a] = butter(g.butterorder,freqs1(find1)/(srate/2),'low');
-%                 pacstruct.ermipac.pacval(find1,find2,k,:) = filtfilt(b,a,squeeze(pacstruct.ermipac.pacval(i,j,k,:))');
-%             end
-%         end
-%     end
-% end
 %--------------------------------------------------------------------------
 %% Populating pacstruct and output
 pacstruct.params.freqs_phase        = freqs1;
@@ -556,7 +568,11 @@ pacstruct.params.signif.alpha       = g.alpha;
 pacstruct.params.signif.ptspercent  = g.ptspercent;
 pacstruct.params.signif.nboot       = g.nboot;
 pacstruct.params.signif.bonfcorr    = g.bonfcorr;
-pacstruct.params.srate              = srate;
+if strcmp(g.method, 'ermipac') || strcmp(g.method, 'mipac') || g.resample == 1
+    pacstruct.params.srate = srate;
+else
+    pacstruct.params.srate = [];
+end
 
 crossfcoh      = pacstruct.(g.method).pacval;
 if ~isempty(g.alpha)
@@ -568,5 +584,4 @@ end
 if strcmp(g.method, 'ermipac')
     timesout1 = timesout1(tindxvector);
 end
-
 end
