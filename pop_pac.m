@@ -305,7 +305,7 @@ if nargin < 6
     options    = {'freqs'     str2num(res.freq1)       'freqs2'     str2num(res.freq2)   'nfreqs1'   g.nfreqs1 ...
                   'nfreqs2'   g.nfreqs2                'freqscale'  g.freqscale          'method'     g.method...
                   'nboot'     g.nboot                  'alpha'      g.alpha              'bonfcorr'  g.bonfcorr'...
-                  'tlimits'  minmax(EEG.times)/1000};
+                  'tlimits'  minmax(EEG.times)};
     
     % Adding pop_pac options
     tmpparams = eval( [ '{' res.edit_optinput '}' ] );
@@ -323,7 +323,7 @@ if nargin < 6
         end
     end    
 else
-    options = {'freqs' freqs1 'freqs2' freqs2  'tlimits'  minmax(EEG.times)/1000};
+    options = {'freqs' freqs1 'freqs2' freqs2  'tlimits'  minmax(EEG.times)};
     options = {options{:} varargin{:}};
 end
 
