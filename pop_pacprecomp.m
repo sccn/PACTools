@@ -159,7 +159,7 @@ if nargin < 3
      if ~isempty(res.freq1), g.freqrange1   = str2num(res.freq1); else, return; end
      if ~isempty(res.freq2), g.freqrange2   = str2num(res.freq2); else, return; end
      if res.chckbx_logphs,   g.freqscale    = 'log';              else,  g.freqscale = 'linear'; end
-     g.dataindx = dataindx;
+     g.dataindx = {ALLEEG(1).chanlocs(dataindx).labels};
      g.method = method_list{res.method};
      g.freqs1 = compfreq(g.freqrange1, g.nfreqs1, g.freqscale);
      g.freqs2 = compfreq(g.freqrange2, g.nfreqs2, g.freqscale);   
