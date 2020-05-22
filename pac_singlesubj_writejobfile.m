@@ -18,7 +18,7 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-tmpopt = options(9:end);
+tmpopt = options(5:end);
 optname = tmpopt(1:2:end);
 optvals =  tmpopt(2:2:end);
 
@@ -27,7 +27,7 @@ for i = 1:length(optname) % Firts eight arguments are passed directly to pop_pac
     if isstr(optvals{i})
         opttext = [opttext ' ''''' optname{i} '''''' ' ''''' optvals{i} ''''''];
     elseif isnumeric(optvals{i})
-        opttext = [opttext ' ''''' optname{i} '''''' ' ' num2str(optvals{i})];
+        opttext = [opttext ' ''''' optname{i} '''''' ' [' num2str(optvals{i}) ']'];
     elseif islogical(optvals{i})
         opttext = [opttext ' ''''' optname{i} '''''' ' ' num2str(optvals{i})];
     end
@@ -46,6 +46,6 @@ fprintf(fid, 'pooldata                = ''%s'';\n', pooldata);
 fprintf(fid, 'pacopt     = eval(''%s'');\n', opttext);
 
 % Calling pop_pac
-fprintf(fid,'[EEG,com] = pop_pac(EEG,pooldata,freqs1,freqs2,indexfreqs1,indexfreqs2,''compflag'', ''local'',pacopt);\n')
-fprintf(fid,'pop_saveset(EEG,''filename'', EEG.filename, ''filepath'', pwd)');
+fprintf(fid,'[EEG,com] = pop_pac(EEG,pooldata,freqs1,freqs2,indexfreqs1,indexfreqs2,''compflag'', ''local'',pacopt{:});\n');
+fprintf(fid,'pop_saveset(EEG,''filename'', EEG.filename, ''filepath'', pwd);');
 fclose(fid);
