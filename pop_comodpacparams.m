@@ -52,79 +52,73 @@
 function [ STUDY, com ] = pop_comodpacparams(STUDY, varargin);
 
 STUDY = default_comodparams(STUDY);
-TMPSTUDY = STUDY;
 com = '';
-if ~isfield(STUDY.etc, 'pac'), STUDY.etc.pac=[]; end
+if ~isfield(STUDY.etc, 'pacplotopt'), STUDY.etc.pacplotopt=[]; end
 if isempty(varargin)
       
-    tmpAvgTimeRange    = STUDY.etc.pac.comodpacparam.avgtimerange;
-    tmpTimeRange       = STUDY.etc.pac.comodpacparam.timerange;
-    tmpFreqRange1      = STUDY.etc.pac.comodpacparam.freqrange1;
-    tmpFreqRange2      = STUDY.etc.pac.comodpacparam.freqrange2;
-        
-    cb_multiplechan    = [ '    if ~isempty(get(findobj(gcbf, ''tag'', ''timerange''), ''string'')) && length(unique(str2num(get(findobj(gcbf, ''tag'', ''timerange''), ''string'')))) ==1,' ...
-                           '       set(findobj(gcbf, ''tag'', ''timerange''), ''string'', '''');' ...
-                           '    end;' ...
-                           '    if ~isempty(get(findobj(gcbf, ''tag'', ''freqrange1''), ''string'')) && length(unique(str2num(get(findobj(gcbf, ''tag'', ''freqrange1''), ''string'')))) ==1,' ...
-                           '       set(findobj(gcbf, ''tag'', ''freqrange1''), ''string'', '''');' ...
-                           '    end;' ...
-                           '    if ~isempty(get(findobj(gcbf, ''tag'', ''freqrange2''), ''string'')) && length(unique(str2num(get(findobj(gcbf, ''tag'', ''freqrange2''), ''string'')))) ==1,' ...
-                           '       set(findobj(gcbf, ''tag'', ''freqrange2''), ''string'', '''');' ...
-                           '    end;'];    
+    tmpJoinTimeMethod  = STUDY.etc.pacplotopt.comodparam.jointimemethod;
+    tmpTimeRange       = STUDY.etc.pacplotopt.comodparam.timerange;
+    tmpFreqRange1      = STUDY.etc.pacplotopt.comodparam.freqrange1;
+    tmpFreqRange2      = STUDY.etc.pacplotopt.comodparam.freqrange2;
+    
+    AlljoinTimeMethods = {'average', 'maxval'};
+    methodcurrval = find(~cellfun(@isempty,strfind(AlljoinTimeMethods,tmpJoinTimeMethod)));
+
     uilist = { ...
         {'style' 'text'       'string' 'Comodulogram plotting options' 'fontweight' 'bold' 'tag', 'tfpac' } ...
         {'style' 'text'       'string' 'Time range to average in ms [Low High]'}  {'style' 'edit'       'string' num2str(tmpTimeRange) 'tag' 'timerange' } ...
-        {'style' 'text'       'string' 'Time range in ms [Low High]'}  {'style' 'edit'       'string' num2str(tmpAvgTimeRange) 'tag' 'avgtimerange' } ...
+        {'style' 'text'       'string' 'Method to combine latencies'}  {'style' 'popupmenu'       'string' {'Maximum value', 'Average latencies'} 'value' methodcurrval  'tag' 'jointimemethod' } ...
         {'style' 'text'       'string' 'Phase Freq. value or range in Hz [Low High]'} {'style' 'edit' 'string' num2str(tmpFreqRange1) 'tag' 'freqrange1' } ...
         {'style' 'text'       'string' 'Amp. Freq. value range in Hz [Low High]'} {'style' 'edit'  'string' num2str(tmpFreqRange2) 'tag' 'freqrange2' } {} };
-    evalstr = 'set(findobj(gcf, ''tag'', ''ersp''), ''fontsize'', 12);';
     otherline = [ 0.6 .4 ];
     geometry = { 1 otherline otherline otherline otherline 1};
     
     [~, ~, ~, res] = inputgui( 'geometry' , geometry, 'uilist', uilist, 'skipline', 'off', ...
-                                            'title', 'Time-Freq PAC plotting parameters -- pop_comodpacparams()', 'eval', evalstr);
+                                            'title', 'Comodulogram plotting parameters -- pop_comodpacparams()');
     if isempty(res), return; end
     
     % decode input
     % ------------
-    res.avgtimerange  = str2num( res.avgtimerange );
-    res.timerange     = str2num( res.timerange );
-    res.freqrange1    = str2num( res.freqrange1 );
-    res.freqrange2    = str2num( res.freqrange2 );
+    res.jointimemethod      = AlljoinTimeMethods{res.jointimemethod };
+    res.timerange           = str2num( res.timerange );
+    res.freqrange1          = str2num( res.freqrange1 );
+    res.freqrange2          = str2num( res.freqrange2 );
     
     % build command call
     % ------------------
     options = {};
-    if ~isequal(res.timerange, STUDY.etc.pac.comodpacparam.avgtimerange),   options = { options{:} 'timerange'  res.avgtimerange };   end
-    if ~isequal(res.timerange, STUDY.etc.pac.comodpacparam.timerange),      options = { options{:} 'timerange'  res.timerange };   end
-    if ~isequal(res.freqrange1, STUDY.etc.pac.comodpacparam.freqrange1),    options = { options{:} 'freqrange1' res.freqrange1 }; end
-    if ~isequal(res.freqrange2, STUDY.etc.pac.comodpacparam.freqrange2),    options = { options{:} 'freqrange1' res.freqrange2 }; end
+    if ~isequal(res.jointimemethod, STUDY.etc.pacplotopt.comodparam.jointimemethod),   options = { options{:} 'jointimemethod'  res.jointimemethod };  end
+    if ~isequal(res.timerange,      STUDY.etc.pacplotopt.comodparam.timerange),        options = { options{:} 'timerange'       res.timerange };       end
+    if ~isequal(res.freqrange1,     STUDY.etc.pacplotopt.comodparam.freqrange1),       options = { options{:} 'freqrange1'      res.freqrange1 };      end
+    if ~isequal(res.freqrange2,     STUDY.etc.pacplotopt.comodparam.freqrange2),       options = { options{:} 'freqrange2'      res.freqrange2 };      end
         
     % execute options
     % ---------------
     if ~isempty(options)
         STUDY = pop_comodpacparams(STUDY, options{:});
-        com = sprintf('STUDY = pop_comodpacparams(STUDY, %s);', vararg2str( options ));
+        if isstudy(STUDY)
+            structname = 'STUDY';
+        else
+            structname = 'EEG';
+        end
+        com = sprintf('%s = pop_comodpacparams(%s, %s);',structname, structname, vararg2str( options ));
     end
 else
     if strcmpi(varargin{1}, 'default')
-        STUDY = default_pacparams(STUDY);
+        STUDY = default_comodparams(STUDY);
     else
         for index = 1:2:length(varargin)
-            if ~isempty(strmatch(varargin{index}, fieldnames(STUDY.etc.pac.comodpacparam), 'exact'))
-                STUDY.etc.pac.comodpacparam = setfield(STUDY.etc.pac.comodpacparam, varargin{index}, varargin{index+1});
+            if ~isempty(strmatch(varargin{index}, fieldnames(STUDY.etc.pacplotopt.comodparam), 'exact'))
+                STUDY.etc.pacplotopt.comodparam = setfield(STUDY.etc.pacplotopt.comodparam, varargin{index}, varargin{index+1});
             end
         end
     end
 end
 
-% scan clusters and channels to remove erspdata info if timerange etc. have
-% changed (not neccesary here)
-
 function STUDY = default_comodparams(STUDY)
-    if ~isfield(STUDY.etc, 'pac'), STUDY.etc.pac = []; end
-    if ~isfield(STUDY.etc.pac,'comodpacparam'), STUDY.etc.pac.comodpacparam = []; end
-     if ~isfield(STUDY.etc.pac.comodpacparam, 'avgtimerange'),     STUDY.etc.pac.comodpacparam.avgtimerange = []; end
-    if ~isfield(STUDY.etc.pac.comodpacparam, 'timerange'),         STUDY.etc.pac.comodpacparam.timerange    = []; end
-    if ~isfield(STUDY.etc.pac.comodpacparam, 'freqrange1'),        STUDY.etc.pac.comodpacparam.freqrange1   = []; end
-    if ~isfield(STUDY.etc.pac.comodpacparam, 'freqrange2'),        STUDY.etc.pac.comodpacparam.freqrange2   = []; end
+    if ~isfield(STUDY.etc, 'pacplotopt'), STUDY.etc.pacplotopt = []; end
+    if ~isfield(STUDY.etc.pacplotopt,'comodparam'), STUDY.etc.pacplotopt.comodparam = []; end
+    if ~isfield(STUDY.etc.pacplotopt.comodparam, 'jointimemethod'),     STUDY.etc.pacplotopt.comodparam.jointimemethod = 'average'; end
+    if ~isfield(STUDY.etc.pacplotopt.comodparam, 'timerange'),          STUDY.etc.pacplotopt.comodparam.timerange    = []; end
+    if ~isfield(STUDY.etc.pacplotopt.comodparam, 'freqrange1'),         STUDY.etc.pacplotopt.comodparam.freqrange1   = []; end
+    if ~isfield(STUDY.etc.pacplotopt.comodparam, 'freqrange2'),         STUDY.etc.pacplotopt.comodparam.freqrange2   = []; end
