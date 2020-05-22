@@ -320,13 +320,13 @@ if nargin < 6
     if ~isempty( tmpparams )
         for i = 1:2:numel(opttmp)
             if any(strcmp(opttmp{i},fieldnames(g)))
-            g.(opttmp{i}) = opttmp{i+1};
+                g.(opttmp{i}) = opttmp{i+1};
             else
                 options{end+1} = opttmp{i};
                 options{end+1} = opttmp{i+1};
             end
         end
-    end    
+    end
 else
     options = {'freqs' freqs1 'freqs2' freqs2  'tlimits'  minmax(EEG.times)};
     options = {options{:} varargin{:}};
@@ -372,15 +372,19 @@ if ~g.cleanup
         [~, tmpstruct] = eeg_cache(EEG.etc.eegpac(1).cache, optionshash);
         if isempty(tmpstruct)
             % Cleanup if different parameters
+            EEG.etc.pacplotopt = [];
             EEG.etc.eegpac = [];
             EEG.etc.eegpac.cache = eeg_cache([], optionshash, {'pooldata', pooldata, opttmp{:}});
         end
     else
+        EEG.etc.pacplotopt = [];
         EEG.etc.eegpac = [];
         EEG.etc.eegpac.cache = eeg_cache([], optionshash, {'pooldata', pooldata, opttmp{:}});
+        
     end
 else
     EEG.etc.eegpac = [];
+    EEG.etc.pacplotopt = [];
 end
 
 if ~isempty(EEG.etc.eegpac) && isfield(EEG.etc.eegpac, 'dataindx')
@@ -430,8 +434,10 @@ for ichanpair = 1:length(indexfreqs1)
                 if ~isempty(EEG.chanlocs)
                     EEG.etc.eegpac(1).labels = {EEG.chanlocs(indexfreqs1(ichanpair)).labels EEG.chanlocs(indexfreqs2(ichanpair)).labels};
                 else
-                    EEG.etc.eegpac(1).labels =  EEG.etc.eegpac(1).dataindx;
+                    EEG.etc.eegpac(1).labels = {['Chan' num2str(indexfreqs1(ichanpair)) '-' 'Chan' num2str(indexfreqs2(ichanpair))]};
                 end
+            else
+                 EEG.etc.eegpac(1).labels = {['IC' num2str(indexfreqs1(ichanpair)) '-' 'IC' num2str(indexfreqs2(ichanpair))]};
             end
             c = c+1;
         else
@@ -445,8 +451,10 @@ for ichanpair = 1:length(indexfreqs1)
                 if ~isempty(EEG.chanlocs)
                     EEG.etc.eegpac(c).labels = {EEG.chanlocs(indexfreqs1(ichanpair)).labels EEG.chanlocs(indexfreqs2(ichanpair)).labels};
                 else
-                    EEG.etc.eegpac(c).labels = EEG.etc.eegpac(c).dataindx;
+                    EEG.etc.eegpac(c).labels = {['Chan' num2str(indexfreqs1(ichanpair)) '-' 'Chan' num2str(indexfreqs2(ichanpair))]};
                 end
+            else
+                EEG.etc.eegpac(c).labels = {['IC' num2str(indexfreqs1(ichanpair)) '-' 'IC' num2str(indexfreqs2(ichanpair))]};
             end
             c = c+1;
         end
@@ -454,6 +462,12 @@ for ichanpair = 1:length(indexfreqs1)
         disp(['pop_pac: Skipping computation of PAC for data pair with index: ' num2str(ichanpair) ]);
     end
 end
+
+% Creating fields for plottimg
+EEG = pop_comodpacparams(EEG, 'default');
+EEG = pop_comodtpacparams(EEG, 'default');
+EEG = pop_tfpacparams(EEG, 'default');
+EEG = pop_trialspacparams(EEG, 'default');
 
 % Sorting fields and removing empty fields
 % EEG = removeemptypac(EEG);
