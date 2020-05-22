@@ -163,7 +163,6 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'alltfXstr'        'struct'         struct                    struct;
                   'alltfYstr'        'struct'         struct                    struct;
                   'ptspercent'       'float'          [0 1]                     0.05;
-                  'nboot'            'real'           [0 Inf]                   200;
                   'baseboot'         'float'          []                        0;                       
                   'boottype'         'string'         {'times','trials','timestrials'}  'timestrials';   
                   'bonfcorr'         'integer'        [0 1]                     0;
@@ -172,8 +171,8 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'freqs2'           'real'           [0 Inf]                   [];
                   'freqscale'        'string'         { 'linear','log' }        'linear';
                   'itctype'          'string'         {'phasecoher','phasecoher2','coher'}  'phasecoher';
-                  'nfreqs1'          'integer'        [0 Inf]                   [];
-                  'nfreqs2'          'integer'        [0 Inf]                   [];
+                  'nfreqs1'          'integer'        [0 Inf]                   10;
+                  'nfreqs2'          'integer'        [0 Inf]                   20;
                   'lowmem'           'string'         {'on','off'}              'off';                   
                   'naccu'            'integer'        [1 Inf]                   250;                     
                   'newfig'           'string'         {'on','off'}              'on';                    
@@ -305,14 +304,16 @@ if g.resample || any(strcmp(g.method,{'mipac', 'ermipac'}))
     alltfX = []; alltfY =[];
     for i = 1:size(alltfXtmp,3)
         for j = 1:size(alltfXtmp,1)
-            [tmpalltfX, tmptime1] = resample(alltfXtmp(j,:,i),tfXtimes, srate);
+            [tmpalltfX, tmptime1] = resample(alltfXtmp(j,:,i),tfXtimes/1000, srate); % time input here is in seconds
             alltfX(j,:,i)  = tmpalltfX';
         end
+        tmptime1 = tmptime1*1000; % Setting time basck to ms
         
         for j = 1:size(alltfYtmp,1)
-            [tmpalltfy,tmptime2] = resample(alltfYtmp(j,:,i),tfYtimes, srate);
+            [tmpalltfy,tmptime2] = resample(alltfYtmp(j,:,i),tfYtimes/1000, srate); % time input here is in seconds
             alltfY(j,:,i)  = tmpalltfy';
         end
+        tmptime2 = tmptime2*1000; % Setting time basck to ms
     end
     
     t12 = finddelay(tmptime1,tmptime2);
