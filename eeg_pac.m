@@ -177,7 +177,7 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'lowmem'           'string'         {'on','off'}              'off';                   
                   'naccu'            'integer'        [1 Inf]                   250;                     
                   'newfig'           'string'         {'on','off'}              'on';                    
-                  'padratio'         'integer'        [1 Inf]                   2;
+                  'padratio'         'integer'        [1 Inf]                   1;
                   'rmerp'            'string'         {'on','off'}              'off';
                   'rboot'            'real'           []                        [];                      
                   'subitc'           'string'         {'on','off'}              'off';
@@ -192,7 +192,7 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'title'            'string'         []                        '';                      
                   'vert'             {'real','cell'}  []                        [];
                   'cycles'           'real'           [0 Inf]                   [3 0.5];
-                  'cycles2'          'real'           [0 Inf]                   [3 0.5];   
+                  'cycles2'          'real'           [0 Inf]                   [10 0.5];   
                   'verbose'          'string'         {'on','off'}              'off';...
                   'butterorder'      'real'           [1 20]                     6; 
                   'winsize'          'integer'        [0 Inf]                   max(pow2(nextpow2(frame)-3),4);
