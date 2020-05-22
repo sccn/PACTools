@@ -53,105 +53,95 @@
 
 function [ STUDY, com ] = pop_tfpacparams(STUDY, varargin);
 
-STUDY = default_pacparams(STUDY);
-TMPSTUDY = STUDY;
+STUDY = default_tfpacparams(STUDY);
 com = '';
-if ~isfield(STUDY.etc, 'pac'), STUDY.etc.pac=[]; end
+if ~isfield(STUDY.etc, 'pacplotopt'), STUDY.etc.pacplotopt=[]; end
 if isempty(varargin)
+      
+    tmpTFixFreq        = STUDY.etc.pacplotopt.tfparam.fixfreq;
+    tmpTimeRange       = STUDY.etc.pacplotopt.tfparam.timerange;
+    tmpFreqRange       = STUDY.etc.pacplotopt.tfparam.freqrange;
+    tmpFreqVal1        = STUDY.etc.pacplotopt.tfparam.freqval1;
+    tmpFreqVal2        = STUDY.etc.pacplotopt.tfparam.freqval2;
     
-    rmsFlag = fastif(strcmpi(STUDY.etc.pac.tfpacparam.averagemode, 'rms'), 0, 1);
-    icaFlag = fastif(isnan(STUDY.etc.pac.tfpacparam.topotime), 1, 0);
-    
-    tmpTimeRange = STUDY.etc.pac.tfpacparam.timerange;
-    tmpFreqRange1 = STUDY.etc.pac.tfpacparam.freqrange1;
-    tmpFreqRange2 = STUDY.etc.pac.tfpacparam.freqrange2;
-    
-    if strcmpi(STUDY.etc.pac.tfpacparam.averagechan,'off')
-        multipleChansVal   = 1; % scalp array
-    else
-        multipleChansVal   = 2; % average channels
+    if tmpTFixFreq==1, chbx_freq1 = 1, chbx_freq2 = 0; enable_chbx1 =  'on'; enable_chbx2 = 'off';
+    else,              chbx_freq1 = 0, chbx_freq2 = 1; enable_chbx1 = 'off'; enable_chbx2 = 'on';
     end
+    cb_chbox1 = 'set(findobj(''tag'',''freqval2''),''enable'' ,''off''); set(findobj(''tag'',''freqval1''),''enable'' ,''on'');set(findobj(''tag'',''fix_freq2''),''value'' ,0);'; 
+    cb_chbox2 = 'set(findobj(''tag'',''freqval1''),''enable'' ,''off''); set(findobj(''tag'',''freqval2''),''enable'' ,''on'');set(findobj(''tag'',''fix_freq1''),''value'' ,0);';
     
-    cb_multiplechan    = [ '    if ~isempty(get(findobj(gcbf, ''tag'', ''timerange''), ''string'')) && length(unique(str2num(get(findobj(gcbf, ''tag'', ''timerange''), ''string'')))) ==1,' ...
-                           '       set(findobj(gcbf, ''tag'', ''timerange''), ''string'', '''');' ...
-                           '    end;' ...
-                           '    if ~isempty(get(findobj(gcbf, ''tag'', ''freqrange1''), ''string'')) && length(unique(str2num(get(findobj(gcbf, ''tag'', ''freqrange1''), ''string'')))) ==1,' ...
-                           '       set(findobj(gcbf, ''tag'', ''freqrange1''), ''string'', '''');' ...
-                           '    end;' ...
-                           '    if ~isempty(get(findobj(gcbf, ''tag'', ''freqrange2''), ''string'')) && length(unique(str2num(get(findobj(gcbf, ''tag'', ''freqrange2''), ''string'')))) ==1,' ...
-                           '       set(findobj(gcbf, ''tag'', ''freqrange2''), ''string'', '''');' ...
-                           '    end;'];    
     uilist = { ...
-        {'style' 'text'       'string' 'Time-Freq PAC plotting options' 'fontweight' 'bold' 'tag', 'tfpac' } ...
-        {'style' 'text'       'string' '(At least a single value must be defined for Phase or Amplitude frequencies)'  'tag', 'tfpac' } ...
+        {'style' 'text'       'string' 'PAC Freq-Time plotting options' 'fontweight' 'bold' 'tag', 'tfpac' } ...
+        {'style' 'text'       'string' 'Define frequency value' 'fontweight' 'bold'}  {'style' 'text' 'string' 'Fix value' 'fontweight' 'bold'}...
+        {'style' 'text'       'string' 'Phase Freq.'}  {'style' 'edit' 'string' num2str(tmpFreqVal1) 'tag' 'freqval1' 'enable' enable_chbx1}   {'style' 'checkbox' 'value' chbx_freq1 'tag' 'fix_freq1'  'callback' cb_chbox1} ...
+        {'style' 'text'       'string' 'Amplitude Freq.'}  {'style' 'edit' 'string' num2str(tmpFreqVal2) 'tag' 'freqval2'  'enable' enable_chbx2}   {'style' 'checkbox' 'value' chbx_freq2 'tag' 'fix_freq2' 'callback' cb_chbox2}...
         {'style' 'text'       'string' 'Time range in ms [Low High]'}  {'style' 'edit'       'string' num2str(tmpTimeRange) 'tag' 'timerange' } ...
-        {'style' 'text'       'string' 'Phase Freq. value or range in Hz [Low High]'} {'style' 'edit' 'string' num2str(tmpFreqRange1) 'tag' 'freqrange1' } ...
-        {'style' 'text'       'string' 'Amp. Freq. value range in Hz [Low High]'} {'style' 'edit'  'string' num2str(tmpFreqRange2) 'tag' 'freqrange2' } ...
-        {} ...
-        {'style' 'text'       'string' 'Multiple channels selection' 'fontweight' 'bold' 'tag', 'spec' 'fontsize', 12} ...
-        {} {'style' 'popupmenu'  'string' { 'Plot channels individually' 'Average of selected channels' } 'value' multipleChansVal 'tag' 'multiplechan' 'callback' cb_multiplechan } {} };
-    evalstr = 'set(findobj(gcf, ''tag'', ''ersp''), ''fontsize'', 12);';
-    otherline = [ 0.6 .4 ];
-    chanline  = [ 0.07 0.8];
-    geometry = { 1  1 otherline otherline otherline 1 1 chanline  1};
-    
-    if icaFlag
-        uilist = uilist(1:end-2);
-        geometry = geometry(1:end-2);
-    end
+        {'style' 'text'       'string' 'Frequency range in Hz [Low High]'} {'style' 'edit' 'string' num2str(tmpFreqRange) 'tag' 'freqrange' } {} };     
+    otherline = [ 0.2 .2 ];
+    chbxline = [ .3 .2 .1 ];
+    geometry = { 1  [.7 .2] chbxline chbxline otherline otherline 1 };
     
     [~, ~, ~, res] = inputgui( 'geometry' , geometry, 'uilist', uilist, 'skipline', 'off', ...
-                                            'title', 'Time-Freq PAC plotting parameters -- pop_tfpacparams()', 'eval', evalstr);
+                                            'title', 'Time-frequency PAC plotting parameters -- pop_tfpacparams()');
+                                        
     if isempty(res), return; end
+    if isempty(res.freqval1) && isempty(res.freqval2),  disp('A value must be defined for Amplitude or Phase frequency'); return; end
     
     % decode input
     % ------------
-    if ~isfield(res, 'multiplechan') res.multiplechan = 0; end
-    res.timerange  = str2num( res.timerange );
-    res.freqrange1 = str2num( res.freqrange1 );
-    res.freqrange2 = str2num( res.freqrange2 );
+    res.timerange          = str2num(res.timerange) ;
+    res.freqrange          = str2num(res.freqrange) ;
+    if res.fix_freq1 == 1,  res.fixfreq = 1; res.freqval1 = str2num(res.freqval1) ; else, res.freqval1 = []; end
+    if res.fix_freq2 == 1,  res.fixfreq = 2; res.freqval2 = str2num(res.freqval2) ; else, res.freqval2 = []; end
     
     % build command call
     % ------------------
     options = {};
-
-    if ~isequal(res.timerange, STUDY.etc.pac.tfpacparam.timerange),   options = { options{:} 'timerange' res.timerange };   end
-    if ~isequal(res.freqrange1, STUDY.etc.pac.tfpacparam.freqrange1), options = { options{:} 'freqrange1' res.freqrange1 }; end
-    if ~isequal(res.freqrange2, STUDY.etc.pac.tfpacparam.freqrange2), options = { options{:} 'freqrange1' res.freqrange2 }; end
     
-    % mutliple channel option
-    % -----------------------
-    if res.multiplechan == 1
-        if ~isequal('off', STUDY.etc.pac.tfpacparam.averagechan), options = { options{:} 'averagechan' 'off' }; end
-    else
-        if ~isequal('on', STUDY.etc.pac.tfpacparam.averagechan), options = { options{:} 'averagechan' 'on' }; end
-    end
-    
+    if ~isequal(res.timerange, STUDY.etc.pacplotopt.tfparam.timerange),       options = { options{:} 'timerange'  res.timerange };  end
+    if ~isequal(res.freqrange, STUDY.etc.pacplotopt.tfparam.freqrange),       options = { options{:} 'freqrange'  res.freqrange };  end
+    if ~isequal(res.freqval1,  STUDY.etc.pacplotopt.tfparam.freqval1),        options = { options{:} 'freqval1'   res.freqval1 };   end
+    if ~isequal(res.freqval2,  STUDY.etc.pacplotopt.tfparam.freqval2),        options = { options{:} 'freqval2'   res.freqval2 };   end
+    if ~isequal(res.fixfreq,   STUDY.etc.pacplotopt.tfparam.fixfreq),         options = { options{:} 'fixfreq'    res.fixfreq };    end
+        
     % execute options
     % ---------------
     if ~isempty(options)
         STUDY = pop_tfpacparams(STUDY, options{:});
-        com = sprintf('STUDY = pop_tfpacparams(STUDY, %s);', vararg2str( options ));
+        if isstudy(STUDY)
+            structname = 'STUDY';
+        else
+            structname = 'EEG';
+        end
+        com = sprintf('%s = pop_tfpacparams(%s, %s);',structname, structname, vararg2str( options ));
     end
 else
     if strcmpi(varargin{1}, 'default')
-        STUDY = default_pacparams(STUDY);
+        STUDY = default_tfpacparams(STUDY);
     else
         for index = 1:2:length(varargin)
-            if ~isempty(strmatch(varargin{index}, fieldnames(STUDY.etc.pac.tfpacparam), 'exact'))
-                STUDY.etc.pac.tfpacparam = setfield(STUDY.etc.pac.tfpacparam, varargin{index}, varargin{index+1});
+            if ~isempty(strmatch(varargin{index}, fieldnames(STUDY.etc.pacplotopt.tfparam), 'exact'))
+                STUDY.etc.pacplotopt.tfparam = setfield(STUDY.etc.pacplotopt.tfparam, varargin{index}, varargin{index+1});
             end
         end
     end
 end
 
-% scan clusters and channels to remove erspdata info if timerange etc. have
-% changed (not neccesary here)
+function STUDY = default_tfpacparams(STUDY)
 
-function STUDY = default_pacparams(STUDY)
-    if ~isfield(STUDY.etc, 'pac'), STUDY.etc.pac = []; end
-    if ~isfield(STUDY.etc.pac,'tfpacparam'), STUDY.etc.pac.tfpacparam = []; end
-    if ~isfield(STUDY.etc.pac.tfpacparam, 'timerange'),     STUDY.etc.pac.tfpacparam.timerange = []; end
-    if ~isfield(STUDY.etc.pac.tfpacparam, 'freqrange1'),    STUDY.etc.pac.tfpacparam.freqrange1 = []; end
-    if ~isfield(STUDY.etc.pac.tfpacparam, 'freqrange2'),    STUDY.etc.pac.tfpacparam.freqrange2 = []; end
-    if ~isfield(STUDY.etc.pac.tfpacparam, 'averagechan'),   STUDY.etc.pac.tfpacparam.averagechan = []; end
+phval = []; % Fill out when implementing STUDY level
+if ~isstudy(STUDY)
+    try
+    phval = ceil(numel(STUDY.etc.eegpac(1).params.freqs_phase)/2);
+    catch
+        disp('Input must be valid a EEG/STUDY structure');
+        return;
+    end
+end    
+if ~isfield(STUDY.etc, 'pacplotopt'), STUDY.etc.pacplotopt = []; end
+if ~isfield(STUDY.etc.pacplotopt,'tfparam'), STUDY.etc.pacplotopt.tfparam = []; end
+if ~isfield(STUDY.etc.pacplotopt.tfparam, 'timerange'),          STUDY.etc.pacplotopt.tfparam.timerange  = [];    end
+if ~isfield(STUDY.etc.pacplotopt.tfparam, 'freqrange'),          STUDY.etc.pacplotopt.tfparam.freqrange  = [];    end
+if ~isfield(STUDY.etc.pacplotopt.tfparam, 'freqval1'),           STUDY.etc.pacplotopt.tfparam.freqval1   = phval; end
+if ~isfield(STUDY.etc.pacplotopt.tfparam, 'freqval2'),           STUDY.etc.pacplotopt.tfparam.freqval2   = [];    end
+if ~isfield(STUDY.etc.pacplotopt.tfparam, 'fixfreq'),            STUDY.etc.pacplotopt.tfparam.fixfreq    = 1;     end
