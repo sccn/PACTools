@@ -29,108 +29,189 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function [fighandle com] = pop_plotpac(EEG, plottype, pacmethod, phasedataindx, ampdataindx, varargin)
-fighandle = []; com = '';
-
-try
-    options = varargin;
-    if ~isempty( varargin )
-        for i = 1:2:numel(options)
-            g.(options{i}) = options{i+1};
-        end
-    else g = []; end;
-catch
-    disp('pop_plotpac() error: calling convention {''key'', value, ... } error'); return;
-end;
-
-try g.plotopt;                                 catch, g.plotopt         = {};              end;
-try g.plotsignif;                              catch, g.plotsignif      = 0;               end;
-try g.fampval;                                 catch, g.fampval         = [];              end;
-try g.fphaseval;                               catch, g.fphaseval       = [];              end;
-try g.timeval;                                 catch, g.timeval         = [];              end;
-
-% Check if EEG file 
-if ~isfield(EEG,'etc') && ~isfield(EEG,'data')
-    error('pop_plotpac() error: Ivalid EEG structure provided as input');
-end
-% Check if PAC was computed
-if ~isfield(EEG.etc,'eegpac') && isempty(EEG.etc.eegpac)
-    error('pop_plotpac() error: PAC must be computed');
-end
-
-if nargin < 6 
- %%   
-fieldnamesval = fieldnames(EEG.etc.eegpac);
-if length(fieldnamesval)>3
-    listmethod   = fieldnamesval(5:end); % getting computed method
-else
-    error('pop_plotpac() error: PAC must be computed');
-end
-listchanindx     = cellfun(@(x) cellstr(num2str(x)),{EEG.etc.eegpac.dataindx})';
+function [EEG, com] = pop_plotpac(varargin)
 
 
-listplot   = {'Comodulogram',...
-              'PhaseAmpTime','Amp-PhaseTime','Phase-AmpTime','Time-PhaseAmp',...
-              'AmpPhase-TrialTime','Amp-PhaseTrialTime','Phase-AmpTrialTime' };
-          
-% Building the GUI
-    guititle = 'Plot results of pop_pac() -- pop_plotpac()';
-    uilist = { ...
-        { 'style', 'text', 'string','Method','fontweight' 'bold'},{'Style', 'popupmenu', 'string', listmethod , 'tag', 'listbox_method'},{ 'style', 'text', 'string','[Phase Amp]','fontweight' 'bold'},{'Style', 'popupmenu', 'string', listchanindx , 'tag', 'listbox_chanindx'},...
-        { 'style', 'text', 'string','Plot type','fontweight' 'bold'}, {'Style', 'popupmenu', 'string', listplot , 'tag', 'listbox_plot'}, { 'style', 'text', 'string','Comp/chan indices','fontweight' 'bold'}...
-        { 'style', 'text', 'string','Phase freq (Hz)','fontweight' 'bold'},{ 'Style', 'edit', 'string','','tag', 'edit_phase'}...
-        { 'style', 'text', 'string','Amp freq (Hz)','fontweight' 'bold'},  { 'Style', 'edit', 'string','','tag', 'edit_amp'},...
-        { 'style', 'text', 'string','Time (s)','fontweight' 'bold'},      { 'Style', 'edit', 'string','','tag', 'edit_time'},...
-        { 'style', 'text', 'string','Command line options','fontweight' 'bold'},{ 'Style', 'edit', 'string','','tag', 'edit_opt'},...
-         };
- 
-    geometry = {{4 4 [0 0]    [1 1]}  {4 4 [0.6 0] [1.2 1] }  {4 4 [2 0]      [0.8 1]}  {4 4 [2.8 0.2] [1.2 1] }...
-                {4 4 [0 1]    [1 1]}  {4 4 [0.6 1] [1.2 1]}   {4 4 [1.9 0.6]  [1   1]}...
-                {4 4 [0 2]    [1 1]}  {4 4 [1 2] [0.5 1]}...
-                {4 4 [1.5 2]  [1 1]}  {4 4 [2.3 2] [0.5 1]}...
-                {4 4 [2.9 2]  [1 1]}  {4 4 [3.5 2] [0.5 1]}...
-                {4 4 [0 3]    [2 1]}  {4 4 [1 3] [3 1]}};
+%Fixed vals for both entries
+AllMethod_listgui = {'Mean vector length modulation index (Canolty et al.)',...
+                     'Kullback-Leibler modulation index (Tort et al.)',...
+                     'General linear model (Penny et al.)',...
+                     'Phase Locking Value (Lachaux et al.)',...
+                     'Instantaneous MIPAC (Martinez-Cancino et al.)',...
+                     'Event related MIPAC (Martinez-Cancino et al.)'};
 
-            [out_param userdat tmp res] = inputgui('title', guititle, 'geom', geometry, 'uilist',uilist, 'helpcom','pophelp(''pop_plotpac'');');
-            if isempty(res), return; end
-            plottype      = listplot{res.listbox_plot};
-            pacmethod     = listmethod{res.listbox_method};
-            tmpchanindx   = str2num(listchanindx{res.listbox_chanindx});
-            phasedataindx = tmpchanindx(1);
-            ampdataindx   = tmpchanindx(2);
-            g.fampval       = str2num(res.edit_amp);
-            g.fphaseval     = str2num(res.edit_phase);
-            g.timeval       = str2num(res.edit_time);
-            
-            if ~isempty(res.edit_opt)
-                tmpparams = eval( [ '{' res.edit_opt '}' ] );
-                g.plotopt   = {tmpparams{:}};
-            end
-end
-  
-fighandle = eeg_plotpac(EEG,plottype,'pacmethod',pacmethod,...
-                                     'phasedataindx',phasedataindx,...
-                                     'ampdataindx',ampdataindx,...
-                                     'plotopt', g.plotopt,...
-                                     'plotsignif', g.plotsignif,...
-                                     'fampval', g.fampval,...
-                                     'fphaseval', g.fphaseval,...
-                                     'timeval', g.timeval);
-                                 
- % Creating command
- if ~isempty(g.plotopt)
-     opt = '{';
-     for i =1:length(g.plotopt)/2
-         if isnumeric(g.plotopt{i+1})
-             opt = ([opt '''' g.plotopt{i} ''' ' num2str(g.plotopt{i+1})]);
-         else
-             opt = ([opt '''' g.plotopt{i} ''' ''' num2str(g.plotopt{i+1}) '''']);
-         end
+AllMethods =  {'mvlmi','klmi','glm','plv','instmipac', 'ermipac'};
+alldatatypes = {'Channels', 'Components'};
+
+if ~ischar(varargin{1})
+     EEG = varargin{1};
+     
+     % Check for fields here eegpac and pacplotopt
+     if length(EEG)>1
+          error('pop_plotpac(): Invalid EEG input');
      end
-      opt = ([opt '}']);
- com = sprintf('hfig = pop_plotpac(EEG,''%s'',''%s'',[%s],[%s],''plotsignif'',[%s],''fampval'',[%s],''fphaseval'',[%s],''timeval'',[%s],''plotopt'', %s);',...
-                                   plottype, pacmethod,num2str(phasedataindx),num2str(ampdataindx),num2str(g.plotsignif),num2str(g.fampval),num2str(g.fphaseval),num2str(g.timeval),opt);
- else
-      com = sprintf('hfig = pop_plotpac(EEG,''%s'',''%s'',[%s],[%s],''plotsignif'',[%s],''fampval'',[%s],''fphaseval'',[%s],''timeval'',[%s]);',...
-                                   plottype, pacmethod,num2str(phasedataindx),num2str(ampdataindx),num2str(g.plotsignif),num2str(g.fampval),num2str(g.fphaseval),num2str(g.timeval));
- end
+     
+    if ~isfield(EEG.etc, 'eegpac') || isempty(EEG.etc.eegpac) || ~isfield(EEG.etc, 'pacplotopt')
+        error('pop_plotpac(): PAC has not been computed for this dataset');
+    end
+     
+    % Callbacks
+    cb_comod_opt    = ['pop_plotpac(''comod_opt'', gcf);'];
+    cb_comodt_opt   = ['pop_plotpac(''comodt_opt'', gcf);'];
+    cb_tfpac_opt    = ['pop_plotpac(''tfpac_opt'', gcf);'];
+    cb_trialpac_opt = ['pop_plotpac(''trialbasedpac_opt'', gcf);'];
+    cb_lboxchanpair = ['pop_plotpac(''enablebuttons'', gcf);'];
+    
+    cb_comodplot  = ['pop_plotpac(''plot_comod'', gcf);'];
+    cb_comodtplot = ['pop_plotpac(''plot_comodt'', gcf);'];
+    cb_tfplot     = ['pop_plotpac(''plot_tfpac'', gcf);'];
+    cb_trialplot  = ['pop_plotpac(''plot_trialpac'', gcf);'];
+
+    
+    % Gui below
+    datatype = EEG.etc.eegpac(1).datatype;
+    pair_list = [EEG.etc.eegpac.labels]; % If results in cell this mus be changed. hera assuming using structure
+    defaultmethodlist = fieldnames(EEG.etc.eegpac(1));
+    guimethodlist = AllMethod_listgui(find(ismember(AllMethods,fieldnames(EEG.etc.eegpac(1)))));
+    
+    ph_freqrange  = ['[' num2str(minmax(EEG.etc.eegpac(1).params.freqs_phase)) ']'];
+    amp_freqrange = ['[' num2str(minmax(EEG.etc.eegpac(1).params.freqs_amp)) ']'];
+    ph_nfreqs = num2str(numel(EEG.etc.eegpac(1).params.freqs_phase));
+    amp_nfreqs = num2str(numel(EEG.etc.eegpac(1).params.freqs_amp));
+    
+    comod_enable    = 'on';
+    comodt_enable   = 'on';
+    freqtime_enable = 'on';
+    trialpac_enable = 'on';
+    
+    % userdata below
+    % --------------
+    fig_arg{1}{1} = EEG;
+       
+    uilist   = { ...
+        {'style' 'text' 'string' 'Data type: ' 'FontWeight' 'Bold' }  {'style' 'text' 'string' alldatatypes{datatype}} ...
+                                                                           {'style' 'text' 'string' 'Freq range [lo hi] (Hz)' 'FontWeight' 'bold' } {'style' 'text' 'string' '# Frequencies' 'fontweight' 'bold'}...
+        {'style' 'text' 'string' 'Phase data: ' 'FontWeight' 'Bold' }      {'style' 'text' 'string' ph_freqrange}                                   {'style' 'text' 'string'  ph_nfreqs} ...
+        {'style' 'text' 'string' 'Amplitude data: ' 'FontWeight' 'Bold' }  {'style' 'text' 'string' amp_freqrange}                                  {'style' 'text' 'string'  amp_nfreqs} ...
+        {'style' 'text' 'string' 'Select components/channels pair: ' 'FontWeight' 'Bold' }...
+        {'style' 'listbox'  'string' pair_list 'tag' 'lbox_pairs' 'max' 1 'min' 1 'tag' 'lbox_chanpair'} ...
+        {'style' 'text'       'string' 'Select method to plot: ' 'FontWeight' 'Bold'  }...
+        {'style' 'popupmenu'  'string' guimethodlist 'tag' 'pupm_method' 'value' 1 'callback' cb_lboxchanpair} ...
+        {'style' 'checkbox' 'tag' 'chckbx_signif' 'value' 0 'string' 'Plot significance if computed'}...
+        { }...
+        {'style' 'pushbutton' 'enable'  comod_enable    'string' 'Plot Comodulogram'          'Callback' cb_comodplot  'tag' 'plot_comod'}    {'style' 'pushbutton' 'enable'   comod_enable    'string' 'Params' 'Callback' cb_comod_opt   'tag' 'comod_opt'} ...
+        {'style' 'pushbutton' 'enable'  comodt_enable   'string' 'Plot Temporal comodulogram' 'Callback' cb_comodtplot 'tag' 'plot_comodt'}   {'style' 'pushbutton' 'enable'   comodt_enable   'string' 'Params' 'Callback' cb_comodt_opt   'tag' 'comodt_opt'} ...
+        {'style' 'pushbutton' 'enable'  freqtime_enable 'string' 'Plot Freq.-Time PAC'        'Callback' cb_tfplot     'tag' 'plot_tf'}       {'style' 'pushbutton' 'enable'   freqtime_enable 'string' 'Params' 'Callback' cb_tfpac_opt    'tag' 'tfpac_opt'} ...
+        {'style' 'pushbutton' 'enable'  trialpac_enable 'string' 'Plot Trial-based PAC'       'Callback' cb_trialplot  'tag' 'plot_trialpac'} {'style' 'pushbutton' 'enable'   trialpac_enable 'string' 'Params' 'Callback' cb_trialpac_opt 'tag' 'trialpac_opt'} ...
+        };
+    
+    guiheight = 15;
+    guiwidth = 1.5;
+    
+    geometry    = {{guiwidth guiheight [0 0]    [1 1]}  {guiwidth guiheight [0.4 0] [1  1]}...
+                                                        {guiwidth guiheight [0.4 1] [1 1]}  {guiwidth guiheight [1.08 1] [1  1]}...
+        {guiwidth guiheight [0 2] [1 1]}  {guiwidth guiheight [0.5 2] [1  1]} {guiwidth guiheight [1.2 2] [1  1]}...
+        {guiwidth guiheight [0 3] [1 1]}  {guiwidth guiheight [0.5 3] [1  1]} {guiwidth guiheight [1.2 3] [1  1]}...
+        {guiwidth guiheight [0 4]    [1 1]}...
+        {guiwidth guiheight [0 5]    [1.5 3]}...
+        {guiwidth guiheight [0 8]    [1 1]}...
+        {guiwidth guiheight [0 9]    [1.5 1]}...
+        {guiwidth guiheight [0 10]   [1.5 1]}...
+        {guiwidth guiheight [0 11]   [1.5 1]}...
+        {guiwidth guiheight [0 12]   [1 1]}  {guiwidth guiheight [1.15 12]  [0.35 1]}...
+        {guiwidth guiheight [0 13]   [1 1]}  {guiwidth guiheight [1.15 13]  [0.35 1]}...
+        {guiwidth guiheight [0 14]   [1 1]}  {guiwidth guiheight [1.15 14]  [0.35 1]}...
+        {guiwidth guiheight [0 15]   [1 1]}  {guiwidth guiheight [1.15 15]  [0.35 1]}...
+        };
+    
+    [out_param userdat tmp res] = inputgui( 'geom' , geometry, 'uilist', uilist,'helpcom', 'pophelp(''pop_pacplotnew'')',...
+                                            'title', 'Plot PAC for single subject -- pop_pacplot()' , 'userdata', fig_arg,...
+                                            'eval', cb_lboxchanpair );
+    
+else
+    hdl = varargin{2};  %figure handle
+    userdat  = get(varargin{2}, 'userdat');
+    EEG   = userdat{1}{1};
+    
+    flag_stat = get(findobj(hdl,'tag', 'chckbx_signif'),'Value');
+    
+    % Check pair selected
+    ListBoxObj = findobj(hdl,'tag', 'lbox_chanpair');
+    PairIndxVal = get(ListBoxObj,'value');
+    
+    % Check method in structure
+    PopupMenuMethod = findobj(hdl,'tag', 'pupm_method');
+    CurrMethodString = get(PopupMenuMethod,'string');
+    CurrMethodVal = get(PopupMenuMethod,'value');
+    CurrMethod  = CurrMethodString{CurrMethodVal};
+    CurrMethodCode =  AllMethods{find(~cellfun(@isempty, strfind(AllMethod_listgui,CurrMethod)))};
+    
+    try
+        switch  varargin{1}
+            case 'plot_comod'
+                eeg_plotcomod(EEG,'plotindx', PairIndxVal,'pacmethod', CurrMethodCode, 'plotsignif', flag_stat);
+                
+            case 'plot_comodt'
+                eeg_plotcomodt(EEG,'plotindx', PairIndxVal,'pacmethod', CurrMethodCode);
+                
+            case 'plot_tfpac'
+                 eeg_plottfpac(EEG,'plotindx', PairIndxVal,'pacmethod', CurrMethodCode);
+                
+            case 'plot_trialpac'
+                eeg_plotrialpac(EEG,'plotindx', PairIndxVal,'pacmethod', CurrMethodCode);
+                
+            case  'comod_opt'
+                EEG = pop_comodpacparams(EEG);
+                userdat{1}{1} = EEG;
+                set(hdl, 'userdat',userdat);
+                
+            case  'comodt_opt'
+                EEG = pop_comodtpacparams(EEG);
+                userdat{1}{1} = EEG;
+                set(hdl, 'userdat',userdat);
+                
+            case  'tfpac_opt'
+                EEG = pop_tfpacparams(EEG);
+                userdat{1}{1} = EEG;
+                set(hdl, 'userdat',userdat);
+                
+            case  'trialbasedpac_opt'
+                EEG = pop_trialspacparams(EEG);
+                userdat{1}{1} = EEG;
+                set(hdl, 'userdat',userdat);
+                
+            case  'enablebuttons'
+                % Dimension of computed PAC
+                if ~isempty(EEG.etc.eegpac(PairIndxVal).(CurrMethodCode).pacval)
+                    pacdim = EEG.etc.eegpac(PairIndxVal).(CurrMethodCode).dim;
+                else
+                    pacdim = 0;
+                end
+                
+                 switch pacdim
+                     case 0
+                         set(findobj(hdl,'tag', 'plot_comod'), 'enable', 'off');    set(findobj(hdl,'tag', 'comod_opt'), 'enable', 'off'); 
+                         set(findobj(hdl,'tag', 'plot_comodt'), 'enable', 'off');   set(findobj(hdl,'tag', 'comodt_opt'), 'enable', 'off'); 
+                         set(findobj(hdl,'tag', 'plot_tf'), 'enable', 'off');       set(findobj(hdl,'tag', 'tfpac_opt'), 'enable', 'off'); 
+                         set(findobj(hdl,'tag', 'plot_trialpac'), 'enable', 'off'); set(findobj(hdl,'tag', 'trialpac_opt'), 'enable', 'off');  
+                     case 1
+                         set(findobj(hdl,'tag', 'plot_comod'), 'enable', 'on');     set(findobj(hdl,'tag', 'comod_opt'), 'enable', 'on'); 
+                         set(findobj(hdl,'tag', 'plot_comodt'), 'enable', 'off');   set(findobj(hdl,'tag', 'comodt_opt'), 'enable', 'off'); 
+                         set(findobj(hdl,'tag', 'plot_tf'), 'enable', 'off');       set(findobj(hdl,'tag', 'tfpac_opt'), 'enable', 'off'); 
+                         set(findobj(hdl,'tag', 'plot_trialpac'), 'enable', 'off'); set(findobj(hdl,'tag', 'trialpac_opt'), 'enable', 'off');  
+                     case 2
+                         set(findobj(hdl,'tag', 'plot_comod'), 'enable', 'on');      set(findobj(hdl,'tag', 'comod_opt'), 'enable', 'on'); 
+                         set(findobj(hdl,'tag', 'plot_comodt'), 'enable', 'on');     set(findobj(hdl,'tag', 'comodt_opt'), 'enable', 'on'); 
+                         set(findobj(hdl,'tag', 'plot_tf'), 'enable', 'on');         set(findobj(hdl,'tag', 'tfpac_opt'), 'enable', 'on'); 
+                         set(findobj(hdl,'tag', 'plot_trialpac'), 'enable', 'off');  set(findobj(hdl,'tag', 'trialpac_opt'), 'enable', 'off');  
+                     case 3
+                          set(findobj(hdl,'tag', 'plot_comod'), 'enable', 'on');   set(findobj(hdl,'tag', 'comod_opt'), 'enable', 'on'); 
+                         set(findobj(hdl,'tag', 'plot_comodt'), 'enable', 'on');   set(findobj(hdl,'tag', 'comodt_opt'), 'enable', 'on'); 
+                         set(findobj(hdl,'tag', 'plot_tf'), 'enable', 'on');       set(findobj(hdl,'tag', 'tfpac_opt'), 'enable', 'on'); 
+                         set(findobj(hdl,'tag', 'plot_trialpac'), 'enable', 'on'); set(findobj(hdl,'tag', 'trialpac_opt'), 'enable', 'on');  
+                 end    
+        end
+    catch
+        eeglab_error;
+    end
+end
