@@ -84,6 +84,11 @@ if ~isempty(params.freqrange2)
 %     end
 end
 
+% Collapsing Trials
+if pacstruct.(g.pacmethod).dim == 3
+    pacdata = mean(pacdata,3);    
+end
+
 % Trimming time dimesion
 timevals = [];
 if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
