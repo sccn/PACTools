@@ -398,8 +398,8 @@ for find1 = 1:length(freqs1)
         end
 
 %%
-%          parfor (ti = 1:length(tindxvector), parforArg)
-         for ti = 1:length(tindxvector)
+         parfor (ti = 1:length(tindxvector), parforArg)
+%          for ti = 1:length(tindxvector)
          single_alltfx = []; single_alltfy = [];   
             % Retreiving the data
             if strial_flag % Single trial case
