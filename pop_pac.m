@@ -432,7 +432,7 @@ for ichanpair = 1:length(indexfreqs1)
             EEG.etc.eegpac(1).labels = {};
             if  EEG.etc.eegpac(1).datatype == 1
                 if ~isempty(EEG.chanlocs)
-                    EEG.etc.eegpac(1).labels = {EEG.chanlocs(indexfreqs1(ichanpair)).labels EEG.chanlocs(indexfreqs2(ichanpair)).labels};
+                    EEG.etc.eegpac(1).labels = {[EEG.chanlocs(indexfreqs1(ichanpair)).labels '-' EEG.chanlocs(indexfreqs2(ichanpair)).labels]};
                 else
                     EEG.etc.eegpac(1).labels = {['Chan' num2str(indexfreqs1(ichanpair)) '-' 'Chan' num2str(indexfreqs2(ichanpair))]};
                 end
@@ -449,7 +449,7 @@ for ichanpair = 1:length(indexfreqs1)
             
             if  EEG.etc.eegpac(c).datatype == 1
                 if ~isempty(EEG.chanlocs)
-                    EEG.etc.eegpac(c).labels = {EEG.chanlocs(indexfreqs1(ichanpair)).labels EEG.chanlocs(indexfreqs2(ichanpair)).labels};
+                    EEG.etc.eegpac(c).labels = {[EEG.chanlocs(indexfreqs1(ichanpair)).labels '-' EEG.chanlocs(indexfreqs2(ichanpair)).labels]};
                 else
                     EEG.etc.eegpac(c).labels = {['Chan' num2str(indexfreqs1(ichanpair)) '-' 'Chan' num2str(indexfreqs2(ichanpair))]};
                 end
