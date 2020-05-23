@@ -30,7 +30,7 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 function [EEG, com] = pop_plotpac(varargin)
-
+com = []; EEG = [];
 
 %Fixed vals for both entries
 AllMethod_listgui = {'Mean vector length modulation index (Canolty et al.)',...
