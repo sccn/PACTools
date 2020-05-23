@@ -31,7 +31,7 @@ end
 
 % pacval may be empty
 if isempty(pacstruct.(g.pacmethod).pacval)
-    disp('eeg_plotcomod() error: No PAC value has been computed for the input provided.');
+    disp('eeg_plottfpac() error: No PAC value has been computed for the input provided.');
     return;
 end
 
@@ -90,6 +90,7 @@ end
 if params.fixfreq == 2
     if isempty(fixfreqval), disp('eeg_plotfpac() message: A value must be defined for the Phase frequency.'); return; end
     [~, indfreq2] = min(abs(freq2vals - fixfreqval));
+    if isempty(indfreq2), error('eeg_plotfpac() message: Frequency value out of range'); end
     pacdata = pacdata(:,indfreq2,:,:);
 else
     if ~isempty(params.freqrange)
@@ -102,6 +103,11 @@ else
         %         pvalmask = pvalmask(:,indfreq2,:,:);
         %     end
     end
+end
+
+% Collapsing Trials
+if pacstruct.(g.pacmethod).dim == 3
+    pacdata = mean(pacdata,3);    
 end
 
 % Trimming time dimesion
@@ -150,8 +156,9 @@ title  = [ modes{indxtitle} ' Vs Time (f_{' modes{params.fixfreq} '} = ' num2str
 TrialAxeTitle = [modes{indxtitle}  ' Frequency (Hz)'];
 
 h = figure('Name', ['Time-frequency PAC (' g.pacmethod ')'] ,'Units','Normalized'); hold on;
-[~,~,~,~,axhndls] = erpimage(squeeze(pacdata)',[],timevals,title,0,0,'img_trialax_label',TrialAxeTitle,'cbar', 'on','cbar_title', 'Mod. Index','erp', 'on','yerplabel', 'Marginal Mod. Indx.', g.plotopt{:}) ;
+[~,~,~,~,axhndls] = erpimage(squeeze(pacdata)',[],timevals,title,0,0,'img_trialax_label',TrialAxeTitle,'cbar', 'on','cbar_title', 'Mod. Index','erp', 'on','yerplabel', 'Marginal Mod. Ind.', g.plotopt{:}) ;
 
+set(get(axhndls{3},'Xlabel'),'String', 'Latency (ms)');
 set(axhndls{1}, 'box', 'on'); set(axhndls{2}, 'box', 'on'); set(axhndls{3}, 'box', 'on');
 set(axhndls{1},'YTickLabel',round(freqvals(get(axhndls{1},'YTick'))));
 set(axhndls{1},'Fontsize', 20);
