@@ -78,6 +78,17 @@ if ~isempty(params.freqrange2)
     end
 end
 
+% Collapsing Trials
+if pacstruct.(g.pacmethod).dim == 3
+    if strcmp(params.jointimemethod, 'average')
+        pacdata = mean(pacdata,3);    
+    elseif strcmp(params.jointimemethod, 'maxval')     
+        pacdata = max(pacdata,[],3);   
+    else
+        disp('eeg_plotcomod() error: Invalid argument for property ''jointimemethod''. See ''pop_comodpacparams'' for resolution');
+    end
+end
+
 % Trimming and collapsing time dimesion if present
 timevals = [];
 if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
@@ -103,6 +114,7 @@ if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
         end
     end
     
+    
     % Collapsing time
     if ~isempty(params.jointimemethod) && ~isempty(timevals)
         if strcmp(params.jointimemethod, 'average')
@@ -110,7 +122,7 @@ if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
                  pacdata = mean(pacdata,3);
             else pacdata = mean(pacdata,4);
             end
-        elseif strcmp(params.jointimemethod, 'max')
+        elseif strcmp(params.jointimemethod, 'maxval')
             if pacstruct.(g.pacmethod).dim == 2
                  pacdata = max(pacdata,[],3);
             else pacdata = max(pacdata,[],4);
