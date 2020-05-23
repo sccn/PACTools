@@ -10,7 +10,7 @@ end
 DefaultTitle     = 'Modulation Index';
 ZLabelDefault    = 'Phase Frequency (Hz)';
 YLabelDefault    = 'Amplitude Frequency (Hz)';
-XLabelDefault    = 'Time(sec)';
+XLabelDefault    = 'Latency(sec)';
 CBarLabelDefault = 'Modulation Index';
 g = finputcheck( varargin, { ...
                             'npoints'     'integer'       [2 length(timevect) ]      20;
