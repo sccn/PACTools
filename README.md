@@ -91,7 +91,7 @@ In the second column (**Freq range [lo hi] (Hz)**), the range of frequencies (in
 
 The next two sections allow for the selection of the PAC method (**PAC Method**) and the input of pop_pac optional parameters at **Optional inputs**.  To list po_pac optional parameters refer to pop_pac.m help in the lowest left button **Help**.
 
-The following section comprises the settings for the computation of PAC statistics (**Significance testing**). Here the number of surrogates (**# surrogates**), number of blocks to use to shuffle the data for generating the surrogates (**# data blocks**), the significance threshold (**Significance threshold (0<p<1)**) and multiple comparison correction (**Correct for multiple comparisons (Bonferroni)**) can bet set. 
+The following section comprises the settings for the computation of PAC statistics (**Significance testing**). Here the number of surrogates (**# surrogates**), number of blocks to use to shuffle the data for generating the surrogates (**# data blocks**), the significance threshold (**Significance threshold (0<p<1)**) and multiple comparison correction (**Correct for multiple comparisons**) can bet set. 
  
 The last section of pop_pac GUI, designated with the label **Compute on NSG** and enabled with a checkbox,  is reserved for enabling and setting the computation of PAC through the Neurosciences Gateway. We will expand on this capability in the next sections.
 
@@ -170,8 +170,8 @@ The set of parameters common to all the methods computed, as phase-frequency (*f
          
 Finally, the field *cache* stores the serialized(encoded) parameters used for the current PAC computation. This field allows for a fast comparison with the parameters provided in a new computation and prevents the user to recompute and already computed PAC measure.
 
-## Demos
-### Computing Mean Vector Length Modulation Index in a continuous signal
+## Demo
+### Computing Instantaneous MIPAC and MVLMI in a continuous signal
 
 #### Computation
 
