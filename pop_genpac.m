@@ -75,8 +75,7 @@ try g.cpfunc;      catch, g.cpfunc      = 'linear';      end;
 try g.srate;       catch, g.srate       = 500;           end;
 try g.Ac;          catch, g.Ac          = 5;             end;
 try g.Am;          catch, g.Am          = 1;             end;
-try g.snr;          catch, g.snr        = Inf;           end;
-
+try g.snr;         catch, g.snr         = Inf;           end;
 try g.nsegm;       catch, g.nsegm       = 3;             end;
 try g.linslope;    catch, g.linslope    = 1;             end;
 try g.sinamp;      catch, g.sinamp      = 1;             end;
@@ -86,12 +85,10 @@ try g.m;           catch, g.m           = 0.5;           end;
 try g.fsin;        catch, g.fsin        = 0.1;           end;
 try g.padtime;     catch, g.padtime     = 0;             end;
 try g.maxshift;    catch, g.maxshift    = 0;             end;
-
-
-try g.nchan;     catch, g.nchan         = 1;             end;
-try g.ntrials;   catch, g.ntrials       = 1;             end;
-try g.filename;  catch, g.filename      = defaultname;   end;
-try g.setname;   catch, g.setname       = setname;       end;
+try g.nchan;       catch, g.nchan       = 1;             end;
+try g.ntrials;     catch, g.ntrials     = 1;             end;
+try g.filename;    catch, g.filename    = defaultname;   end;
+try g.setname;     catch, g.setname     = setname;       end;
 
 % GUI here
 if nargin < 1
@@ -100,7 +97,7 @@ end
 
 m = g.m;
 if (any(g.m < 0)||any(g.m > 1))
-    error('Coupling inp may be less than or equal to one and greater than zero');
+    error('Coupling value should be less than or equal to one and greater than zero');
 end
 % General settings
 time  = tlimits(1):1/g.srate:tlimits(2)+2*g.padtime;  % Total time for simulation
@@ -108,8 +105,6 @@ amplitude_mod = zeros(1,length(time));
 phase_signal  = zeros(1,length(time));
 
 % Carrier signal generation
-g.Ac = 5; % A Amplitude
-g.Am = 1;
 carrier_signal = g.Ac*sin(2*pi*fc*time);
 
 %% Coupling functions. Determining shape of m
@@ -170,7 +165,7 @@ if ~isempty(g.cpfunc)
 end
 mmod = m./max(m);
 
-% Amplitude Modulation (Wikipedia modified)
+% Amplitude Modulation
 if length(mmod) == length(amplitude_mod)
     ti = time;
     amplitude_mod  = (1+ mmod.*cos(2*pi*fm*ti)).*g.Ac.*sin(2*pi*fc*ti) + mmod.*cos(2*pi*fm*ti);
@@ -196,7 +191,8 @@ else
         end
     end
 end
-    
+
+% Plots
 if g.plot_flag
     figure('Units','normalized','Position',[0.3049 0.2544 0.5486 0.6311]);
     ax(1) = subplot(3,1,1);
