@@ -101,7 +101,7 @@ if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
     if ~isempty(params.timerange) && ~isempty(timevals)
         if params.timerange(1) < min(timevals) || params.timerange(2) > max(timevals), error('eeg_plotcomod: Invalid time range'); end
         try
-            timendx = (timevals > params.timerange(1) && timevals < params.timerange(2));
+            timendx = (timevals > params.timerange(1) & timevals < params.timerange(2));
             timevals = timevals(timendx);
             if pacstruct.(g.pacmethod).dim == 2
                 pacdata = pacdata(:,:,timevals);
