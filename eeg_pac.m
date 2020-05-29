@@ -163,6 +163,7 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'alltfXstr'        'struct'         struct                    struct;
                   'alltfYstr'        'struct'         struct                    struct;
                   'ptspercent'       'float'          [0 1]                     0.05;
+                  'nboot'            'real'           [0 Inf]                   200;
                   'baseboot'         'float'          []                        0;                       
                   'boottype'         'string'         {'times','trials','timestrials'}  'timestrials';   
                   'bonfcorr'         'integer'        [0 1]                     0;
