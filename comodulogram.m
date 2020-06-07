@@ -15,7 +15,7 @@ g = finputcheck( varargin, { ...
 
 h = figure('Name', g.title,'Units','Normalized','Tag','comod_plot');
 haxes = axes('parent',h,'Units', 'Normalized','ActivePositionProperty', 'outerposition');
-pcolor(freqs_amp, freqs_phase, pacval);
+pcolor(freqs_phase, freqs_amp, pacval');
 % shading(haxes,g.shading); % shading data
 colormap(haxes,'parula');  % Colormap
 
