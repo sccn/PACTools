@@ -10,10 +10,10 @@ end
 DefaultTitle     = 'Modulation Index';
 ZLabelDefault    = 'Phase Frequency (Hz)';
 YLabelDefault    = 'Amplitude Frequency (Hz)';
-XLabelDefault    = 'Latency(sec)';
+XLabelDefault    = 'Latency(msec)';
 CBarLabelDefault = 'Modulation Index';
 g = finputcheck( varargin, { ...
-                            'npoints'     'integer'       [2 length(timevect) ]      20;
+                            'npoints'         'integer'       [2 length(timevect) ]      20;
                             'times'           'integer'       []                         [];
                             'title'           'string'        ''                         DefaultTitle;
                             'zlabel'          'string'        ''                         ZLabelDefault;
@@ -23,7 +23,7 @@ g = finputcheck( varargin, { ...
                             'comodtazimuth'   'integer'       []                         -10;
                             'comodtelevation' 'integer'       []                         23;
                             'facealpha'       'integer'       []                         0.5;
-                            'scale'          'string'        {'linear' 'log'}        'log'});
+                            'scale'           'string'        {'linear' 'log'}           'log'});
 % Determining nearest time
 if isempty(g.times)
     times = min(timevect):((max(timevect)-min(timevect))/(g.npoints-1)):max(timevect);
@@ -36,14 +36,14 @@ tplot = timevect(timeidx);
 %% Plotting start here
 
 h     = figure('Name', g.title,'Units','Normalized','Position', [0.2349    0.3093    0.5547    0.2907],'Tag','comodt_plot');
-haxes = axes('Units', 'Normalized','Color','None','parent', h);
+haxes = axes('Units', 'Normalized','Color','None','parent', h, 'YScale', g.scale, 'ZScale', g.scale);
 
 % Plot
 Z = pacval(:,:,timeidx);
 [M,N,P] = size(Z);
 for i=1:P
     % Create a plane at x=i
-    hsurf = surface(tplot(i)*ones(1,M),1:N,repmat([M:-1:1],N,1),repmat([M:-1:1],N,1));
+    hsurf = surface(tplot(i)*ones(1,M),freqs_amp,repmat(flip(freqs_phase),N,1),repmat([M:-1:1],N,1));
     % set the color of the plane to be the image
     set(hsurf,'CData', flipud(Z(:,:,i))');
     % set some extra properties
@@ -61,19 +61,19 @@ h_xlabel = xlabel(g.xlabel,'FontSize',AXES_FONTSIZE_L,'FontWeight','bold','Units
 
 set(haxes,'Color','None');
 
-% Y axis labels
-ylabel_val = freqs_amp(get(haxes,'YTick'));
-for i = 1:length(ylabel_val)
-    ylabel_string{i} = sprintf('%1.1f',ylabel_val(i));
-end
-set(haxes,'YTickLabel', ylabel_string,'FontSize',AXES_FONTSIZE_L);
-
-% Z axis label
-zlabel_val = freqs_phase(get(haxes,'ZTick'));
-for i = 1:length(zlabel_val)
-    zlabel_string{i} = sprintf('%1.1f',zlabel_val(i));
-end
-set(haxes,'ZTickLabel', zlabel_string);
+% % Y axis labels
+% ylabel_val = freqs_amp(get(haxes,'YTick'));
+% for i = 1:length(ylabel_val)
+%     ylabel_string{i} = sprintf('%1.1f',ylabel_val(i));
+% end
+% set(haxes,'YTickLabel', ylabel_string,'FontSize',AXES_FONTSIZE_L);
+% 
+% % Z axis label
+% zlabel_val = freqs_phase(get(haxes,'ZTick'));
+% for i = 1:length(zlabel_val)
+%     zlabel_string{i} = sprintf('%1.1f',zlabel_val(i));
+% end
+% set(haxes,'ZTickLabel', zlabel_string);
 
 % X axis label
 set(haxes,'XTick', tplot);
