@@ -8,11 +8,12 @@ if nargin < 4
 end
 
 DefaultTitle     = 'Modulation Index';
-ZLabelDefault    = 'Phase Frequency (Hz)';
-YLabelDefault    = 'Amplitude Frequency (Hz)';
+ZLabelDefault    = 'Amplitude Frequency (Hz)';
+YLabelDefault    = 'Phase Frequency (Hz)';
 XLabelDefault    = 'Latency(msec)';
 CBarLabelDefault = 'Modulation Index';
 g = finputcheck( varargin, { ...
+                            'signifmask'      'integer'       []                         [];
                             'npoints'         'integer'       [2 length(timevect) ]      20;
                             'times'           'integer'       []                         [];
                             'title'           'string'        ''                         DefaultTitle;
@@ -24,6 +25,13 @@ g = finputcheck( varargin, { ...
                             'comodtelevation' 'integer'       []                         23;
                             'facealpha'       'integer'       []                         0.5;
                             'scale'           'string'        {'linear' 'log'}           'log'});
+                        
+flag_pval = 0;
+if ~isempty(g.signifmask) && ~isequal(size(g.signifmask), size(pacval))
+    error('comodulogramt : PAC values and significnace mask dimensions diverge');
+elseif ~isempty(g.signifmask) && isequal(size(g.signifmask), size(pacval))
+    flag_pval = 1    
+end
 % Determining nearest time
 if isempty(g.times)
     times = min(timevect):((max(timevect)-min(timevect))/(g.npoints-1)):max(timevect);
@@ -39,16 +47,19 @@ h     = figure('Name', g.title,'Units','Normalized','Position', [0.2349    0.309
 haxes = axes('Units', 'Normalized','Color','None','parent', h, 'YScale', g.scale, 'ZScale', g.scale);
 
 % Plot
-Z = pacval(:,:,timeidx);
+Z = permute(pacval(:,:,timeidx), [2,1,3]);
 [M,N,P] = size(Z);
 for i=1:P
     % Create a plane at x=i
-    hsurf = surface(tplot(i)*ones(1,M),freqs_amp,repmat(flip(freqs_phase),N,1),repmat([M:-1:1],N,1));
+    hsurf = surface(tplot(i)*ones(1,M),freqs_phase ,repmat(flip(freqs_amp),N,1),repmat([M:-1:1],N,1));
+    
+    if flag_pval
+        set(hsurf,'CData',real(flipud(g.signifmask(:,:,i))').*flipud(Z(:,:,i))', 'EdgeColor','none');
+    else
     % set the color of the plane to be the image
-    set(hsurf,'CData', flipud(Z(:,:,i))');
-    % set some extra properties
-    set(hsurf,'EdgeColor','none');
-    alpha(g.facealpha)
+    set(hsurf,'CData', flipud(Z(:,:,i))', 'EdgeColor','none');
+    end
+alpha(g.facealpha)
 end
 
 % Makeup
@@ -60,20 +71,6 @@ h_zlabel = zlabel(g.zlabel,'FontSize',AXES_FONTSIZE_L,'FontWeight','bold','Units
 h_xlabel = xlabel(g.xlabel,'FontSize',AXES_FONTSIZE_L,'FontWeight','bold','Units','Normalized');
 
 set(haxes,'Color','None');
-
-% % Y axis labels
-% ylabel_val = freqs_amp(get(haxes,'YTick'));
-% for i = 1:length(ylabel_val)
-%     ylabel_string{i} = sprintf('%1.1f',ylabel_val(i));
-% end
-% set(haxes,'YTickLabel', ylabel_string,'FontSize',AXES_FONTSIZE_L);
-% 
-% % Z axis label
-% zlabel_val = freqs_phase(get(haxes,'ZTick'));
-% for i = 1:length(zlabel_val)
-%     zlabel_string{i} = sprintf('%1.1f',zlabel_val(i));
-% end
-% set(haxes,'ZTickLabel', zlabel_string);
 
 % X axis label
 set(haxes,'XTick', tplot);
