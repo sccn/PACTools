@@ -464,7 +464,7 @@ for find1 = 1:length(freqs1)
             % PAC Methods.
             else
                 tmparg = {gsubf{:} 'alpha' g.alpha};
-                [cell_pactmp{ti},~,~,cell_pacstructtmp{ti}] = eeg_comppac(tmpalltfx,tmpalltfy, g.method, tmparg{:}) ;
+                [cell_pactmp{ti},~,~,cell_pacstructtmp{ti}] = eeg_comppac(tmpalltfx,tmpalltfy, g.method,'nboot',  g.nboot, tmparg{:}) ;
             end
          end
          %%
@@ -497,7 +497,7 @@ for find1 = 1:length(freqs1)
                        if ~isempty(g.alpha)
                            pacstruct.(g.method).signif.pval(find1,find2)           = cell_pacstructtmp{ti}.pval;
                            pacstruct.(g.method).signif.signifmask(find1,find2)     = cell_pacstructtmp{ti}.significant;
-                           pacstruct.(g.method).signif.surrogate_pac(find1,find2,:) = cell_pacstructtmp{ti}.surrogate_pac;
+                           %pacstruct.(g.method).signif.surrogate_pac(find1,find2,:) = cell_pacstructtmp{ti}.surrogate_pac;
                        end
                    else
                        % Methods with dimension = 2
