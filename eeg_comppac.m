@@ -14,11 +14,12 @@
 %       'alpha'         - Significance level of the statistical test. If
 %                         empty no statistical test is done.
 %                         Default [0.05]
-%       'method'        - {'mvlmi', 'klmi', 'glm'} Method to be use
+%       'method'        - {'mvlmi', 'klmi', 'glm', 'plv'} Method to be use
 %                         to compute the phase amplitude coupling. 
 %                         mvlmi : Mean Vector Length Modulation Index (Canolty et al. 2006)
 %                         klmi  : Kullback-Leibler Modulation Index (Tort et al. 2010)
 %                         glm   : Generalized Linear Model (Penny et al. 2008)
+%                         plv   : Phase-locking value (Lachaux, 1999)
 %                         Default {'glm'}
 %       'nbinskl'       - Number of bins to use for the Kullback Leibler
 %                         Modulation Index. Default [18].
@@ -36,12 +37,11 @@
 %                         intermediate steps of the method
 %     
 %
-% Author: Joseph Heng and Ramon Martinez Cancino, EPFL, SCCN/INC, UCSD 2016
+% Author: Ramon Martinez Cancino and Joseph Heng, SCCN/INC, UCSD 2016
 %
 %
 % See also:
-% Copyright (C) 2002  Joseph Heng and Ramon Martinez Cancino, EPFL, UCSD, 
-% INC, SCCN
+% Copyright (C) 2016 Ramon Martinez Cancino and Joseph Heng, UCSD, INC, SCCN
 %
 % This program is free software; you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
