@@ -130,6 +130,10 @@ if ~ischar(varargin{1})
     [out_param userdat tmp res] = inputgui( 'geom' , geometry, 'uilist', uilist,'helpcom', 'pophelp(''pop_pacplotnew'')',...
                                             'title', 'Plot PAC for single subject -- pop_pacplot()' , 'userdata', fig_arg,...
                                             'eval', cb_lboxchanpair );
+                                        
+    if ~isempty(userdat)
+        EEG = userdat{1}{1};
+    end
     
 else
     hdl = varargin{2};  %figure handle
@@ -155,7 +159,7 @@ else
                 eeg_plotcomod(EEG,'plotindx', PairIndxVal,'pacmethod', CurrMethodCode, 'plotsignif', flag_stat);
                 
             case 'plot_comodt'
-                eeg_plotcomodt(EEG,'plotindx', PairIndxVal,'pacmethod', CurrMethodCode);
+                eeg_plotcomodt(EEG,'plotindx', PairIndxVal,'pacmethod', CurrMethodCode,'plotsignif', flag_stat);
                 
             case 'plot_tfpac'
                  eeg_plottfpac(EEG,'plotindx', PairIndxVal,'pacmethod', CurrMethodCode);
