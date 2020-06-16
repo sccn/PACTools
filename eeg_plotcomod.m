@@ -104,9 +104,9 @@ if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
             timendx = (timevals > params.timerange(1) & timevals < params.timerange(2));
             timevals = timevals(timendx);
             if pacstruct.(g.pacmethod).dim == 2
-                pacdata = pacdata(:,:,timevals);
+                pacdata = pacdata(:,:,timendx);
             else
-                pacdata = pacdata(:,:,:,timevals);
+                pacdata = pacdata(:,:,:,timendx);
             end
         catch
             disp('Unable to trim time/latency values. Please check option ''timerange''');

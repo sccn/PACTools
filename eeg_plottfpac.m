@@ -152,10 +152,10 @@ else indxtitle = 1;
      freqvals = freq1vals;
 end
 
-title  = [ modes{indxtitle} ' Vs Time (f_{' modes{params.fixfreq} '} = ' num2str(fixfreqval) 'Hz)'];
+title  = [ modes{indxtitle} ' Vs Latency (f_{' modes{params.fixfreq} '} = ' num2str(fixfreqval) 'Hz)'];
 TrialAxeTitle = [modes{indxtitle}  ' Frequency (Hz)'];
 
-h = figure('Name', ['Time-frequency PAC (' g.pacmethod ')'] ,'Units','Normalized'); hold on;
+h = figure('Name', ['frequency-Latency PAC (' g.pacmethod ')'] ,'Units','Normalized'); hold on;
 [~,~,~,~,axhndls] = erpimage(squeeze(pacdata)',[],timevals,title,0,0,'img_trialax_label',TrialAxeTitle,'cbar', 'on','cbar_title', 'Mod. Index','erp', 'on','yerplabel', 'Marginal Mod. Ind.', g.plotopt{:}) ;
 
 set(get(axhndls{3},'Xlabel'),'String', 'Latency (ms)');

@@ -12,6 +12,7 @@ options = mystruct(varargin);
 options = myrmfield( options, myfieldnames(params));
 
 g  = finputcheck(  options, { ...
+                   'plotsignif'     'integer'       [0 1]       0;
                    'plotindx'       'integer'       []          1;
                    'pacmethod'      'string'        ''          '';
                    'plotopt'        'cell'          {}          {}}, ...
@@ -36,6 +37,17 @@ end
 pacdata   = pacstruct.(g.pacmethod).pacval;
 freq1vals = pacstruct.params.freqs_phase;
 freq2vals = pacstruct.params.freqs_amp;
+
+% Pvals stuff
+signifmask = []; flag_pval =0;
+if pacstruct.(g.pacmethod).dim ==2 && g.plotsignif  % Only for dim = 2 data 
+    if isfield(pacstruct.(g.pacmethod),'signif') && ~isempty(pacstruct.(g.pacmethod).signif.pval)
+        signifmask = pacstruct.(g.pacmethod).signif.signifmask;
+        flag_pval = 1;
+    else
+        disp('eeg_plotcomodt message: Significance mask overlay was requested but has not been computed. This input will be disregarded');
+    end
+end
 
 if isfield( pacstruct.(g.pacmethod),'times')
     timevals  = pacstruct.(g.pacmethod).times;
@@ -67,9 +79,9 @@ if ~isempty(params.freqrange1)
     indfreq1 = find(freq1vals > params.freqrange1(1) & freq1vals < params.freqrange1(2));
     freq1vals =  freq1vals(indfreq1);
     pacdata = pacdata(indfreq1,:,:,:);
-%     if flag_pval
-%         pvalmask = pvalmask(indfreq1,:,:,:);
-%     end
+    if flag_pval
+        signifmask = signifmask(indfreq1,:,:,:);
+    end
 end
 
 % Trimming Amplitude frequency values
@@ -79,14 +91,9 @@ if ~isempty(params.freqrange2)
     indfreq2 = find(freq2vals > params.freqrange2(1) & freq2vals < params.freqrange2(2));
     freq2vals =  freq2vals(indfreq2);
     pacdata = pacdata(:,indfreq2,:,:);
-%     if flag_pval
-%         pvalmask = pvalmask(:,indfreq2,:,:);
-%     end
-end
-
-% Collapsing Trials
-if pacstruct.(g.pacmethod).dim == 3
-    pacdata = mean(pacdata,3);    
+    if flag_pval
+        signifmask = signifmask(:,indfreq2,:,:);
+    end
 end
 
 % Trimming time dimesion
@@ -103,10 +110,15 @@ if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
         try
             timendx = (timevals > params.timerange(1) & timevals < params.timerange(2));
             timevals = timevals(timendx);
-            if pacstruct.(g.pacmethod).dim == 2
-                pacdata = pacdata(:,:,timendx);
-            else
-                pacdata = pacdata(:,:,:,timendx);
+            
+            % Collapsing Trials
+            if  pacstruct.(g.pacmethod).dim == 3
+                pacdata = squeeze(mean(pacdata,3));  
+            end
+            
+            pacdata = pacdata(:,:,timendx);
+            if flag_pval
+                signifmask = signifmask(:,:,timendx);
             end
         catch
             disp('Unable to trim time/latency values. Please check option ''timerange''');
@@ -115,14 +127,10 @@ if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
     end
 end
 
-% % Plotting significance
-% if flag_pval
-%     if ~isempty(pacstruct.(g.pacmethod).signif.signifmask)
-%         g.plotopt(end+1:end+2) = {'signifmask', pvalmask};
-%     else
-%         disp('eegplot pac() message: Significance mask overlay was requested but has not been computed. This input will be disregarded');
-%     end
-% end
+% Plotting significance
+if flag_pval &&  ~isempty(signifmask)
+        g.plotopt(end+1:end+2) = {'signifmask', signifmask};
+end
 
 if ~isempty(g.plotopt)
     postmp = ~cellfun(@isempty,strfind(g.plotopt(1:2:end),'npoints' ));

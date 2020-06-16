@@ -435,7 +435,7 @@ for find1 = 1:length(freqs1)
             % ERMIPAC
             if strcmp(g.method,'ermipac')
                 tmparg = {gsubf{:} 'xdistmethod' 'circular'};
-                [~,cell_pactmp{ti},cell_kconv{ti}] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy', tmparg{:});
+                [~,cell_pactmp{ti},kconv] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy', tmparg{:});
                 
                 if ~isempty(g.alpha)
                     [trash, zerolat] = min(abs(timesout1));
@@ -446,7 +446,7 @@ for find1 = 1:length(freqs1)
                     surrdata = minfokraskov_computesurrfrombaseline([size(single_alltfx,2), windowsearchsize+1] ,Xbaseline, Ybaseline, g.nboot,tmparg{:});
                     
                     % Statistical testing
-                    Iloc_zscore         = (pactmp' - repmat(mean(surrdata(:)),size(pactmp',1),size(pactmp',2))) ./ repmat(std(surrdata(:)),size(pactmp',1),size(pactmp',2));
+                    Iloc_zscore         = (cell_pactmp{ti}' - repmat(mean(surrdata(:)),size(cell_pactmp{ti}',1),size(cell_pactmp{ti}',2))) ./ repmat(std(surrdata(:)),size(cell_pactmp{ti}',1),size(cell_pactmp{ti}',2));
                     Iloc_pval           = 1-normcdf(abs(Iloc_zscore));
                     %                    Iloc_pval           = 2*normcdf(-abs(Iloc_zscore));
                     Iloc_sigval = zeros(size(Iloc_pval));
@@ -454,6 +454,7 @@ for find1 = 1:length(freqs1)
                     cell_signiftmp{ti} = Iloc_sigval;
                     cell_pval{ti}      = Iloc_pval;
                 end
+                cell_kconv{ti} = kconv;
             
             % Inst MIPAC
             elseif strcmp(g.method,'instmipac')              
@@ -464,7 +465,7 @@ for find1 = 1:length(freqs1)
             % PAC Methods.
             else
                 tmparg = {gsubf{:} 'alpha' g.alpha};
-                [cell_pactmp{ti},~,~,cell_pacstructtmp{ti}] = eeg_comppac(tmpalltfx,tmpalltfy, g.method, tmparg{:}) ;
+                [cell_pactmp{ti},~,~,cell_pacstructtmp{ti}] = eeg_comppac(tmpalltfx,tmpalltfy, g.method,'nboot',  g.nboot, tmparg{:}) ;
             end
          end
          %%
@@ -497,7 +498,7 @@ for find1 = 1:length(freqs1)
                        if ~isempty(g.alpha)
                            pacstruct.(g.method).signif.pval(find1,find2)           = cell_pacstructtmp{ti}.pval;
                            pacstruct.(g.method).signif.signifmask(find1,find2)     = cell_pacstructtmp{ti}.significant;
-                           pacstruct.(g.method).signif.surrogate_pac(find1,find2,:) = cell_pacstructtmp{ti}.surrogate_pac;
+                           %pacstruct.(g.method).signif.surrogate_pac(find1,find2,:) = cell_pacstructtmp{ti}.surrogate_pac;
                        end
                    else
                        % Methods with dimension = 2

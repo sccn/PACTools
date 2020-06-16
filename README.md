@@ -169,6 +169,8 @@ The set of parameters common to all the methods computed, as phase-frequency (*f
 ```
          
 Finally, the field *cache* stores the serialized(encoded) parameters used for the current PAC computation. This field allows for a fast comparison with the parameters provided in a new computation and prevents the user to recompute and already computed PAC measure.
+#### Method-specific fields
+(work in progress..)
 
 ## Demo
 ### Computing Instantaneous MIPAC and MVLMI in a continuous signal

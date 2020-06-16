@@ -7,7 +7,7 @@ submenu = uimenu( plotmenu, 'Label', 'PAC Tools', 'separator', 'on');
 uimenu( submenu, 'label', 'Estimate PAC','callback',...
     [try_strings.no_check '[EEG LASTCOM]=pop_pac(EEG);' catch_strings.add_to_hist]);
 uimenu( submenu, 'label', 'Plot PAC','callback',...
-    [try_strings.no_check '[~,LASTCOM]=pop_plotpac(EEG);' catch_strings.add_to_hist]);
+    [try_strings.no_check '[EEG,LASTCOM]=pop_plotpac(EEG);' catch_strings.add_to_hist]);
 
 % STUDY menu
 studymenu = findobj(fig, 'tag', 'study');
