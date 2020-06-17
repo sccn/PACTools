@@ -28,7 +28,8 @@
 %                 when creating surrogate data. Default: [0.05] 
 %  forcecomp    - [0,1] Flag to force (1) or not (0) the computation of PAC
 %                 in the case it is detected that the measure has been
-%                 computed already. Default:[0]
+%                 computed already or the parameters used are different to the ones saved.
+%                 Default:[0]
 % Outputs:
 %  EEG          - EEGLAB EEG structure. Results of computing CFC are
 %                  stored in EEG.etc.pac
@@ -209,18 +210,18 @@ if nargin < 6
     callback_chkcbx_logphs = 'set(findobj(''tag'',''chckbx_logamp''), ''value'', get(findobj(''tag'',''chckbx_logphs''),''value''))';
     callback_chkcbx_logamp = 'set(findobj(''tag'',''chckbx_logphs''), ''value'', get(findobj(''tag'',''chckbx_logamp''),''value''))';
     
-    if nsginstalled_flag
     guiheight = 12;
     guiwidth = 2.6;
-    nsgdefaultopt = ['''runtime'',' num2str(g.runtime) ',''jobid'','''  g.jobid ''''];
-    nsgmenugeom = {{guiwidth guiheight [0 10]    [1 1]}  {guiwidth guiheight [0.5 10] [0.5  1]}...
-                   {guiwidth guiheight [0.1 11]    [1 1]}  {guiwidth guiheight [0.5 11] [2.1 1]}...
-                   {guiwidth guiheight [0 12]    [1 1]}};
-    nsgmenuuilist = {{'style' 'text' 'string' 'Compute via NSG' 'fontweight' 'bold'} {'style' 'checkbox' 'tag' 'chckbx_nsgt' 'callback' nsgcheck 'value' fastif(strcmpi(g.compflag,'nsg'), 1, 0)}...
-                    {'style' 'text' 'string' 'NSG options'}    {'style' 'edit'       'string'  nsgdefaultopt           'tag' 'nsgopt' 'enable' fastif( strcmpi(g.compflag,'nsg'), 'on','off')}...
-                    {}};
+    if nsginstalled_flag
+        nsgdefaultopt = ['''runtime'',' num2str(g.runtime) ',''jobid'','''  g.jobid ''''];
+        nsgmenugeom = {{guiwidth guiheight [0 10]    [1 1]}  {guiwidth guiheight [0.5 10] [0.5  1]}...
+            {guiwidth guiheight [0.1 11]    [1 1]}  {guiwidth guiheight [0.5 11] [2.1 1]}...
+            {guiwidth guiheight [0 12]    [1 1]}};
+        nsgmenuuilist = {{'style' 'text' 'string' 'Compute via NSG' 'fontweight' 'bold'} {'style' 'checkbox' 'tag' 'chckbx_nsgt' 'callback' nsgcheck 'value' fastif(strcmpi(g.compflag,'nsg'), 1, 0)}...
+            {'style' 'text' 'string' 'NSG options'}    {'style' 'edit'       'string'  nsgdefaultopt           'tag' 'nsgopt' 'enable' fastif( strcmpi(g.compflag,'nsg'), 'on','off')}...
+            {}};
     else
-        guiheight = 9
+        guiheight = 9;
         nsgmenugeom =  {{guiwidth guiheight [0 10]    [1 1]}};
         nsgmenuuilist = {{}};
     end
@@ -363,7 +364,7 @@ if isempty(g.freq1_trialindx) || isempty(g.freq2_trialindx)
     g.freq2_trialindx = 1:dim_trial;
 end
 
-% Check if parameters are the sa
+% Check if parameters are the same
 %--
 if ~g.cleanup
     methodindx  = find(strcmp(options,'method' ));
@@ -372,7 +373,22 @@ if ~g.cleanup
     optionshash = gethashcode(std_serialize({'pooldata', pooldata, opttmp{:}}));
     if isfield(EEG.etc,'eegpac') && isfield(EEG.etc.eegpac, 'cache')
         [~, tmpstruct] = eeg_cache(EEG.etc.eegpac(1).cache, optionshash);
-        if isempty(tmpstruct)
+        if isempty(tmpstruct) 
+            if ~g.forcecomp
+                prompt = 'PACTools is about to remove previous saved PAC computations:';
+                guititle = 'pop_pac - PAC results deletion';
+                abortcomp = 'Exit';
+                ignorewarn = 'Continue';
+                answer = questdlg2(prompt,guititle,abortcomp,ignorewarn,ignorewarn);
+                
+                switch answer
+                    case 'Continue'
+                        disp('pop_pac: Proceeding to delete saved PAC results per user request');
+                    case 'Exit'
+                        disp('pop_pac: PAC computation has been canceled per user request. If you want to avoid this check use the ''forcecomp'' argument');
+                        return;
+                end
+            end
             % Cleanup if different parameters
             EEG.etc.pacplotopt = [];
             EEG.etc.eegpac = [];
