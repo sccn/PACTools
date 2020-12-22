@@ -60,17 +60,17 @@ end
 
 STUDY = pop_erspparams(STUDY, 'default');
 [opt moreopts] = finputcheck( varargin, { ...
-    'design'        'integer' []               STUDY.currentdesign;
-    'channels'      'cell'    []               {};
-    'clusters'      'integer' []               [];
-    'timerange'     'real'    []               [];
+    'design'        'integer'  []               STUDY.currentdesign;
+    'channels'      'cell'     []               {};
+    'clusters'      'integer'  []               [];
+    'timerange'     'real'     []               [];
     'freqrange1'     'real'    []               [];
     'freqrange2'     'real'    []               [];
-    'datatype'      'string'  { 'pac' 'mipac'} 'pac';
-    'singletrials'  'string'  { 'on','off' }   'off';
-    'componentpol'  'string'  { 'on','off' }   'on';
-    'component'     'integer' []               [];
-    'subject'       'string'  []               '' }, ...
+    'datatype'      'string'   { 'pac' 'mipac'} 'pac';
+    'singletrials'  'string'   { 'on','off' }   'off';
+    'componentpol'  'string'   { 'on','off' }   'on';
+    'component'     'integer'  []               [];
+    'subject'       'string'   []               '' }, ...
     'std_readdata', 'ignore');
 if ischar(opt), error(opt); end
 
@@ -79,9 +79,6 @@ dtype = opt.datatype; % data type
 % get the file extension
 % ----------------------
 tmpDataType = opt.datatype;
-if isempty(opt.timerange),  opt.timerange  = STUDY.etc.pacparams.timerange;  end
-if isempty(opt.freqrange1), opt.freqrange1 = STUDY.etc.pacparams.freqrange1;  end
-if isempty(opt.freqrange2), opt.freqrange2 = STUDY.etc.pacparams.freqrange2;  end
 
 if ~isempty(opt.channels), fileExt = '.datpac';
 else                       fileExt = '.icapac';
@@ -102,11 +99,11 @@ end
 % options
 % -------
 opts = {};
-if ~isempty(opt.timerange),  opts = { 'timelimits', opt.timerange };   end
-if ~isempty(opt.freqrange1), opts = { 'freqlimits1', opt.freqrange1 }; end
-if ~isempty(opt.freqrange2), opts = { 'freqlimits1', opt.freqrange2 }; end
+if ~isempty(opt.timerange),  opts = [opts(:)'  {'timelimits'}, {opt.timerange} ];  end
+if ~isempty(opt.freqrange1), opts = [opts(:)' {'freqlimits1'}, {opt.freqrange1} ]; end
+if ~isempty(opt.freqrange2), opts = [opts(:)' {'freqlimits1'}, {opt.freqrange2} ]; end
 
-opts = { opts{:} 'singletrials' opt.singletrials };
+opts = [ opts(:)' {'singletrials'} {opt.singletrials} ];
 fprintf('Reading subjects'' data or looking up measure values in EEGLAB cache\n');
 
 % get all sessions (same code as std_readdat)
