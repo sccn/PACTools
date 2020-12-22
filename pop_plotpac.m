@@ -7,7 +7,8 @@
 %  EEG          - [Structure] Input dataset as an EEGLAB EEG structure
 
 % Outputs:
-%  h            - Handles of figures generated
+%  EEG          - [Structure] EEG dataset structure with pac results
+%  com          - Command executed (on development)
 %
 % See also:
 %
@@ -127,7 +128,7 @@ if ~ischar(varargin{1})
         {guiwidth guiheight [0 17]   [1.5 1]}...
         };
     
-    [out_param userdat tmp res] = inputgui( 'geom' , geometry, 'uilist', uilist,'helpcom', 'pophelp(''pop_pacplotnew'')',...
+    [out_param userdat tmp res] = inputgui( 'geom' , geometry, 'uilist', uilist,'helpcom', 'pophelp(''pop_pacplot'')',...
                                             'title', 'Plot PAC for single subject -- pop_pacplot()' , 'userdata', fig_arg,...
                                             'eval', cb_lboxchanpair );
                                         
