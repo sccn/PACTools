@@ -13,4 +13,4 @@ uimenu( submenu, 'label', 'Plot PAC','callback',...
 studymenu = findobj(fig, 'tag', 'study');
 submenustudy = uimenu( studymenu, 'Label', 'STUDY PAC Tools', 'separator', 'on','userdata', 'startup:off;study:on');
 uimenu( submenustudy, 'label', 'Precompute PAC','callback',[try_strings.no_check '[STUDY, ALLEEG, LASTCOM] = pop_pacprecomp(STUDY, ALLEEG);' catch_strings.add_to_hist],'userdata', 'startup:off;study:on');
-uimenu( submenustudy, 'label', 'Plot PAC','callback',[try_strings.no_check '[STUDY, ALLEEG, LASTCOM] = pop_pacplotstd;' catch_strings.add_to_hist],'userdata', 'startup:off;study:on');
+uimenu( submenustudy, 'label', 'Plot PAC','callback',[try_strings.no_check '[STUDY, LASTCOM] = pop_stdplotpac(STUDY, ALLEEG);' catch_strings.add_to_hist],'userdata', 'startup:off;study:on');
