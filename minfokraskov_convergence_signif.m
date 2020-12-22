@@ -109,7 +109,7 @@ try g.xvarnorm_circ;     catch, g.xvarnorm_circ   = 0;             end
 try g.varthresh;         catch, g.varthresh       = 0.05;          end
 try g.kstep;             catch, g.kstep           = 1;             end
 try g.saveallmi;         catch, g.saveallmi       = 0;             end
-try g.maxk;              catch, g.maxk            = 40;            end
+try g.maxk;              catch, g.maxk            = 200;            end
 try g.normmethod;        catch, g.normmethod      = 'norm';        end 
 try g.scaledistmat;      catch, g.scaledistmat    = 0;             end
 
@@ -118,6 +118,7 @@ try g.nboot;             catch, g.nboot           = 200;           end
 try g.butterorder;       catch, g.butterorder     = 6;             end
 try g.alpha;             catch, g.alpha           = [];            end
 try g.filterfreq;        catch, g.filterfreq      = [];            end
+try g.usejidt;           catch, g.usejidt         = 0;             end
 
 % Input stuff
 OptionNames = fieldnames(g);
@@ -129,7 +130,11 @@ for i =1:length(OptionNames)
     end
 end
 
-[~,Iloc_orig,kconv0,difvarvect, AllILocal] = minfokraskov_convergencewin(X,Y,arg{:});
+if g.usejidt
+    [~,Iloc_orig,kconv0, difvarvect, AllILocal] = minfokraskov_convergencewin_jidt(X,Y,arg{:});
+else
+    [~,Iloc_orig,kconv0,difvarvect, AllILocal] = minfokraskov_convergencewin(X,Y,arg{:});
+end
 
 if ~isempty(g.filterfreq)
      [b,a] = butter(g.butterorder,g.filterfreq/(srate/2),'low');
@@ -182,15 +187,23 @@ if ~isempty(g.alpha)
             permarray      = randperm(size(shuffledata2,2));
             Y_surrogate    = shuffledata2(:,permarray);
             if rand_idx > length(X)-r
-                Y_surrogate    = [remainder_surr(length(X)-rand_idx+1:end)' Y_surrogate(1:end) remainder_surr(1:length(X)-rand_idx)'];
+                Y_surrogate    = [remainder_surr(length(X)-rand_idx+1:end) Y_surrogate(1:end) remainder_surr(1:length(X)-rand_idx)];
             else
-                Y_surrogate    = [Y_surrogate(1:rand_idx) remainder_surr' Y_surrogate(rand_idx+1:end)];
+                Y_surrogate    = [Y_surrogate(1:rand_idx) remainder_surr Y_surrogate(rand_idx+1:end)];
             end
             Y_surrogate    = Y_surrogate(:)';
             
         end 
+        
         arg{find(cell2mat(cellfun(@(x) strcmp(x,'k'), arg,'UniformOutput',0)))+1} = kconv0; % Fixing value of 'k' to the one from convergence.
-        [Isurrtmp,Ilocal,kconv,difvarvect] = minfokraskov_convergencewin(X_surrogate',Y_surrogate',arg{:});
+        
+%         [Isurrtmp,Ilocal,kconv,difvarvect] = minfokraskov_convergencewin(X_surrogate',Y_surrogate',arg{:});
+        
+        if g.usejidt
+            [~,Ilocal] = minfokraskov_convergencewin_jidt(X_surrogate',Y_surrogate',arg{:});
+        else
+            [~,Ilocal] = minfokraskov_convergencewin(X_surrogate',Y_surrogate',arg{:});
+        end
 
         if ~isempty(g.filterfreq)            
             [b,a] = butter(g.butterorder,g.filterfreq/(srate/2),'low');
@@ -199,7 +212,7 @@ if ~isempty(g.alpha)
         surrdata(si,:) = Ilocal;
     end
     
-    Iloc_zscore = (Iloc_origsurr - mean(surrdata)) ./ std(surrdata);
+    Iloc_zscore = (Iloc_origsurr' - mean(surrdata)) ./ std(surrdata);
     Iloc_pval   = 1-normcdf(abs(Iloc_zscore));
     Iloc_sigval = zeros(size(Iloc_pval));
     Iloc_sigval(abs(Iloc_pval) < g.alpha) = 1;    
