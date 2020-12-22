@@ -199,6 +199,7 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
                   'method'           'string'         pacmethods_list           'glm';      
                   'resample'         'real'           [0 1]                      0;      
                   'useparallel'      'real'           [0 1]                      1;
+                  'usejidt'          'real'           [0 1]                      0;
                   'nparpools'        'real'           [1 100]                    [] }, 'eeg_pac','ignore');
 if ischar(g), error(g); end
 
@@ -208,6 +209,8 @@ if g.useparallel
     if isempty(g.nparpools) || g.nparpools>parclust.NumWorkers
         g.nparpools = parclust.NumWorkers;
     end
+else
+    g.nparpools = 1;
 end
 
 % remove ERP if asked
@@ -247,7 +250,7 @@ if trials ==1 && strcmp(g.method, 'ermipac'),   disp('eeg_pac: Method not suppor
         g.timesout = tfXtimes;
         
     else
-        tfX       = g.alltfXstr.alltf;
+        tfX       = double(g.alltfXstr.alltf);
         freqs1    = g.alltfXstr.freqs;
         tfXtimes  = g.alltfXstr.timesout;
     end
@@ -259,9 +262,9 @@ if trials ==1 && strcmp(g.method, 'ermipac'),   disp('eeg_pac: Method not suppor
                                                 'freqs',      g.freqs2,    'freqscale', g.freqscale, 'nfreqs',   g.nfreqs2,...
                                                 'verbose',    g.verbose);
     else
-        tfY    = g.alltfYstr.alltf;
+        tfY       = double(g.alltfYstr.alltf);
         freqs2    = g.alltfYstr.freqs;
-        tfYtimes = g.alltfYstr.timesout;
+        tfYtimes   = g.alltfYstr.timesout;
     end
 
 %%
@@ -352,6 +355,7 @@ end
 % Getting array length to store results
 if strial_flag && strcmp(g.method,'instmipac') || strcmp(g.method,'ermipac')
     arraylength = length(timesout1);
+    if strcmp(g.method,'ermipac'), trials =  size(alltfX,3); end;
 else
     arraylength = length(ti_loopend);
 end
@@ -385,7 +389,7 @@ for find1 = 1:length(freqs1)
         
         % Time loop here( ti =1 if single trial, otherwise the number of timepoints)
         % Check for parpool and adjust the number of workers to the value in parpools.
-        if g.nparpools > 1 && length(tindxvector) > 1
+        if g.nparpools > 1 && length(tindxvector) > 1 
             hpool = gcp('nocreate');
             if isempty(hpool)
                 parpool(g.nparpools)
@@ -397,7 +401,8 @@ for find1 = 1:length(freqs1)
         else
             parforArg = 0;
         end
-
+        
+        if strcmp(g.method,'ermipac') && g.usejidt, parforArg = 0; end
 %%
          parfor (ti = 1:length(tindxvector), parforArg)
 %          for ti = 1:length(tindxvector)
@@ -435,7 +440,12 @@ for find1 = 1:length(freqs1)
             % ERMIPAC
             if strcmp(g.method,'ermipac')
                 tmparg = {gsubf{:} 'xdistmethod' 'circular'};
-                [~,cell_pactmp{ti},kconv] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy', tmparg{:});
+                
+                if g.usejidt
+                    [~,cell_pactmp{ti},kconv] = minfokraskov_convergencewin_jidt(tmpalltfx',tmpalltfy', tmparg{:});
+                else
+                    [~,cell_pactmp{ti},kconv] = minfokraskov_convergencewin(tmpalltfx',tmpalltfy', tmparg{:});
+                end
                 
                 if ~isempty(g.alpha)
                     [trash, zerolat] = min(abs(timesout1));
@@ -459,7 +469,7 @@ for find1 = 1:length(freqs1)
             % Inst MIPAC
             elseif strcmp(g.method,'instmipac')              
                 % Inst MIPAC with and withoth signif (controled by g.alpha)
-                tmparg = {gsubf{:} 'xdistmethod' 'circular' 'filterfreq' freqs1(find1) 'alpha' g.alpha};
+                tmparg = {gsubf{:} 'xdistmethod' 'circular' 'filterfreq' freqs1(find1) 'alpha' g.alpha 'usejidt',g.usejidt};
                 [cell_pactmp{ti}, cell_kconv{ti}, cell_signiftmp{ti}, cell_pval{ti}] = minfokraskov_convergence_signif(tmpalltfx,tmpalltfy,srate,tmparg{:});
                 
             % PAC Methods.
