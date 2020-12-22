@@ -99,31 +99,34 @@ end
 % Trimming time dimesion
 timevals = [];
 if pacstruct.(g.pacmethod).dim == 2 || pacstruct.(g.pacmethod).dim == 3
+    
     % Time values
-    if  isfield(pacstruct.(g.pacmethod),'times')
-        timevals = pacstruct.(g.pacmethod).times;
-    end
+    timevals = pacstruct.(g.pacmethod).times;
         
     % Trimming time
-    if ~isempty(params.timerange) && ~isempty(timevals)
+    if ~isempty(params.timerange)
          if params.timerange(1) < min(timevals) || params.timerange(2) > max(timevals), error('eeg_plotcomod: Invalid time range'); end
         try
             timendx = (timevals > params.timerange(1) & timevals < params.timerange(2));
             timevals = timevals(timendx);
             
-            % Collapsing Trials
-            if  pacstruct.(g.pacmethod).dim == 3
-                pacdata = squeeze(mean(pacdata,3));  
-            end
-            
-            pacdata = pacdata(:,:,timendx);
-            if flag_pval
-                signifmask = signifmask(:,:,timendx);
-            end
         catch
             disp('Unable to trim time/latency values. Please check option ''timerange''');
             disp('Ignoring  option ''timerange'' ......');
         end
+    else
+        timendx = 1:length(timevals);
+    end
+    
+    % Collapsing Trials
+    if  pacstruct.(g.pacmethod).dim == 3
+        pacdata = squeeze(mean(pacdata,3));
+    end
+    
+    pacdata = pacdata(:,:,timendx);
+    
+    if flag_pval
+        signifmask = signifmask(:,:,timendx);
     end
 end
 
