@@ -50,7 +50,10 @@ if strcmpi(g.compflag, 'local')
     % Check channels across subjects
     % here
     if isnumeric(dataindx)
+        datindxint = dataindx;
         dataindx = {ALLEEG(1).chanlocs(dataindx).labels};
+    else
+        datindxint = find(contains({ALLEEG(1).chanlocs.labels},dataindx));
     end
     
     % Check for TF decomposition in STUDY
@@ -201,7 +204,7 @@ if strcmpi(g.compflag, 'local')
                 
                 % Compute PAC
                 [pacval, timesout, freqs1, freqs2, alltfX, alltfY,~, pacstruct] =...
-                    eeg_pac([], [], [], 'alltfXstr',alltf_1,...
+                    eeg_pac([], [], ALLEEG(1).srate, 'alltfXstr',alltf_1,...
                     'alltfYstr',alltf_2,...
                     'method',g.method,...
                     'tlimits', alltimes, g.pacparams{:});
@@ -248,6 +251,22 @@ if strcmpi(g.compflag, 'local')
             std_savedat( filebase , all_pac );
         end
     end
+    
+    % Updating STUDY structure
+    STUDY.etc.eegpac.method                 = g.method;
+    STUDY.etc.eegpac.dataindx               = datindxint;
+    STUDY.etc.eegpac.labels                 = dataindx;
+    STUDY.etc.eegpac.datatype               = chanorcomp;
+    STUDY.etc.eegpac.pactype                = datatype;
+    STUDY.etc.eegpac.params.freqs_phase     = all_pac.freqs1;
+    STUDY.etc.eegpac.params.freqs_amp       = all_pac.freqs2  ;
+    STUDY.etc.eegpac.cache                  = '';
+    
+    STUDY = pop_comodpacparams(STUDY, 'default');
+    STUDY = pop_comodtpacparams(STUDY, 'default');
+    STUDY = pop_tfpacparams(STUDY, 'default');
+    STUDY = pop_trialspacparams(STUDY, 'default');
+    
 else
     try
         nsg_info;  % get information on where to create the temporary file
