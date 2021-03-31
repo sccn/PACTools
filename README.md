@@ -248,4 +248,4 @@ To visualize the PAC values computed previously we use the *pop_plotpac* GUI (cl
 </center>    
 
 ### Contributions and feedback
-This is an open-source project on constant development. Please, contact the authors at ram033@eng.ucsd.edu for contributions. The use of the issue tracker is encouraged. 
+This is an open-source project on constant development. Please, contact the authors at nucleuscub@gmail.com for contributions. The use of the issue tracker is encouraged. 
