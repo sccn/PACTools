@@ -1,3 +1,8 @@
+[![GitHub stars](https://img.shields.io/github/stars/sccn/PACTools?color=%235eeb34&logo=GithUb&logoColor=%23fafafa)](https://github.com/sccn/PACTools/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/sccn/PACTools?color=%23b3d9f5&logo=GitHub)](https://github.com/sccn/PACTools/network)
+[![GitHub issues](https://img.shields.io/github/issues/sccn/PACTools?color=%23fa251e&logo=GitHub)](https://github.com/sccn/PACTools/issues)
+[![Twitter](https://img.shields.io/twitter/url?label=EEGLAB&style=social&url=https%3A%2F%2Ftwitter.com%2Feeglab2)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2Fsccn%2FPACTools)
+
 # EEGLAB Event Related PACTools
 The Event Related PACTools (PACTools) is an EEGLAB plug-in to compute phase-amplitude coupling in single subject data. 
 In addition to traditional methods to compute PAC, the plugin include the Instantaneuous and Event-Related implementation of the Mutual Information Phase-Amplitude Coupling Method (MIPAC) (see Martinez-Cancino et al 2019).
