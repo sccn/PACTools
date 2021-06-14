@@ -6,7 +6,7 @@
 # EEGLAB Event Related PACTools
 The Event Related PACTools (PACTools) is an EEGLAB plug-in to compute phase-amplitude coupling in single subject data. 
 In addition to traditional methods to compute PAC, the plugin include the Instantaneuous and Event-Related implementation of the Mutual Information Phase-Amplitude Coupling Method (MIPAC) (see Martinez-Cancino et al 2019).
-The toolbox is developed and maintained by the EEGLAB Team at the Swartz Center for Computational Neurosciences in UCSD, La Jolla, California.
+This toolbox was developed at the Swartz Center for Computational Neurosciences in UCSD, La Jolla, California by Ramon Martinez-Cancino.
 
 ## Table of Contents
 1. [Phase-amplitude coupling in neurosciences](#phase-amplitude-coupling-in-neurosciences)
