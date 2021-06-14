@@ -40,9 +40,9 @@ set(get(h,'Children'),'Fontsize',AXES_FONTSIZE_L+5);
 if ~isempty(g.signifmask)
     haxes2 = axes('Position',haxes.Position,'XTick',[],'YTick',[],'XTickLabel','','YTickLabel','');
     haxes2.ActivePositionProperty = 'outerposition';
-    haxes2.Visible = 'off'
+    haxes2.Visible = 'off';
     linkaxes([haxes,haxes2]);
-    h_trans = pcolor(freqs_amp,freqs_phase,int8(g.signifmask), 'parent', haxes2);
+    h_trans = pcolor(freqs_phase, freqs_amp,int8(g.signifmask)', 'parent', haxes2);
     
     if strcmp(g.scale, 'log')
         set(haxes2, 'XScale', 'log');
