@@ -204,7 +204,10 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
 if ischar(g), error(g); end
 
 % Parallelization stuff
-if g.useparallel
+AllToolboxes = ver;
+DistToolFlag = any(strcmp('Parallel Computing Toolbox', {AllToolboxes.Name}));
+
+if g.useparallel && DistToolFlag
     parclust = parcluster;
     if isempty(g.nparpools) || g.nparpools>parclust.NumWorkers
         g.nparpools = parclust.NumWorkers;
