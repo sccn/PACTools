@@ -203,11 +203,16 @@ pacmethods_list = {'plv','mvlmi','klmi','glm','plv', 'instmipac', 'ermipac'} ;
 if ischar(g), error(g); end
 
 % Parallelization stuff
-if g.useparallel
-    parclust = parcluster;
-    if isempty(g.nparpools) || g.nparpools>parclust.NumWorkers
-        g.nparpools = parclust.NumWorkers;
+try
+    if g.useparallel
+        parclust = parcluster;
+        if isempty(g.nparpools) || g.nparpools>parclust.NumWorkers
+            g.nparpools = parclust.NumWorkers;
+        end
     end
+catch
+    g.nparpools = 1;
+    g.useparallel = 0;
 end
 
 % remove ERP if asked
