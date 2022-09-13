@@ -74,8 +74,8 @@ if ~ischar(varargin{1})
     defaultmethodlist = fieldnames(EEG.etc.eegpac(1));
     guimethodlist = AllMethod_listgui(find(ismember(AllMethods,fieldnames(EEG.etc.eegpac(1)))));
     
-    ph_freqrange  = ['[' num2str(minmax(EEG.etc.eegpac(1).params.freqs_phase)) ']'];
-    amp_freqrange = ['[' num2str(minmax(EEG.etc.eegpac(1).params.freqs_amp)) ']'];
+    ph_freqrange  = ['[' num2str([min(EEG.etc.eegpac(1).params.freqs_phase) max(EEG.etc.eegpac(1).params.freqs_phase)]) ']'];
+    amp_freqrange = ['[' num2str([min(EEG.etc.eegpac(1).params.freqs_amp) max(EEG.etc.eegpac(1).params.freqs_amp)]) ']'];
     ph_nfreqs = num2str(numel(EEG.etc.eegpac(1).params.freqs_phase));
     amp_nfreqs = num2str(numel(EEG.etc.eegpac(1).params.freqs_amp));
     
